@@ -2,6 +2,14 @@
 
 A modern Laravel application with Inertia.js, Team management, Two-Factor Authentication, and Passkeys support.
 
+## Quickstart
+
+Script to run the project
+
+```bash
+npm run start
+```
+
 ## Features
 
 - 🔐 **Authentication**: Complete auth system with Laravel Fortify
