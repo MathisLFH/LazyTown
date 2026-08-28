@@ -4,7 +4,7 @@ A modern Laravel application with Inertia.js, Team management, Two-Factor Authen
 
 ## Quickstart
 
-Script to run the project
+Start the local development environment
 
 ```bash
 npm run start
@@ -97,21 +97,24 @@ pnpm build
 
 ### Running the development server
 
-Terminal 1 - Start the PHP server:
+Laravel Herd serves the application at `https://lazytown.test`. Start the
+frontend development server in a terminal:
 
 ```bash
-php artisan serve
-```
-
-Terminal 2 - Watch frontend assets:
-
-```bash
+nvm use 20.20.2
 npm run dev
 # or
 pnpm dev
 ```
 
-The application will be available at `http://localhost:8000`
+On Windows, open a new terminal after changing the Node version and verify
+that `node --version` reports `v20.20.2`. This project uses Node 20 because
+the current Vite HTTPS/HMR path fails with Node 22 in this environment.
+
+The application will be available at `https://lazytown.test`. Vite serves
+frontend assets and provides hot module replacement while the terminal stays
+running. Docker Compose is only used for infrastructure services such as the
+PostgreSQL database.
 
 ## Project Structure
 

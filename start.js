@@ -7,20 +7,12 @@ function run(command, args) {
     });
 }
 
+const vite = run('npm', ['run', 'dev']);
 run('docker', ['compose', 'up', '-d']);
 
 setTimeout(() => {
-    console.log('Starte Laravel...');
-
-    run('php', ['artisan', 'serve']);
-
-    console.log('Starte Vite...');
-
-    run('npm', ['run', 'dev']);
-
-    setTimeout(() => {
-        console.log('🌐 Öffne Browser...');
-
+    if (!vite.killed) {
+        console.log('Öffne Herd: https://lazytown.test/');
         run('start', ['https://lazytown.test/']);
-    }, 2000);
-}, 3000);
+    }
+}, 4000);
