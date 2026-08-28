@@ -1,0 +1,11 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: lazytown
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: lazytown
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: lazytown
+    ports:
+      - '5432:5432'
