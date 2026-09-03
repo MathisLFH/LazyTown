@@ -2,19 +2,14 @@
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import DashboardContent from '@/components/DashboardContent.vue';
-import { login, register, aboutus } from '@/routes';
+import { login, register } from '@/routes';
 
 const page = usePage();
-const isAuthenticated = computed(() => Boolean(page.props.auth.user));
 </script>
 
 <template>
-    <Head :title="isAuthenticated ? 'Startseite' : 'Willkommen bei LazyTown'" />
-
-    <DashboardContent v-if="isAuthenticated" />
-
+    <Head title="About Us"/>
     <main
-        v-else
         class="flex min-h-screen items-center justify-center bg-muted/30 p-6"
     >
         <section
@@ -51,7 +46,5 @@ const isAuthenticated = computed(() => Boolean(page.props.auth.user));
                 </Link>
             </div>
         </section>
-        <button> <Link :href="aboutus()">About Us</Link> </button>
     </main>
 </template>
-   

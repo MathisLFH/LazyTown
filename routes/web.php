@@ -6,11 +6,13 @@ use App\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'Welcome')->name('home');
+Route::inertia('about-us', 'AboutUs')->name('aboutus');
 
 Route::prefix('{current_team}')
     ->middleware(['auth', 'verified', EnsureTeamMembership::class])
     ->group(function () {
         Route::get('dashboard', DashboardController::class)->name('dashboard');
+
     });
 
 Route::middleware(['auth'])->group(function () {
@@ -26,6 +28,7 @@ Route::middleware(['auth'])->group(function () {
     Route::inertia('mannschaft-bearbeiten', 'MannschaftBearbeiten')->name('mannschaft-bearbeiten');
     Route::inertia('hallenplan-bearbeiten', 'HallenplanBearbeiten')->name('hallenplan-bearbeiten');
     Route::inertia('bezahlung', 'Bezahlung')->name('bezahlung');
+  
 });
 
 require __DIR__.'/settings.php';
