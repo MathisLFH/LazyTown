@@ -1,10 +1,6 @@
 <script setup lang="ts">
-import { Head, Link, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
-import DashboardContent from '@/components/DashboardContent.vue';
+import { Head, Link } from '@inertiajs/vue3';
 import { login, register } from '@/routes';
-
-const page = usePage();
 </script>
 
 <template>

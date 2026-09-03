@@ -2,6 +2,7 @@
 
 namespace App\Concerns;
 
+use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rule;
@@ -21,6 +22,9 @@ trait ProfileValidationRules
             'city' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50'],
             'email' => $this->emailRules($userId),
+            'roles' => ['required', 'array', 'min:1'],
+            'roles.*' => ['string', Rule::in(array_column(UserRole::cases(), 'value'))],
+            'active_role' => ['required', 'string', Rule::in(array_column(UserRole::cases(), 'value'))],
         ];
     }
 

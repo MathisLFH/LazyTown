@@ -8,7 +8,6 @@ import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/composables/useAuth';
 import { useProfileAvatar } from '@/composables/useProfileAvatar';
 import { logout } from '@/routes';
 import { exportMethod as exportProfile } from '@/routes/profile';
@@ -28,7 +27,9 @@ defineOptions({
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
-const { activeRole, roles } = useAuth();
+const roleOptions = computed(() => page.props.roleOptions as { value: string; label: string }[]);
+const selectedRoles = computed(() => (user.value.roles as string[] | undefined) ?? ['spieler']);
+const selectedRoleOptions = computed(() => roleOptions.value.filter((role) => selectedRoles.value.includes(role.value)));
 const { avatarDataUrl, setAvatar } = useProfileAvatar();
 const privacyConsent = ref(true);
 const privacyMessage = ref('');
@@ -195,22 +196,29 @@ function handleAvatarChange(event: Event): void {
         <section class="space-y-4 border-t pt-6">
             <Heading
                 variant="small"
-                title="Rolle"
-                description="Temporäre Rollen-Auswahl für die Entwicklung"
+                title="Rollen"
+                description="Wähle alle Rollen, die du gleichzeitig ausübst."
             />
 
-            <label class="grid max-w-sm gap-2 text-sm" for="active-role">
-                Aktive Rolle
-                <select
-                    id="active-role"
-                    v-model="activeRole"
-                    class="h-10 rounded-md border border-input bg-background px-3 outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
-                >
-                    <option v-for="role in roles" :key="role" :value="role">
-                        {{ role }}
-                    </option>
-                </select>
-            </label>
+            <Form v-bind="ProfileController.update.form()" class="grid gap-4" v-slot="{ processing }">
+                <input type="hidden" name="name" :value="user.name" />
+                <input type="hidden" name="email" :value="user.email" />
+                <div class="grid gap-3 sm:grid-cols-3">
+                    <label v-for="role in roleOptions" :key="role.value" class="flex items-center gap-2 text-sm">
+                        <input type="checkbox" name="roles[]" :value="role.value" :checked="selectedRoles.includes(role.value)" />
+                        {{ role.label }}
+                    </label>
+                </div>
+                <label class="grid max-w-sm gap-2 text-sm" for="active-role">
+                    Aktive Rolle
+                    <select id="active-role" name="active_role" :value="user.active_role ?? selectedRoles[0]" class="h-10 rounded-md border border-input bg-background px-3">
+                        <option v-for="role in selectedRoleOptions" :key="role.value" :value="role.value">
+                            {{ role.label }}
+                        </option>
+                    </select>
+                </label>
+                <Button type="submit" :disabled="processing">Rollen speichern</Button>
+            </Form>
         </section>
 
         <section class="space-y-4 border-t pt-6">

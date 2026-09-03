@@ -98,6 +98,21 @@ defineOptions({
                 <InputError :message="errors.password_confirmation" />
             </div>
 
+            <fieldset class="grid gap-3">
+                <legend class="text-sm font-medium">Wie möchtest du starten?</legend>
+                <div class="grid gap-2 sm:grid-cols-2">
+                    <label class="flex items-center gap-2 rounded-md border p-3 text-sm">
+                        <input type="radio" name="start_role" value="spieler" checked />
+                        Als Spieler
+                    </label>
+                    <label class="flex items-center gap-2 rounded-md border p-3 text-sm">
+                        <input type="radio" name="start_role" value="trainer" />
+                        Als Trainer
+                    </label>
+                </div>
+                <InputError :message="errors.start_role" />
+            </fieldset>
+
             <Button
                 type="submit"
                 class="mt-2 w-full"

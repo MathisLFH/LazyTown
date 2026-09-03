@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, router } from '@inertiajs/vue3';
-import { ChevronDown, Mail, UserPlus, X } from '@lucide/vue';
+import { ChevronDown, CreditCard, Mail, UserPlus, X } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import CancelInvitationModal from '@/components/CancelInvitationModal.vue';
 import DeleteTeamModal from '@/components/DeleteTeamModal.vue';
@@ -28,6 +28,7 @@ import {
 import { useInitials } from '@/composables/useInitials';
 import { edit, index, update } from '@/routes/teams';
 import { update as updateMember } from '@/routes/teams/members';
+import { edit as paymentEdit } from '@/routes/teams/payment';
 import type {
     RoleOption,
     Team,
@@ -42,6 +43,7 @@ type Props = {
     invitations: TeamInvitation[];
     permissions: TeamPermissions;
     availableRoles: RoleOption[];
+    availableInvitationRoles: RoleOption[];
 };
 
 const props = defineProps<Props>();
@@ -108,6 +110,13 @@ const confirmCancelInvitation = (invitation: TeamInvitation) => {
                 description="Update your team name and settings"
             />
 
+            <Button variant="outline" as-child>
+                <Link :href="paymentEdit(team.slug)">
+                    <CreditCard />
+                    Zahlung
+                </Link>
+            </Button>
+
             <Form
                 v-bind="update.form(team.slug)"
                 class="space-y-6"
@@ -146,7 +155,7 @@ const confirmCancelInvitation = (invitation: TeamInvitation) => {
             <div class="flex items-center justify-between">
                 <Heading
                     variant="small"
-                    title="Team members"
+                            title="Vereinsmitglieder"
                     :description="
                         permissions.canCreateInvitation
                             ? 'Manage who belongs to this team'
@@ -159,7 +168,7 @@ const confirmCancelInvitation = (invitation: TeamInvitation) => {
                     data-test="invite-member-button"
                     @click="inviteDialogOpen = true"
                 >
-                    <UserPlus /> Invite member
+                    <UserPlus /> Mitglied hinzufügen
                 </Button>
             </div>
 
@@ -255,7 +264,7 @@ const confirmCancelInvitation = (invitation: TeamInvitation) => {
         </div>
 
         <!-- Pending Invitations Section -->
-        <div v-if="invitations.length > 0" class="space-y-6">
+        <div v-if="false" class="space-y-6">
             <Heading
                 variant="small"
                 title="Pending invitations"
@@ -340,7 +349,7 @@ const confirmCancelInvitation = (invitation: TeamInvitation) => {
     <InviteMemberModal
         v-if="permissions.canCreateInvitation"
         :team="team"
-        :available-roles="availableRoles"
+        :available-invitation-roles="availableInvitationRoles"
         :open="inviteDialogOpen"
         @update:open="inviteDialogOpen = $event"
     />

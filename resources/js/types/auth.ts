@@ -5,6 +5,8 @@ export type User = {
     city?: string | null;
     phone?: string | null;
     email: string;
+    roles?: string[];
+    active_role?: string | null;
     avatar?: string;
     email_verified_at: string | null;
     two_factor_enabled?: boolean;

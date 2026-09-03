@@ -1,20 +1,12 @@
 <script setup lang="ts">
-import { Head, Link, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
-import DashboardContent from '@/components/DashboardContent.vue';
+import { Head, Link } from '@inertiajs/vue3';
 import { login, register, aboutus } from '@/routes';
-
-const page = usePage();
-const isAuthenticated = computed(() => Boolean(page.props.auth.user));
 </script>
 
 <template>
-    <Head :title="isAuthenticated ? 'Startseite' : 'Willkommen bei LazyTown'" />
-
-    <DashboardContent v-if="isAuthenticated" />
+    <Head title="Willkommen bei LazyTown" />
 
     <main
-        v-else
         class="flex min-h-screen items-center justify-center bg-muted/30 p-6"
     >
         <section

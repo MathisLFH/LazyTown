@@ -25,7 +25,7 @@ trait HasTeams
     public function teams(): BelongsToMany
     {
         return $this->belongsToMany(Team::class, 'team_members', 'user_id', 'team_id')
-            ->withPivot(['role'])
+            ->withPivot(['role', 'status'])
             ->withTimestamps();
     }
 
@@ -98,7 +98,7 @@ trait HasTeams
      */
     public function belongsToTeam(Team $team): bool
     {
-        return $this->teams()->where('teams.id', $team->id)->exists();
+        return $this->teams()->where('teams.id', $team->id)->wherePivot('status', 'active')->exists();
     }
 
     /**
@@ -173,7 +173,8 @@ trait HasTeams
             canAddMember: $role?->hasPermission(TeamPermission::AddMember) ?? false,
             canUpdateMember: $role?->hasPermission(TeamPermission::UpdateMember) ?? false,
             canRemoveMember: $role?->hasPermission(TeamPermission::RemoveMember) ?? false,
-            canCreateInvitation: $role?->hasPermission(TeamPermission::CreateInvitation) ?? false,
+            canCreateInvitation: $this->hasRole('trainer')
+                && ($role?->hasPermission(TeamPermission::CreateInvitation) ?? false),
             canCancelInvitation: $role?->hasPermission(TeamPermission::CancelInvitation) ?? false,
         );
     }

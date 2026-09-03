@@ -7,6 +7,8 @@ use Inertia\Testing\AssertableInertia as Assert;
 
 test('the teams index page can be rendered', function () {
     $user = User::factory()->create();
+    $team = Team::factory()->create();
+    $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
 
     $response = $this
         ->actingAs($user)
@@ -17,6 +19,8 @@ test('the teams index page can be rendered', function () {
 
 test('teams can be created', function () {
     $user = User::factory()->create();
+    $team = Team::factory()->create();
+    $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
 
     $response = $this
         ->actingAs($user)
@@ -34,6 +38,8 @@ test('teams can be created', function () {
 
 test('team slug uses next available suffix', function () {
     $user = User::factory()->create();
+    $team = Team::factory()->create();
+    $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
 
     Team::factory()->create(['name' => 'Acme', 'slug' => 'acme']);
     Team::factory()->create(['name' => 'Acme One', 'slug' => 'acme-1']);

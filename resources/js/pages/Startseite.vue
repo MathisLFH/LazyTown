@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import DashboardContent from '@/components/DashboardContent.vue';
+import StartseiteContent from '@/components/StartseiteContent.vue';
 </script>
 
 <template>
     <Head title="Startseite" />
-    <DashboardContent />
+    <StartseiteContent />
 </template>

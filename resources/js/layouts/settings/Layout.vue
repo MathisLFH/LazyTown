@@ -21,7 +21,7 @@ const sidebarNavItems: NavItem[] = [
         href: editSecurity(),
     },
     {
-        title: 'Teams',
+        title: 'Verein',
         href: teams(),
     },
     {

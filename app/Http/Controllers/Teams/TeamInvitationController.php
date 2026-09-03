@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Teams;
 
+use App\Enums\InvitationRole;
 use App\Enums\TeamRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Teams\CreateTeamInvitationRequest;
@@ -26,7 +27,7 @@ class TeamInvitationController extends Controller
 
         $invitation = $team->invitations()->create([
             'email' => $request->validated('email'),
-            'role' => TeamRole::from($request->validated('role')),
+            'role' => InvitationRole::from($request->validated('role'))->teamRole(),
             'invited_by' => $request->user()->id,
             'expires_at' => now()->addDays(3),
         ]);
@@ -72,12 +73,20 @@ class TeamInvitationController extends Controller
 
             $invitation->update(['accepted_at' => now()]);
 
+            $roles = $user->roles ?: ['spieler'];
+
+            if ($invitation->role === TeamRole::Admin && ! in_array('trainer', $roles, true)) {
+                $roles[] = 'trainer';
+            }
+
+            $user->update(['roles' => $roles]);
+
             $user->switchTeam($team);
         });
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Invitation accepted.')]);
 
-        return to_route('dashboard');
+        return to_route('home');
     }
 
     /**
@@ -89,6 +98,6 @@ class TeamInvitationController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Invitation declined.')]);
 
-        return to_route('dashboard');
+        return to_route('home');
     }
 }

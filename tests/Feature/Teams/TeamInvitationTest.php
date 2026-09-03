@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Notification;
 test('team invitations can be created', function () {
     Notification::fake();
 
-    $owner = User::factory()->create();
+    $owner = User::factory()->create(['roles' => ['trainer'], 'active_role' => 'trainer']);
     $team = Team::factory()->create();
 
     $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
@@ -19,7 +19,7 @@ test('team invitations can be created', function () {
         ->actingAs($owner)
         ->post(route('teams.invitations.store', $team), [
             'email' => 'invited@example.com',
-            'role' => TeamRole::Member->value,
+            'role' => 'spieler',
         ]);
 
     $response->assertRedirect(route('teams.edit', $team));
@@ -32,7 +32,7 @@ test('team invitations can be created', function () {
 });
 
 test('invitation email for existing users uses login route', function () {
-    $owner = User::factory()->create();
+    $owner = User::factory()->create(['roles' => ['trainer'], 'active_role' => 'trainer']);
     $invitedUser = User::factory()->create(['email' => 'invited@example.com']);
     $team = Team::factory()->create();
 
@@ -51,7 +51,7 @@ test('invitation email for existing users uses login route', function () {
 });
 
 test('invitation email for unknown users uses login route', function () {
-    $owner = User::factory()->create();
+    $owner = User::factory()->create(['roles' => ['trainer'], 'active_role' => 'trainer']);
     $team = Team::factory()->create();
 
     $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
@@ -71,8 +71,8 @@ test('invitation email for unknown users uses login route', function () {
 test('team invitations can be created by admins', function () {
     Notification::fake();
 
-    $owner = User::factory()->create();
-    $admin = User::factory()->create();
+    $owner = User::factory()->create(['roles' => ['trainer'], 'active_role' => 'trainer']);
+    $admin = User::factory()->create(['roles' => ['trainer'], 'active_role' => 'trainer']);
     $team = Team::factory()->create();
 
     $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
@@ -82,16 +82,30 @@ test('team invitations can be created by admins', function () {
         ->actingAs($admin)
         ->post(route('teams.invitations.store', $team), [
             'email' => 'invited@example.com',
-            'role' => TeamRole::Member->value,
+            'role' => 'spieler',
         ]);
 
     $response->assertRedirect(route('teams.edit', $team));
 });
 
+test('team admins without the trainer role cannot invite members', function () {
+    $admin = User::factory()->create(['roles' => ['spieler'], 'active_role' => 'spieler']);
+    $team = Team::factory()->create();
+
+    $team->members()->attach($admin, ['role' => TeamRole::Admin->value]);
+
+    $this->actingAs($admin)
+        ->post(route('teams.invitations.store', $team), [
+            'email' => 'invited@example.com',
+            'role' => 'spieler',
+        ])
+        ->assertForbidden();
+});
+
 test('existing team members cannot be invited', function () {
     Notification::fake();
 
-    $owner = User::factory()->create();
+    $owner = User::factory()->create(['roles' => ['trainer'], 'active_role' => 'trainer']);
     $member = User::factory()->create(['email' => 'member@example.com']);
     $team = Team::factory()->create();
 
@@ -102,7 +116,7 @@ test('existing team members cannot be invited', function () {
         ->actingAs($owner)
         ->post(route('teams.invitations.store', $team), [
             'email' => 'member@example.com',
-            'role' => TeamRole::Member->value,
+            'role' => 'spieler',
         ]);
 
     $response->assertSessionHasErrors('email');
@@ -111,7 +125,7 @@ test('existing team members cannot be invited', function () {
 test('duplicate invitations cannot be created', function () {
     Notification::fake();
 
-    $owner = User::factory()->create();
+    $owner = User::factory()->create(['roles' => ['trainer'], 'active_role' => 'trainer']);
     $team = Team::factory()->create();
     $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
 
@@ -125,14 +139,14 @@ test('duplicate invitations cannot be created', function () {
         ->actingAs($owner)
         ->post(route('teams.invitations.store', $team), [
             'email' => 'invited@example.com',
-            'role' => TeamRole::Member->value,
+            'role' => 'spieler',
         ]);
 
     $response->assertSessionHasErrors('email');
 });
 
 test('team invitations cannot be created by members', function () {
-    $owner = User::factory()->create();
+    $owner = User::factory()->create(['roles' => ['trainer'], 'active_role' => 'trainer']);
     $member = User::factory()->create();
     $team = Team::factory()->create();
 
@@ -143,14 +157,14 @@ test('team invitations cannot be created by members', function () {
         ->actingAs($member)
         ->post(route('teams.invitations.store', $team), [
             'email' => 'invited@example.com',
-            'role' => TeamRole::Member->value,
+            'role' => 'spieler',
         ]);
 
     $response->assertForbidden();
 });
 
 test('team invitations can be cancelled by owners', function () {
-    $owner = User::factory()->create();
+    $owner = User::factory()->create(['roles' => ['trainer'], 'active_role' => 'trainer']);
     $team = Team::factory()->create();
 
     $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
@@ -189,7 +203,7 @@ test('team invitations can be accepted', function () {
         ->actingAs($invitedUser)
         ->post(route('invitations.accept', $invitation));
 
-    $response->assertRedirect(route('dashboard'));
+    $response->assertRedirect(route('home'));
     $response->assertInertiaFlash('toast', ['type' => 'success', 'message' => 'Invitation accepted.']);
 
     expect($invitedUser->fresh()->belongsToTeam($team))->toBeTrue();
@@ -213,7 +227,7 @@ test('team invitations can be declined by the invited user', function () {
         ->actingAs($invitedUser)
         ->delete(route('invitations.decline', $invitation));
 
-    $response->assertRedirect(route('dashboard'));
+    $response->assertRedirect(route('home'));
 
     $this->assertDatabaseMissing('team_invitations', [
         'id' => $invitation->id,
