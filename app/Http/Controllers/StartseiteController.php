@@ -7,10 +7,14 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class DashboardController extends Controller
+class StartseiteController extends Controller
 {
     public function __invoke(Request $request): Response
     {
+        if (! $request->user()) {
+            return Inertia::render('Welcome');
+        }
+
         $email = strtolower($request->user()->email);
 
         $pendingInvitations = TeamInvitation::query()
@@ -31,7 +35,7 @@ class DashboardController extends Controller
                 ],
             ]);
 
-        return Inertia::render('Dashboard', [
+        return Inertia::render('Startseite', [
             'pendingInvitations' => $pendingInvitations,
         ]);
     }
