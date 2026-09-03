@@ -23,6 +23,8 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string|null $city
  * @property string|null $phone
  * @property string $email
+ * @property array<int, string> $roles
+ * @property string|null $active_role
  * @property Carbon|null $email_verified_at
  * @property string $password
  * @property string|null $two_factor_secret
@@ -37,7 +39,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property-read Collection<int, Membership> $teamMemberships
  * @property-read Collection<int, Team> $teams
  */
-#[Fillable(['name', 'birth_date', 'city', 'phone', 'email', 'password', 'current_team_id'])]
+#[Fillable(['name', 'birth_date', 'city', 'phone', 'email', 'password', 'current_team_id', 'roles', 'active_role'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {
@@ -56,6 +58,12 @@ class User extends Authenticatable implements PasskeyUser
             'birth_date' => 'date',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
+            'roles' => 'array',
         ];
+    }
+
+    public function hasRole(string $role): bool
+    {
+        return in_array($role, $this->roles ?: [], true);
     }
 }

@@ -17,8 +17,12 @@ use Illuminate\Support\Carbon;
 /**
  * @property int $id
  * @property string $name
+ * @property int|null $created_by
  * @property string $slug
  * @property bool $is_personal
+ * @property string $payment_status
+ * @property string|null $payment_reference
+ * @property Carbon|null $payment_paid_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
@@ -26,7 +30,7 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, Membership> $memberships
  * @property-read Collection<int, User> $members
  */
-#[Fillable(['name', 'slug', 'is_personal'])]
+#[Fillable(['name', 'slug', 'is_personal', 'created_by', 'payment_status', 'payment_reference', 'payment_paid_at'])]
 class Team extends Model
 {
     /** @use HasFactory<TeamFactory> */
@@ -71,7 +75,7 @@ class Team extends Model
     {
         return $this->belongsToMany(User::class, 'team_members', 'team_id', 'user_id')
             ->using(Membership::class)
-            ->withPivot(['role'])
+            ->withPivot(['role', 'status'])
             ->withTimestamps();
     }
 
@@ -104,6 +108,7 @@ class Team extends Model
     {
         return [
             'is_personal' => 'boolean',
+            'payment_paid_at' => 'datetime',
         ];
     }
 

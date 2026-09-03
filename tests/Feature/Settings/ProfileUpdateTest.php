@@ -39,6 +39,41 @@ test('profile information can be updated', function () {
     expect($user->email_verified_at)->toBeNull();
 });
 
+test('a user can save multiple roles and an active role', function () {
+    $user = User::factory()->create([
+        'roles' => ['spieler', 'trainer'],
+        'active_role' => 'trainer',
+    ]);
+
+    $this
+        ->actingAs($user)
+        ->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'roles' => ['spieler', 'trainer', 'verwaltung'],
+            'active_role' => 'trainer',
+        ])
+        ->assertSessionHasNoErrors();
+
+    expect($user->refresh()->roles)->toBe(['spieler', 'trainer', 'verwaltung'])
+        ->and($user->active_role)->toBe('trainer');
+});
+
+test('users cannot assign themselves the trainer role in their profile', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'roles' => ['spieler', 'trainer'],
+            'active_role' => 'spieler',
+        ])
+        ->assertSessionHasNoErrors();
+
+    expect($user->refresh()->roles)->toBe(['spieler']);
+});
+
 test('email verification status is unchanged when the email address is unchanged', function () {
     $user = User::factory()->create();
 

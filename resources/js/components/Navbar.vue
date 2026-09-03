@@ -8,8 +8,6 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import type { Role } from '@/composables/useAuth';
-import { useAuth } from '@/composables/useAuth';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { useProfileAvatar } from '@/composables/useProfileAvatar';
 import {
@@ -28,20 +26,15 @@ import { edit as profile } from '@/routes/profile';
 type NavigationItem = {
     label: string;
     href: string;
-    minimumRole?: Role;
 };
 
 const searchQuery = ref('');
 const { isCurrentUrl } = useCurrentUrl();
-const { activeRole } = useAuth();
 const { avatarDataUrl } = useProfileAvatar();
-const isAuthenticated = computed(() => Boolean(usePage().props.auth.user));
+const page = usePage();
+const isAuthenticated = computed(() => Boolean(page.props.auth.user));
+const userRoles = computed(() => (page.props.auth.user?.roles ?? []) as string[]);
 const profileUrl = profile().url;
-const roleLevel: Record<Role, number> = {
-    Spieler: 1,
-    Trainer: 2,
-    Verwaltung: 3,
-};
 
 const navigationItems: NavigationItem[] = [
     { label: 'Startseite', href: home().url },
@@ -50,24 +43,25 @@ const navigationItems: NavigationItem[] = [
     { label: 'Mein Team', href: meinTeam().url },
 ];
 
-const managementNavigationItems: NavigationItem[] = [
-    { label: 'Pässe beantragen', href: paesseBeantragen().url, minimumRole: 'Trainer' },
-    { label: 'Spielende hinzufügen', href: spielendeHinzufuegen().url, minimumRole: 'Trainer' },
-    { label: 'Mannschaft bearbeiten', href: mannschaftBearbeiten().url, minimumRole: 'Trainer' },
-    { label: 'Hallenplan bearbeiten', href: hallenplanBearbeiten().url, minimumRole: 'Verwaltung' },
-    { label: 'Bezahlung für das Tool', href: bezahlung().url, minimumRole: 'Verwaltung' },
+const trainerNavigationItems: NavigationItem[] = [
+    { label: 'Pässe beantragen', href: paesseBeantragen().url },
+    { label: 'Spielende hinzufügen', href: spielendeHinzufuegen().url },
+    { label: 'Mannschaft bearbeiten', href: mannschaftBearbeiten().url },
 ];
 
-const managementItems = computed<NavigationItem[]>(() =>
-    managementNavigationItems.filter(canAccess),
+const administrationNavigationItems: NavigationItem[] = [
+    { label: 'Hallenplan bearbeiten', href: hallenplanBearbeiten().url },
+    { label: 'Bezahlung für das Tool', href: bezahlung().url },
+];
+
+const trainerItems = computed(() => userRoles.value.includes('trainer') ? trainerNavigationItems : []);
+const administrationItems = computed(() => userRoles.value.includes('verwaltung') ? administrationNavigationItems : []);
+
+const isTrainerActive = computed(() =>
+    trainerItems.value.some((item) => isCurrentUrl(item.href)),
 );
-
-function canAccess(item: NavigationItem): boolean {
-    return !item.minimumRole || roleLevel[activeRole.value] >= roleLevel[item.minimumRole];
-}
-
-const isManagementActive = computed(() =>
-    managementItems.value.some((item) => isCurrentUrl(item.href)),
+const isAdministrationActive = computed(() =>
+    administrationItems.value.some((item) => isCurrentUrl(item.href)),
 );
 </script>
 
@@ -108,22 +102,22 @@ const isManagementActive = computed(() =>
                     </Link>
                 </template>
 
-                <DropdownMenu v-if="managementItems.length > 0">
+                <DropdownMenu v-if="trainerItems.length > 0">
                     <DropdownMenuTrigger as-child>
                         <button
                             type="button"
                             class="inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
                             :class="{
-                                'bg-accent text-foreground': isManagementActive,
+                                'bg-accent text-foreground': isTrainerActive,
                             }"
                         >
-                            Verwaltung
+                            Trainer
                             <ChevronDown class="size-4" aria-hidden="true" />
                         </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" class="w-56">
                         <DropdownMenuItem
-                            v-for="item in managementItems"
+                            v-for="item in trainerItems"
                             :key="item.label"
                             as-child
                         >
@@ -133,6 +127,30 @@ const isManagementActive = computed(() =>
                                 :class="{
                                     'bg-accent text-accent-foreground': isCurrentUrl(item.href),
                                 }"
+                            >
+                                {{ item.label }}
+                            </Link>
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+
+                <DropdownMenu v-if="administrationItems.length > 0">
+                    <DropdownMenuTrigger as-child>
+                        <button
+                            type="button"
+                            class="inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
+                            :class="{ 'bg-accent text-foreground': isAdministrationActive }"
+                        >
+                            Verwaltung
+                            <ChevronDown class="size-4" aria-hidden="true" />
+                        </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" class="w-56">
+                        <DropdownMenuItem v-for="item in administrationItems" :key="item.label" as-child>
+                            <Link
+                                :href="item.href"
+                                class="w-full"
+                                :class="{ 'bg-accent text-accent-foreground': isCurrentUrl(item.href) }"
                             >
                                 {{ item.label }}
                             </Link>

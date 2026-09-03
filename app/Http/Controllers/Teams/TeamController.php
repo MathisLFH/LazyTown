@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Teams;
 
 use App\Actions\Teams\CreateTeam;
+use App\Enums\InvitationRole;
 use App\Enums\TeamRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Teams\DeleteTeamRequest;
@@ -19,6 +20,11 @@ use Inertia\Response;
 
 class TeamController extends Controller
 {
+    public function editCurrent(Request $request): Response
+    {
+        return $this->edit($request, $request->user()->currentTeam()->firstOrFail());
+    }
+
     /**
      * Display a listing of the user's teams.
      */
@@ -40,7 +46,9 @@ class TeamController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Team created.')]);
 
-        return to_route('teams.edit', ['team' => $team->slug]);
+        return $request->user()->hasRole('trainer')
+            ? to_route('teams.payment.edit', ['team' => $team->slug])
+            : to_route('teams.edit', ['team' => $team->slug]);
     }
 
     /**
@@ -56,8 +64,9 @@ class TeamController extends Controller
                 'name' => $team->name,
                 'slug' => $team->slug,
                 'isPersonal' => $team->is_personal,
+                'paymentStatus' => $team->payment_status,
             ],
-            'members' => $team->members()->get()->map(function (User $member) {
+            'members' => $team->members()->wherePivot('status', 'active')->get()->map(function (User $member) {
                 /** @var Membership $membership */
                 $membership = $member->getRelation('pivot');
 
@@ -77,11 +86,14 @@ class TeamController extends Controller
                     'code' => $invitation->code,
                     'email' => $invitation->email,
                     'role' => $invitation->role->value,
-                    'role_label' => $invitation->role->label(),
+                    'role_label' => $invitation->role === TeamRole::Admin
+                        ? InvitationRole::Trainer->label()
+                        : InvitationRole::Player->label(),
                     'created_at' => $invitation->created_at->toISOString(),
                 ]),
             'permissions' => $user->toTeamPermissions($team),
             'availableRoles' => TeamRole::assignable(),
+            'availableInvitationRoles' => InvitationRole::options(),
         ]);
     }
 

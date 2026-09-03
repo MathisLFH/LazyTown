@@ -43,6 +43,17 @@ test('new users can register', function () {
 
     $this->assertAuthenticated();
 
-    $user = User::where('email', 'test@example.com')->first();
-    $response->assertRedirect(route('dashboard'));
+    $response->assertRedirect(route('home'));
+});
+
+test('registration starts a player without assigning a club', function () {
+    $response = $this->post(route('register.store'), [
+        'name' => 'Trainer User',
+        'email' => 'trainer@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ]);
+
+    $response->assertRedirect(route('home'));
+    expect(User::where('email', 'trainer@example.com')->first()->roles)->toBe(['spieler']);
 });

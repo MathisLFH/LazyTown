@@ -25,6 +25,14 @@ test('authenticated users can visit the home page', function () {
     $response->assertOk();
 });
 
+test('trainers without a club are sent to club setup', function () {
+    $user = User::factory()->create(['roles' => ['trainer'], 'active_role' => 'trainer']);
+
+    $this->actingAs($user)
+        ->get(route('home'))
+        ->assertRedirect(route('club.onboarding'));
+});
+
 test('home page includes pending invitations for the authenticated user', function () {
     $owner = User::factory()->create(['name' => 'Taylor Otwell']);
     $invitedUser = User::factory()->create(['email' => 'invited@example.com']);
@@ -44,7 +52,7 @@ test('home page includes pending invitations for the authenticated user', functi
 
     $response->assertOk();
     $response->assertInertia(fn (Assert $page) => $page
-        ->component('Startseite')
+        ->component('NoClub')
         ->has('pendingInvitations', 1)
         ->where('pendingInvitations.0.code', $invitation->code)
         ->where('pendingInvitations.0.inviterName', 'Taylor Otwell')
@@ -73,7 +81,7 @@ test('home page does not include accepted invitations', function () {
 
     $response->assertOk();
     $response->assertInertia(fn (Assert $page) => $page
-        ->component('Startseite')
+        ->component('NoClub')
         ->has('pendingInvitations', 0),
     );
 });
@@ -97,7 +105,7 @@ test('home page excludes expired invitations without deleting them', function ()
 
     $response->assertOk();
     $response->assertInertia(fn (Assert $page) => $page
-        ->component('Startseite')
+        ->component('NoClub')
         ->has('pendingInvitations', 0),
     );
 
@@ -125,7 +133,7 @@ test('home page does not include or delete other users invitations', function ()
 
     $response->assertOk();
     $response->assertInertia(fn (Assert $page) => $page
-        ->component('Startseite')
+        ->component('NoClub')
         ->has('pendingInvitations', 0),
     );
 
