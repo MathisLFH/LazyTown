@@ -4,6 +4,6 @@ import DashboardContent from '@/components/DashboardContent.vue';
 </script>
 
 <template>
-    <Head title="Dashboard" />
+    <Head title="Startseite" />
     <DashboardContent />
 </template>

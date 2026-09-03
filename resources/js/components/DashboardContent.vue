@@ -12,7 +12,7 @@ const news = [
 
 <template>
     <div class="space-y-6 p-6">
-        <h1 class="text-2xl font-semibold">Dashboard</h1>
+        <h1 class="text-2xl font-semibold">Startseite</h1>
 
         <div class="grid gap-4 lg:grid-cols-3">
             <section class="rounded-lg border border-sidebar-border/70 p-5 lg:col-span-2">
