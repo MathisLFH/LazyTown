@@ -19,6 +19,9 @@ test('profile information can be updated', function () {
         ->actingAs($user)
         ->patch(route('profile.update'), [
             'name' => 'Test User',
+            'birth_date' => '1995-04-12',
+            'city' => 'Köln',
+            'phone' => '+49 221 1234567',
             'email' => 'test@example.com',
         ]);
 
@@ -29,6 +32,9 @@ test('profile information can be updated', function () {
     $user->refresh();
 
     expect($user->name)->toBe('Test User');
+    expect($user->birth_date?->toDateString())->toBe('1995-04-12');
+    expect($user->city)->toBe('Köln');
+    expect($user->phone)->toBe('+49 221 1234567');
     expect($user->email)->toBe('test@example.com');
     expect($user->email_verified_at)->toBeNull();
 });
