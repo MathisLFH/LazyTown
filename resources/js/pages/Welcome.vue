@@ -43,7 +43,7 @@ import { login, register, aboutus } from '@/routes';
                 </Link>
             </div>
         </section>
-        <Link :href="aboutus()">About Us</Link>
+        <button> <Link :href="aboutus()">About Us</Link> </button>
     </main>
 </template>
    
