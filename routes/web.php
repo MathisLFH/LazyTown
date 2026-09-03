@@ -5,6 +5,7 @@ use App\Http\Controllers\Teams\TeamInvitationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', StartseiteController::class)->name('home');
+Route::inertia('about-us', 'AboutUs')->name('aboutus');
 
 Route::middleware(['auth'])->group(function () {
     Route::post('invitations/{invitation}/accept', [TeamInvitationController::class, 'accept'])->name('invitations.accept');
@@ -19,6 +20,7 @@ Route::middleware(['auth'])->group(function () {
     Route::inertia('mannschaft-bearbeiten', 'MannschaftBearbeiten')->name('mannschaft-bearbeiten');
     Route::inertia('hallenplan-bearbeiten', 'HallenplanBearbeiten')->name('hallenplan-bearbeiten');
     Route::inertia('bezahlung', 'Bezahlung')->name('bezahlung');
+  
 });
 
 require __DIR__.'/settings.php';

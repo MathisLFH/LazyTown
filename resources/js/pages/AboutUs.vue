@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { login, register, aboutus } from '@/routes';
+import { login, register } from '@/routes';
 </script>
 
 <template>
-    <Head title="Willkommen bei LazyTown" />
-
+    <Head title="About Us"/>
     <main
         class="flex min-h-screen items-center justify-center bg-muted/30 p-6"
     >
@@ -43,7 +42,5 @@ import { login, register, aboutus } from '@/routes';
                 </Link>
             </div>
         </section>
-        <Link :href="aboutus()">About Us</Link>
     </main>
 </template>
-   
