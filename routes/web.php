@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', StartseiteController::class)->name('home');
 Route::inertia('about-us', 'AboutUs')->name('aboutus');
+Route::inertia('kontakt', 'Kontakt')->name('kontakt');
+Route::inertia('impressum', 'Impressum')->name('impressum');
+Route::inertia('datenschutzerklaerung', 'Datenschutzerklaerung')->name('datenschutzerklaerung');
 
 Route::middleware(['auth'])->group(function () {
     Route::post('invitations/{invitation}/accept', [TeamInvitationController::class, 'accept'])->name('invitations.accept');
@@ -27,6 +30,7 @@ Route::middleware(['auth'])->group(function () {
         Route::inertia('paesse-beantragen', 'PaesseBeantragen')->name('paesse-beantragen');
         Route::get('spielende-hinzufuegen', [TeamController::class, 'editCurrent'])->name('spielende-hinzufuegen');
         Route::inertia('mannschaft-bearbeiten', 'MannschaftBearbeiten')->name('mannschaft-bearbeiten');
+        Route::inertia('zurueck-zur-startseite', 'Startseite')->name('startseite');
     });
     Route::middleware(['club.access', 'role:verwaltung'])->group(function () {
         Route::inertia('hallenplan-bearbeiten', 'HallenplanBearbeiten')->name('hallenplan-bearbeiten');

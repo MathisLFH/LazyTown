@@ -44,4 +44,35 @@
     <body class="font-sans antialiased">
         <x-inertia::app />
     </body>
+     <footer class="bg-gray-100 border-t border-gray-200">
+        <div class="max-w-7xl mx-auto px-6 py-8">
+
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+
+                <p class="text-sm text-gray-500">
+                    © 2026 Unser Verein
+                </p>
+
+                <nav class="flex gap-6 text-sm">
+                    <a href="{{ route('aboutus') }}" class="text-gray-500 hover:text-gray-900">
+                Über uns
+                </a>
+
+                    <a href="{{route('kontakt')}}" class="text-gray-500 hover:text-gray-900">
+                        Kontakt
+                    </a>
+
+                    <a href="{{ route('impressum') }}" class="text-gray-500 hover:text-gray-900">
+                        Impressum
+                    </a>
+
+                    <a href="{{ route('datenschutzerklaerung') }}" class="text-gray-500 hover:text-gray-900">
+                        Datenschutz
+                    </a>
+                </nav>
+
+            </div>
+
+        </div>
+    </footer>
 </html>

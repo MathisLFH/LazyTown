@@ -30,6 +30,7 @@ function saveProfile(): void {
         <h1 class="text-2xl font-semibold">Profil</h1>
 
         <section class="rounded-lg border border-sidebar-border/70 p-5">
+           <button> Return to Startseite <link href="{{ route('startseite') }}">Startseite</link></button> 
             <form class="grid max-w-xl gap-4" @submit.prevent="saveProfile">
                 <label class="grid gap-1 text-sm">
                     Name

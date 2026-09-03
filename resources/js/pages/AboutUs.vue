@@ -59,31 +59,5 @@ import { login, register } from '@/routes';
             </div>
         </section>
     </main>
-    <footer class="bg-gray-100 text-gray-600 py-8 mt-12">
-    <div class="max-w-7xl mx-auto px-6 text-center">
-        
-        <div class="flex justify-center gap-6 mb-4">
-            <a href="#" class="hover:text-gray-900">
-                Impressum
-            </a>
 
-            <a href="#" class="hover:text-gray-900">
-                Datenschutz
-            </a>
-
-            <a href="#" class="hover:text-gray-900">
-                Kontakt
-            </a>
-
-            <a href="#" class="hover:text-gray-900">
-                Über uns
-            </a>
-        </div>
-
-        <p class="text-sm text-gray-500">
-            © 2026 Unser Verein. Alle Rechte vorbehalten.
-        </p>
-
-    </div>
-</footer>
 </template>
