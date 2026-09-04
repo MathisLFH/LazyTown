@@ -25,6 +25,27 @@ class TeamController extends Controller
         return $this->edit($request, $request->user()->currentTeam()->firstOrFail());
     }
 
+    public function spielendeHinzufuegen(Request $request): Response
+    {
+        return Inertia::render('SpielendeHinzufuegen', $this->memberManagementProps(
+            $request->user(),
+            $request->user()->currentTeam()->firstOrFail(),
+        ));
+    }
+
+    public function meinTeam(Request $request): Response
+    {
+        $props = $this->memberManagementProps(
+            $request->user(),
+            $request->user()->currentTeam()->firstOrFail(),
+        );
+
+        return Inertia::render('MeinTeam', [
+            'team' => $props['team'],
+            'members' => $props['members'],
+        ]);
+    }
+
     /**
      * Display a listing of the user's teams.
      */
@@ -33,7 +54,9 @@ class TeamController extends Controller
         $user = $request->user();
 
         return Inertia::render('teams/Index', [
-            'teams' => $user->toUserTeams(includeCurrent: true),
+            'teams' => $user->toUserTeams(includeCurrent: true)
+                ->where('isPersonal', false)
+                ->values(),
         ]);
     }
 
@@ -66,14 +89,33 @@ class TeamController extends Controller
                 'isPersonal' => $team->is_personal,
                 'paymentStatus' => $team->payment_status,
             ],
+            'permissions' => $user->toTeamPermissions($team),
+        ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function memberManagementProps(User $user, Team $team): array
+    {
+        return [
+            'team' => [
+                'id' => $team->id,
+                'name' => $team->name,
+                'slug' => $team->slug,
+                'isPersonal' => $team->is_personal,
+                'paymentStatus' => $team->payment_status,
+            ],
             'members' => $team->members()->wherePivot('status', 'active')->get()->map(function (User $member) {
                 /** @var Membership $membership */
                 $membership = $member->getRelation('pivot');
 
                 return [
                     'id' => $member->id,
+                    'public_id' => $member->public_id,
                     'name' => $member->name,
                     'email' => $member->email,
+                    'phone' => $member->phone,
                     'avatar' => $member->avatar ?? null,
                     'role' => $membership->role->value,
                     'role_label' => $membership->role->label(),
@@ -94,7 +136,7 @@ class TeamController extends Controller
             'permissions' => $user->toTeamPermissions($team),
             'availableRoles' => TeamRole::assignable(),
             'availableInvitationRoles' => InvitationRole::options(),
-        ]);
+        ];
     }
 
     /**

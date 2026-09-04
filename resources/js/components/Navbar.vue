@@ -15,7 +15,6 @@ import {
     hallenplan,
     hallenplanBearbeiten,
     home,
-    mannschaftBearbeiten,
     meinTeam,
     paesseBeantragen,
     spielendeHinzufuegen,
@@ -30,10 +29,11 @@ type NavigationItem = {
 
 const searchQuery = ref('');
 const { isCurrentUrl } = useCurrentUrl();
-const { avatarDataUrl } = useProfileAvatar();
 const page = usePage();
+const currentUser = computed(() => page.props.auth.user);
+const { avatarDataUrl } = useProfileAvatar(currentUser.value?.id ?? null);
 const isAuthenticated = computed(() => Boolean(page.props.auth.user));
-const userRoles = computed(() => (page.props.auth.user?.roles ?? []) as string[]);
+const userRoles = computed(() => (currentUser.value?.roles ?? []) as string[]);
 const profileUrl = profile().url;
 
 const navigationItems: NavigationItem[] = [
@@ -45,8 +45,7 @@ const navigationItems: NavigationItem[] = [
 
 const trainerNavigationItems: NavigationItem[] = [
     { label: 'Pässe beantragen', href: paesseBeantragen().url },
-    { label: 'Spielende hinzufügen', href: spielendeHinzufuegen().url },
-    { label: 'Mannschaft bearbeiten', href: mannschaftBearbeiten().url },
+    { label: 'Verein verwalten', href: spielendeHinzufuegen().url },
 ];
 
 const administrationNavigationItems: NavigationItem[] = [
@@ -169,16 +168,19 @@ const isAdministrationActive = computed(() =>
                 </button>
                 <Link
                     :href="profileUrl"
-                    class="inline-flex size-10 items-center justify-center overflow-hidden rounded-full border border-input text-muted-foreground transition hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
+                    class="inline-flex items-center gap-2 rounded-md border border-input px-2 py-1 text-sm font-medium text-foreground transition hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
                     aria-label="Profil öffnen"
                 >
-                    <img
-                        v-if="isAuthenticated && avatarDataUrl"
-                        :src="avatarDataUrl"
-                        alt=""
-                        class="size-full object-cover"
-                    />
-                    <CircleUserRound v-else class="size-5" aria-hidden="true" />
+                    <span class="max-w-32 truncate">{{ currentUser?.name }}</span>
+                    <span class="inline-flex size-8 items-center justify-center overflow-hidden rounded-full border border-input text-muted-foreground">
+                        <img
+                            v-if="isAuthenticated && avatarDataUrl"
+                            :src="avatarDataUrl"
+                            :alt="currentUser?.name ?? 'Profilbild'"
+                            class="size-full object-cover"
+                        />
+                        <CircleUserRound v-else class="size-5" aria-hidden="true" />
+                    </span>
                 </Link>
             </div>
         </div>

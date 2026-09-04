@@ -18,6 +18,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 
 /**
  * @property int $id
+ * @property string $public_id
  * @property string $name
  * @property string|null $birth_date
  * @property string|null $city
@@ -45,6 +46,17 @@ class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasTeams, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+
+    protected static function booted(): void
+    {
+        static::creating(function (User $user): void {
+            do {
+                $publicId = (string) random_int(10000000, 99999999);
+            } while (self::where('public_id', $publicId)->exists());
+
+            $user->public_id = $publicId;
+        });
+    }
 
     /**
      * Get the attributes that should be cast.

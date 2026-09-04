@@ -67,16 +67,28 @@ function handleOpenChange(value: boolean) {
 
                 <div class="grid gap-4">
                     <div class="grid gap-2">
-                        <Label for="email">Email address</Label>
+                        <Label for="email">E-Mail-Adresse</Label>
                         <Input
                             id="email"
                             name="email"
                             data-test="invite-email"
                             type="email"
-                            placeholder="colleague@example.com"
+                            placeholder="spieler@example.com"
                             required
                         />
                         <InputError :message="errors.email" />
+                    </div>
+
+                    <div class="grid gap-2">
+                        <Label for="public_id">Oder Benutzer-ID</Label>
+                        <Input
+                            id="public_id"
+                            name="public_id"
+                            type="number"
+                            min="1"
+                            placeholder="z. B. 12345678"
+                        />
+                        <InputError :message="errors.public_id" />
                     </div>
 
                     <div class="grid gap-2">

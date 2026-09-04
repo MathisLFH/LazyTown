@@ -28,7 +28,6 @@ test('authenticated users can open the placeholder pages', function () {
         'profil',
         'paesse-beantragen',
         'spielende-hinzufuegen',
-        'mannschaft-bearbeiten',
         'hallenplan-bearbeiten',
         'bezahlung',
     ] as $routeName) {
@@ -63,7 +62,6 @@ test('trainers can access trainer pages but not administration pages', function 
 
     $this->actingAs($user);
 
-    $this->get(route('mannschaft-bearbeiten'))->assertOk();
     $this->get(route('bezahlung'))->assertForbidden();
 });
 

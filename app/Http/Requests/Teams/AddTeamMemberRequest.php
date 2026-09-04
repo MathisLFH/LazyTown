@@ -14,7 +14,8 @@ class AddTeamMemberRequest extends FormRequest
         abort_if(! $this->route('team') instanceof Team, 404);
 
         return [
-            'email' => ['required', 'email', 'exists:users,email'],
+            'email' => ['nullable', 'email', 'exists:users,email', 'required_without:public_id'],
+            'public_id' => ['nullable', 'digits:8', 'exists:users,public_id', 'required_without:email'],
             'role' => ['required', 'string', Rule::enum(InvitationRole::class)],
         ];
     }

@@ -1,101 +1,79 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { Mail, Phone } from '@lucide/vue';
+import { computed } from 'vue';
+import Heading from '@/components/Heading.vue';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { useInitials } from '@/composables/useInitials';
+import { meinTeam } from '@/routes';
+import type { Team, TeamMember } from '@/types';
 
-type Member = {
-    id: number;
-    name: string;
-    position: string;
-    email: string;
+type Props = {
+    team: Team;
+    members: TeamMember[];
 };
 
-const members = ref<Member[]>([
-    { id: 1, name: 'Alex Müller', position: 'Mittelblock', email: 'alex@example.test' },
-    { id: 2, name: 'Samira Klein', position: 'Zuspiel', email: 'samira@example.test' },
-    { id: 3, name: 'Jonas Weber', position: 'Außenangriff', email: 'jonas@example.test' },
+const props = defineProps<Props>();
+const { getInitials } = useInitials();
+
+const trainers = computed(() => props.members.filter((member) => member.role !== 'member'));
+const players = computed(() => props.members.filter((member) => member.role === 'member'));
+
+const memberGroups = computed(() => [
+    { title: 'Trainer', members: trainers.value },
+    { title: 'Spieler', members: players.value },
 ]);
 
-const editingMember = ref<Member | null>(null);
-
-function openEditor(member: Member): void {
-    editingMember.value = { ...member };
-}
-
-function closeEditor(): void {
-    editingMember.value = null;
-}
-
-function saveMember(): void {
-    if (!editingMember.value) {
-        return;
-    }
-
-    const index = members.value.findIndex((member) => member.id === editingMember.value?.id);
-
-    if (index !== -1) {
-        members.value[index] = { ...editingMember.value };
-    }
-
-    closeEditor();
-}
+defineOptions({
+    layout: () => ({
+        breadcrumbs: [{ title: 'Mein Team', href: meinTeam() }],
+    }),
+});
 </script>
 
 <template>
     <Head title="Mein Team" />
 
-    <main class="space-y-6 p-6">
-        <h1 class="text-2xl font-semibold">Mein Team</h1>
+    <div class="space-y-10">
+        <Heading
+            :title="team.name"
+            description="Übersicht über die Mitglieder und ihre Kontaktdaten."
+        />
 
-        <section class="rounded-lg border border-sidebar-border/70 p-5">
-            <div class="space-y-3">
+        <section v-for="group in memberGroups" :key="group.title" class="space-y-5">
+            <Heading variant="small" :title="group.title" />
+            <div v-if="group.members.length" class="space-y-3">
                 <article
-                    v-for="member in members"
+                    v-for="member in group.members"
                     :key="member.id"
-                    class="flex flex-col gap-3 rounded-md bg-muted/50 p-4 sm:flex-row sm:items-center sm:justify-between"
+                    class="flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between"
                 >
-                    <div>
-                        <h2 class="font-medium">{{ member.name }}</h2>
-                        <p class="text-sm text-muted-foreground">
-                            {{ member.position }} · {{ member.email }}
-                        </p>
+                    <div class="flex items-center gap-4">
+                        <Avatar class="h-10 w-10">
+                            <AvatarImage v-if="member.avatar" :src="member.avatar" :alt="member.name" />
+                            <AvatarFallback>{{ getInitials(member.name) }}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <h2 class="font-medium">{{ member.name }}</h2>
+                            <Badge variant="secondary" class="mt-1">{{ member.role_label }}</Badge>
+                        </div>
                     </div>
-                    <button
-                        type="button"
-                        class="rounded-md border px-3 py-2 text-sm font-medium hover:bg-accent"
-                        @click="openEditor(member)"
-                    >
-                        Bearbeiten
-                    </button>
+                    <div class="flex flex-col gap-2 text-sm sm:items-end">
+                        <a :href="`mailto:${member.email}`" class="inline-flex items-center gap-2 text-muted-foreground transition hover:text-foreground">
+                            <Mail class="h-4 w-4" />
+                            {{ member.email }}
+                        </a>
+                        <a v-if="member.phone" :href="`tel:${member.phone}`" class="inline-flex items-center gap-2 text-muted-foreground transition hover:text-foreground">
+                            <Phone class="h-4 w-4" />
+                            {{ member.phone }}
+                        </a>
+                    </div>
                 </article>
             </div>
+            <p v-else class="rounded-lg border border-dashed p-6 text-center text-muted-foreground">
+                Noch keine {{ group.title.toLowerCase() }} im Team.
+            </p>
         </section>
-
-        <div
-            v-if="editingMember"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="member-dialog-title"
-        >
-            <form class="w-full max-w-md space-y-4 rounded-lg bg-background p-6 shadow-lg" @submit.prevent="saveMember">
-                <h2 id="member-dialog-title" class="text-lg font-semibold">Spieler bearbeiten</h2>
-                <label class="block space-y-1 text-sm">
-                    <span>Name</span>
-                    <input v-model="editingMember.name" class="h-10 w-full rounded-md border border-input px-3" />
-                </label>
-                <label class="block space-y-1 text-sm">
-                    <span>Position</span>
-                    <input v-model="editingMember.position" class="h-10 w-full rounded-md border border-input px-3" />
-                </label>
-                <label class="block space-y-1 text-sm">
-                    <span>E-Mail</span>
-                    <input v-model="editingMember.email" type="email" class="h-10 w-full rounded-md border border-input px-3" />
-                </label>
-                <div class="flex justify-end gap-2">
-                    <button type="button" class="rounded-md border px-3 py-2 text-sm" @click="closeEditor">Abbrechen</button>
-                    <button type="submit" class="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground">Speichern</button>
-                </div>
-            </form>
-        </div>
-    </main>
+    </div>
 </template>

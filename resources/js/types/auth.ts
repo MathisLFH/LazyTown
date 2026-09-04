@@ -1,5 +1,6 @@
 export type User = {
     id: number;
+    public_id: string;
     name: string;
     birth_date?: string | null;
     city?: string | null;

@@ -19,7 +19,9 @@ class TeamMemberController extends Controller
     {
         Gate::authorize('addMember', $team);
 
-        $member = User::where('email', $request->validated('email'))->firstOrFail();
+        $member = $request->validated('public_id')
+            ? User::where('public_id', $request->validated('public_id'))->firstOrFail()
+            : User::where('email', $request->validated('email'))->firstOrFail();
         $teamRole = InvitationRole::from($request->validated('role'))->teamRole();
 
         $team->memberships()->updateOrCreate(
@@ -29,7 +31,7 @@ class TeamMemberController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Mitglied wurde zur Bestätigung zugeordnet.']);
 
-        return to_route('teams.edit', ['team' => $team->slug]);
+        return to_route('spielende-hinzufuegen');
     }
 
     public function confirm(Request $request, Team $team): RedirectResponse
@@ -64,7 +66,7 @@ class TeamMemberController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Member role updated.')]);
 
-        return to_route('teams.edit', ['team' => $team->slug]);
+        return to_route('spielende-hinzufuegen');
     }
 
     /**
@@ -87,6 +89,6 @@ class TeamMemberController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Member removed.')]);
 
-        return to_route('teams.edit', ['team' => $team->slug]);
+        return to_route('spielende-hinzufuegen');
     }
 }

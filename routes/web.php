@@ -17,7 +17,7 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware('club.access')->group(function () {
         Route::inertia('spielplan', 'Spielplan')->name('spielplan');
         Route::inertia('hallenplan', 'Hallenplan')->name('hallenplan');
-        Route::inertia('mein-team', 'MeinTeam')->name('mein-team');
+        Route::get('mein-team', [TeamController::class, 'meinTeam'])->name('mein-team');
     });
     Route::inertia('profil', 'Profil')->name('profil');
     Route::post('verein/{team}/beitritt-bestaetigen', [TeamMemberController::class, 'confirm'])->name('teams.members.confirm');
@@ -25,8 +25,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('verein-erstellen', [ClubOnboardingController::class, 'store'])->middleware('role:trainer')->name('club.onboarding.store');
     Route::middleware(['club.access', 'role:trainer'])->group(function () {
         Route::inertia('paesse-beantragen', 'PaesseBeantragen')->name('paesse-beantragen');
-        Route::get('spielende-hinzufuegen', [TeamController::class, 'editCurrent'])->name('spielende-hinzufuegen');
-        Route::inertia('mannschaft-bearbeiten', 'MannschaftBearbeiten')->name('mannschaft-bearbeiten');
+        Route::get('spielende-hinzufuegen', [TeamController::class, 'spielendeHinzufuegen'])->name('spielende-hinzufuegen');
     });
     Route::middleware(['club.access', 'role:verwaltung'])->group(function () {
         Route::inertia('hallenplan-bearbeiten', 'HallenplanBearbeiten')->name('hallenplan-bearbeiten');

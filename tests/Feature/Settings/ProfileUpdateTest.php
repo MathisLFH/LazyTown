@@ -12,6 +12,18 @@ test('profile page is displayed', function () {
     $response->assertOk();
 });
 
+test('profile page shares the saved birth date', function () {
+    $user = User::factory()->create(['birth_date' => '1995-04-12']);
+
+    $this->actingAs($user)
+        ->get(route('profil'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Profil')
+            ->where('auth.user.birth_date', fn (string $birthDate): bool => str_starts_with($birthDate, '1995-04-12')),
+        );
+});
+
 test('profile information can be updated', function () {
     $user = User::factory()->create();
 

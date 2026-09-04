@@ -2,16 +2,12 @@ import { onMounted, ref } from 'vue';
 
 const storageKey = 'lazytown.profile-avatar';
 const avatarDataUrl = ref<string | null>(null);
-let hasLoaded = false;
 
-export function useProfileAvatar() {
+export function useProfileAvatar(userId: number | null = null) {
+    const userStorageKey = `${storageKey}.${userId ?? 'guest'}`;
+
     onMounted(() => {
-        if (hasLoaded) {
-            return;
-        }
-
-        avatarDataUrl.value = window.localStorage.getItem(storageKey);
-        hasLoaded = true;
+        avatarDataUrl.value = window.localStorage.getItem(userStorageKey);
     });
 
     function setAvatar(file: File | null): void {
@@ -26,7 +22,7 @@ export function useProfileAvatar() {
             }
 
             avatarDataUrl.value = reader.result;
-            window.localStorage.setItem(storageKey, reader.result);
+            window.localStorage.setItem(userStorageKey, reader.result);
         });
         reader.readAsDataURL(file);
     }
