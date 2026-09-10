@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import PermissionDenied from '@/components/PermissionDenied.vue';
+import PermissionDeniedPageContent from '@/components/Errors/PermissionDeniedPageContent.vue';
 </script>
 
 <template>
     <Head title="Keine Berechtigung" />
-    <PermissionDenied />
+    <PermissionDeniedPageContent />
 </template>

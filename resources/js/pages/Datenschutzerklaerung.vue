@@ -1,33 +1,9 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
-import { login, register, home, logout } from '@/routes';
+import { Head } from '@inertiajs/vue3';
+import DatenschutzerklaerungContent from '@/components/Landing/DatenschutzerklaerungContent.vue';
 </script>
 
 <template>
     <Head title="Impressum"/>
-    <main
-        class="flex min-h-screen items-center justify-center bg-muted/30 p-6"
-    >
-       
-        <section
-            class="relative w-full max-w-20xl rounded-2xl border border-sidebar-border/70 bg-background p-8 text-center shadow-sm sm:p-12"
-        >
-         <button class="absolute top-4 left-4">
-            <Link
-                :href="home().url"
-                class="rounded-md border px-3 py-2 text-sm transition-colors hover:bg-muted"
-            >
-                Zurück zur Startseite
-            </Link>
-        </button>
-            <div>
-               <h1> LOGO</h1>
-            <h2 class="text-3xl font-bold">
-                Wir bekommen alle Daten, lol
-            </h2>
-
-            
-            </div>
-        </section>
-    </main>
+    <DatenschutzerklaerungContent />
 </template>
