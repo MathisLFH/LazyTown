@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import { reactive, ref } from 'vue';
 import { useAuth } from '@/composables/useAuth';
 
@@ -27,10 +28,11 @@ function saveProfile(): void {
     <Head title="Profil" />
 
     <main class="space-y-6 p-6">
+        
         <h1 class="text-2xl font-semibold">Profil</h1>
-
+ 
         <section class="rounded-lg border border-sidebar-border/70 p-5">
-           <button> Return to Startseite <link href="{{ route('startseite') }}">Startseite</link></button> 
+          
             <form class="grid max-w-xl gap-4" @submit.prevent="saveProfile">
                 <label class="grid gap-1 text-sm">
                     Name
@@ -65,6 +67,7 @@ function saveProfile(): void {
                 <div v-for="payment in payments" :key="payment.member" class="flex justify-between rounded-md bg-muted/50 p-3 text-sm">
                     <span>{{ payment.member }} · {{ payment.status }}</span>
                     <span class="font-medium">{{ payment.amount }}</span>
+                            
                 </div>
             </div>
         </section>

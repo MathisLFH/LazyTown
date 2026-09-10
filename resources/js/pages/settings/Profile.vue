@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useProfileAvatar } from '@/composables/useProfileAvatar';
-import { logout } from '@/routes';
+import { home, logout } from '@/routes';
 import { exportMethod as exportProfile } from '@/routes/profile';
 import { edit } from '@/routes/profile';
 import { send } from '@/routes/verification';
@@ -64,6 +64,13 @@ function handleAvatarChange(event: Event): void {
     <Head title="Profile settings" />
 
     <h1 class="sr-only">Profile settings</h1>
+
+    <Link
+        :href="home().url"
+        class="rounded-md border px-3 py-2 text-sm transition-colors hover:bg-muted"
+    >
+        Zurück zur Startseite
+    </Link>
 
     <div class="flex flex-col space-y-6">
         <Heading
