@@ -20,7 +20,7 @@ import { login, register } from '@/routes';
                 Über unser Team und unsere Services
             </h2>
             <p class="mb-3 text-sm font-medium uppercase tracking-[0.2em] width-[60px] text-muted-foreground">
-                Über uner Team und unsere Services. 
+                Über uner Team und unsere Services.
             </p>
             <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">
                 Was erwartet sie bei uns?
@@ -30,19 +30,19 @@ import { login, register } from '@/routes';
                 einem zentralen Ort.
             </p>
 
-            <h2 class="text-xl font-semibold tracking-tight"> 
+            <h2 class="text-xl font-semibold tracking-tight">
                 Wer sind wir?
             </h2>
             <p style="margin-bottom: 20px;">
                 Wir sind ein junges Team von Entwicklern, die sich leidenschaftlich für die Entwicklung von Softwarelösungen für Sportvereine einsetzen. Unser Ziel ist es, die Verwaltung von Teams, Trainings, Spielen und Hallenbelegungen zu vereinfachen und zu optimieren.
             </p>
-            <h2 class="text-xl font-semibold tracking-tight"> 
+            <h2 class="text-xl font-semibold tracking-tight">
                 Unser Tool
             </h2>
             <p style="margin-bottom: 20px;">
                 Unser Tool bietet eine zentrale Plattform, auf der Vereinsmitglieder und Trainer alle relevanten Informationen und Ressourcen an einem Ort finden können. Wir legen großen Wert auf Benutzerfreundlichkeit, Effizienz und Sicherheit, um sicherzustellen, dass unsere Nutzer die bestmögliche Erfahrung haben.
             </p>
-            <h2 class="text-xl font-semibold tracking-tight"> 
+            <h2 class="text-xl font-semibold tracking-tight">
                 Kontaktieren Sie uns
             </h2>
             <p style="margin-bottom: 20px;">
@@ -55,13 +55,13 @@ import { login, register } from '@/routes';
             <b>Adresse:</b> Musterstraße 1, 12345 Musterstadt
             </p>
             <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-               
+
             </div>
         </section>
     </main>
     <footer class="bg-gray-100 text-gray-600 py-8 mt-12">
     <div class="max-w-7xl mx-auto px-6 text-center">
-        
+
         <div class="flex justify-center gap-6 mb-4">
             <a href="#" class="hover:text-gray-900">
                 Impressum
