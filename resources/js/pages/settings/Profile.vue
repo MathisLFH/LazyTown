@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, Link, usePage } from '@inertiajs/vue3';
+import { Pencil } from '@lucide/vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/DeleteUser.vue';
@@ -30,7 +31,9 @@ const user = computed(() => page.props.auth.user);
 const roleOptions = computed(() => page.props.roleOptions as { value: string; label: string }[]);
 const selectedRoles = computed(() => (user.value.roles as string[] | undefined) ?? ['spieler']);
 const selectedRoleOptions = computed(() => roleOptions.value.filter((role) => selectedRoles.value.includes(role.value)));
-const { avatarDataUrl, setAvatar } = useProfileAvatar();
+const { avatarDataUrl, setAvatar } = useProfileAvatar(user.value?.id ?? null);
+const birthDateValue = computed(() => user.value.birth_date?.slice(0, 10) ?? '');
+const isEditing = ref(false);
 const privacyConsent = ref(true);
 const privacyMessage = ref('');
 const privacyStorageKey = 'lazytown.privacy-consent';
@@ -79,6 +82,13 @@ function handleAvatarChange(event: Event): void {
             description="Update your name and email address"
         />
 
+        <Button type="button" variant="outline" class="w-fit" @click="isEditing = !isEditing">
+            <Pencil />
+            {{ isEditing ? 'Bearbeitung abbrechen' : 'Profil bearbeiten' }}
+        </Button>
+
+        <p class="text-sm text-muted-foreground">Benutzer-ID: {{ user.public_id }}</p>
+
         <section class="flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-center">
             <div class="flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-full border border-input bg-muted text-muted-foreground">
                 <img
@@ -94,7 +104,8 @@ function handleAvatarChange(event: Event): void {
                 <input
                     type="file"
                     accept="image/*"
-                    class="block max-w-full text-sm"
+                    class="block max-w-full text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                    :disabled="!isEditing"
                     @change="handleAvatarChange"
                 />
             </label>
@@ -103,6 +114,7 @@ function handleAvatarChange(event: Event): void {
         <Form
             v-bind="ProfileController.update.form()"
             class="space-y-6"
+            @success="isEditing = false"
             v-slot="{ errors, processing }"
         >
             <div class="grid gap-2">
@@ -115,6 +127,7 @@ function handleAvatarChange(event: Event): void {
                     required
                     autocomplete="name"
                     placeholder="Full name"
+                    :disabled="!isEditing"
                 />
                 <InputError class="mt-2" :message="errors.name" />
             </div>
@@ -125,8 +138,9 @@ function handleAvatarChange(event: Event): void {
                     type="date"
                     class="mt-1 block w-full"
                     name="birth_date"
-                    :default-value="user.birth_date ?? ''"
+                    :default-value="birthDateValue"
                     autocomplete="bday"
+                    :disabled="!isEditing"
                 />
                 <InputError class="mt-2" :message="errors.birth_date" />
             </div>
@@ -140,6 +154,7 @@ function handleAvatarChange(event: Event): void {
                     :default-value="user.city ?? ''"
                     autocomplete="address-level2"
                     placeholder="Wohnort"
+                    :disabled="!isEditing"
                 />
                 <InputError class="mt-2" :message="errors.city" />
             </div>
@@ -154,6 +169,7 @@ function handleAvatarChange(event: Event): void {
                     :default-value="user.phone ?? ''"
                     autocomplete="tel"
                     placeholder="Telefonnummer"
+                    :disabled="!isEditing"
                 />
                 <InputError class="mt-2" :message="errors.phone" />
             </div>
@@ -169,6 +185,7 @@ function handleAvatarChange(event: Event): void {
                     required
                     autocomplete="username"
                     placeholder="Email address"
+                    :disabled="!isEditing"
                 />
                 <InputError class="mt-2" :message="errors.email" />
             </div>
@@ -193,7 +210,7 @@ function handleAvatarChange(event: Event): void {
                 </div>
             </div>
 
-            <div class="flex items-center gap-4">
+            <div v-if="isEditing" class="flex items-center gap-4">
                 <Button :disabled="processing" data-test="update-profile-button"
                     >Save</Button
                 >
@@ -212,19 +229,19 @@ function handleAvatarChange(event: Event): void {
                 <input type="hidden" name="email" :value="user.email" />
                 <div class="grid gap-3 sm:grid-cols-3">
                     <label v-for="role in roleOptions" :key="role.value" class="flex items-center gap-2 text-sm">
-                        <input type="checkbox" name="roles[]" :value="role.value" :checked="selectedRoles.includes(role.value)" />
+                        <input type="checkbox" name="roles[]" :value="role.value" :checked="selectedRoles.includes(role.value)" :disabled="!isEditing" />
                         {{ role.label }}
                     </label>
                 </div>
                 <label class="grid max-w-sm gap-2 text-sm" for="active-role">
                     Aktive Rolle
-                    <select id="active-role" name="active_role" :value="user.active_role ?? selectedRoles[0]" class="h-10 rounded-md border border-input bg-background px-3">
+                    <select id="active-role" name="active_role" :value="user.active_role ?? selectedRoles[0]" class="h-10 rounded-md border border-input bg-background px-3 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground" :disabled="!isEditing">
                         <option v-for="role in selectedRoleOptions" :key="role.value" :value="role.value">
                             {{ role.label }}
                         </option>
                     </select>
                 </label>
-                <Button type="submit" :disabled="processing">Rollen speichern</Button>
+                <Button v-if="isEditing" type="submit" :disabled="processing">Rollen speichern</Button>
             </Form>
         </section>
 

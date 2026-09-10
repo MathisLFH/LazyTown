@@ -4,6 +4,32 @@ use App\Enums\TeamRole;
 use App\Models\Team;
 use App\Models\User;
 
+test('team members can be added by public user id', function () {
+    $owner = User::factory()->create(['roles' => ['trainer'], 'active_role' => 'trainer']);
+    $member = User::factory()->create();
+    $team = Team::factory()->create();
+
+    $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
+
+    $response = $this
+        ->actingAs($owner)
+        ->post(route('teams.members.store', $team), [
+            'public_id' => $member->public_id,
+            'role' => 'spieler',
+        ]);
+
+    $response->assertRedirect(route('spielende-hinzufuegen'));
+
+    $this->assertDatabaseHas('team_members', [
+        'team_id' => $team->id,
+        'user_id' => $member->id,
+        'role' => TeamRole::Member->value,
+        'status' => 'pending',
+    ]);
+
+    expect($member->public_id)->toMatch('/^\d{8}$/');
+});
+
 test('team member roles can be updated by owners', function () {
     $owner = User::factory()->create();
     $member = User::factory()->create();
@@ -18,7 +44,7 @@ test('team member roles can be updated by owners', function () {
             'role' => TeamRole::Admin->value,
         ]);
 
-    $response->assertRedirect(route('teams.edit', $team));
+    $response->assertRedirect(route('spielende-hinzufuegen'));
 
     expect($team->members()->where('user_id', $member->id)->first()->pivot->role->value)->toEqual(TeamRole::Admin->value);
 });
@@ -54,7 +80,7 @@ test('team members can be removed by owners', function () {
         ->actingAs($owner)
         ->delete(route('teams.members.destroy', [$team, $member]));
 
-    $response->assertRedirect(route('teams.edit', $team));
+    $response->assertRedirect(route('spielende-hinzufuegen'));
 
     expect($member->fresh()->belongsToTeam($team))->toBeFalse();
 });

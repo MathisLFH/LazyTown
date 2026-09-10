@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { login, register } from '@/routes';
 </script>
 
 <template>
@@ -20,7 +19,7 @@ import { login, register } from '@/routes';
                 Über unser Team und unsere Services
             </h2>
             <p class="mb-3 text-sm font-medium uppercase tracking-[0.2em] width-[60px] text-muted-foreground">
-                Über uner Team und unsere Services. 
+                Über uner Team und unsere Services.
             </p>
             <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">
                 Was erwartet sie bei uns?
@@ -30,19 +29,19 @@ import { login, register } from '@/routes';
                 einem zentralen Ort.
             </p>
 
-            <h2 class="text-xl font-semibold tracking-tight"> 
+            <h2 class="text-xl font-semibold tracking-tight">
                 Wer sind wir?
             </h2>
             <p style="margin-bottom: 20px;">
                 Wir sind ein junges Team von Entwicklern, die sich leidenschaftlich für die Entwicklung von Softwarelösungen für Sportvereine einsetzen. Unser Ziel ist es, die Verwaltung von Teams, Trainings, Spielen und Hallenbelegungen zu vereinfachen und zu optimieren.
             </p>
-            <h2 class="text-xl font-semibold tracking-tight"> 
+            <h2 class="text-xl font-semibold tracking-tight">
                 Unser Tool
             </h2>
             <p style="margin-bottom: 20px;">
                 Unser Tool bietet eine zentrale Plattform, auf der Vereinsmitglieder und Trainer alle relevanten Informationen und Ressourcen an einem Ort finden können. Wir legen großen Wert auf Benutzerfreundlichkeit, Effizienz und Sicherheit, um sicherzustellen, dass unsere Nutzer die bestmögliche Erfahrung haben.
             </p>
-            <h2 class="text-xl font-semibold tracking-tight"> 
+            <h2 class="text-xl font-semibold tracking-tight">
                 Kontaktieren Sie uns
             </h2>
             <p style="margin-bottom: 20px;">
@@ -54,10 +53,17 @@ import { login, register } from '@/routes';
             <b>Fax:</b> Keiner benutzt mehr Fax<br>
             <b>Adresse:</b> Musterstraße 1, 12345 Musterstadt
             </p>
-            <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-               
-            </div>
-        </section>
+            <footer class="mt-12 bg-gray-100 py-8 text-gray-600">
+                <div class="mx-auto max-w-7xl px-6 text-center">
+                    <div class="mb-4 flex justify-center gap-6">
+                        <Link href="/impressum" class="hover:text-gray-900">Impressum</Link>
+                        <Link href="/datenschutzerklaerung" class="hover:text-gray-900">Datenschutz</Link>
+                        <Link href="/kontakt" class="hover:text-gray-900">Kontakt</Link>
+                        <Link href="/about-us" class="hover:text-gray-900">Über uns</Link>
+                    </div>
+                    <p class="text-sm text-gray-500">© 2026 Unser Verein. Alle Rechte vorbehalten.</p>
+                </div>
+            </footer>
+            </section>
     </main>
-
-</template>
+    </template>

@@ -2,6 +2,7 @@
 
 use App\Enums\TeamRole;
 use App\Models\Team;
+use App\Models\TeamInvitation;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -18,13 +19,11 @@ test('the teams index page can be rendered', function () {
 });
 
 test('teams can be created', function () {
-    $user = User::factory()->create();
-    $team = Team::factory()->create();
-    $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
+    $user = User::factory()->create(['roles' => ['trainer'], 'active_role' => 'trainer']);
 
     $response = $this
         ->actingAs($user)
-        ->post(route('teams.store'), [
+        ->post(route('club.onboarding.store'), [
             'name' => 'Test Team',
         ]);
 
@@ -36,10 +35,38 @@ test('teams can be created', function () {
     ]);
 });
 
-test('team slug uses next available suffix', function () {
+test('users cannot create a second club', function () {
     $user = User::factory()->create();
     $team = Team::factory()->create();
     $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
+
+    $this->actingAs($user)
+        ->post(route('teams.store'), ['name' => 'Second Club'])
+        ->assertSessionHasErrors('name');
+
+    $this->assertDatabaseMissing('teams', ['name' => 'Second Club']);
+});
+
+test('team index only exposes the users club', function () {
+    $user = User::factory()->create();
+    $club = Team::factory()->create(['name' => 'Mein Verein', 'is_personal' => false]);
+
+    $club->members()->attach($user, ['role' => TeamRole::Owner->value]);
+    $user->update(['current_team_id' => $club->id]);
+
+    $this->actingAs($user)
+        ->get(route('teams.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('teams/Index')
+            ->has('teams', 1)
+            ->where('teams.0.name', 'Mein Verein')
+            ->where('teams.0.isPersonal', false),
+        );
+});
+
+test('team slug uses next available suffix', function () {
+    $user = User::factory()->create(['roles' => ['trainer'], 'active_role' => 'trainer']);
 
     Team::factory()->create(['name' => 'Acme', 'slug' => 'acme']);
     Team::factory()->create(['name' => 'Acme One', 'slug' => 'acme-1']);
@@ -47,7 +74,7 @@ test('team slug uses next available suffix', function () {
 
     $this
         ->actingAs($user)
-        ->post(route('teams.store'), [
+        ->post(route('club.onboarding.store'), [
             'name' => 'Acme',
         ]);
 
@@ -71,8 +98,75 @@ test('the team edit page can be rendered', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('teams/Edit')
-            ->where('members.0.role', TeamRole::Owner->value)
-            ->where('members.0.role_label', TeamRole::Owner->label()),
+            ->missing('members')
+            ->missing('invitations'),
+        );
+});
+
+test('the player management page contains members and pending invitations', function () {
+    $user = User::factory()->create(['roles' => ['trainer'], 'active_role' => 'trainer']);
+    $member = User::factory()->create();
+    $team = Team::factory()->create();
+
+    $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
+    $team->members()->attach($member, ['role' => TeamRole::Member->value]);
+    $user->update(['current_team_id' => $team->id]);
+
+    TeamInvitation::factory()->create([
+        'team_id' => $team->id,
+        'email' => 'pending@example.com',
+        'invited_by' => $user->id,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('spielende-hinzufuegen'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('SpielendeHinzufuegen')
+            ->where('members.1.id', $member->id)
+            ->where('members.0.role_label', 'Trainer')
+            ->where('members.1.role_label', 'Spieler')
+            ->where('invitations.0.email', 'pending@example.com'),
+        );
+});
+
+test('the my team page shows read-only members with their roles and contact details', function () {
+    $trainer = User::factory()->create(['phone' => '+49 111 222333']);
+    $player = User::factory()->create(['phone' => '+49 444 555666']);
+    $team = Team::factory()->create();
+
+    $team->members()->attach($trainer, ['role' => TeamRole::Owner->value]);
+    $team->members()->attach($player, ['role' => TeamRole::Member->value]);
+    $trainer->update(['current_team_id' => $team->id]);
+
+    $this->actingAs($trainer)
+        ->get(route('mein-team'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('MeinTeam')
+            ->where('members.0.name', $trainer->name)
+            ->where('members.0.role_label', 'Trainer')
+            ->where('members.0.phone', $trainer->phone)
+            ->where('members.1.name', $player->name)
+            ->where('members.1.role_label', 'Spieler')
+            ->where('members.1.phone', $player->phone)
+            ->missing('permissions'),
+        );
+});
+
+test('the team settings page does not expose member management data', function () {
+    $user = User::factory()->create();
+    $team = Team::factory()->create();
+
+    $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
+
+    $this->actingAs($user)
+        ->get(route('teams.edit', $team))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('teams/Edit')
+            ->missing('members')
+            ->missing('invitations'),
         );
 });
 

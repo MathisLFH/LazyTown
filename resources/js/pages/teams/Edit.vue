@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form, Head, router } from '@inertiajs/vue3';
+import { Form, Head, Link, router } from '@inertiajs/vue3';
 import { ChevronDown, CreditCard, Mail, UserPlus, X } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import CancelInvitationModal from '@/components/CancelInvitationModal.vue';
@@ -151,7 +151,7 @@ const confirmCancelInvitation = (invitation: TeamInvitation) => {
         </div>
 
         <!-- Members Section -->
-        <div class="space-y-6">
+        <div v-if="false" class="space-y-6">
             <div class="flex items-center justify-between">
                 <Heading
                     variant="small"
@@ -183,7 +183,7 @@ const confirmCancelInvitation = (invitation: TeamInvitation) => {
                         <Avatar class="h-10 w-10">
                             <AvatarImage
                                 v-if="member.avatar"
-                                :src="member.avatar"
+                                :src="member.avatar || ''"
                                 :alt="member.name"
                             />
                             <AvatarFallback>{{

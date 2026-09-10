@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { Eye, LogOut, Pencil, Plus } from '@lucide/vue';
+import { Eye, LogOut, Pencil } from '@lucide/vue';
 import { ref } from 'vue';
-import CreateTeamModal from '@/components/CreateTeamModal.vue';
 import Heading from '@/components/Heading.vue';
 import LeaveTeamModal from '@/components/LeaveTeamModal.vue';
 import { Badge } from '@/components/ui/badge';
@@ -45,7 +44,7 @@ defineOptions({
 </script>
 
 <template>
-    <Head title="Teams" />
+    <Head title="Verein" />
 
     <h1 class="sr-only">Teams</h1>
 
@@ -53,15 +52,9 @@ defineOptions({
         <div class="flex items-center justify-between">
             <Heading
                 variant="small"
-                title="Teams"
-                description="Manage your teams and team memberships"
+                title="Verein"
+                description="Verwalte deinen Verein und seine Mitglieder."
             />
-
-            <CreateTeamModal>
-                <Button data-test="teams-new-team-button">
-                    <Plus /> New team
-                </Button>
-            </CreateTeamModal>
         </div>
 
         <div class="space-y-3">
@@ -75,9 +68,6 @@ defineOptions({
                     <div>
                         <div class="flex items-center gap-2">
                             <span class="font-medium">{{ team.name }}</span>
-                            <Badge v-if="team.isPersonal" variant="secondary">
-                                Personal
-                            </Badge>
                         </div>
                         <span class="text-sm text-muted-foreground">
                             {{ team.roleLabel }}
