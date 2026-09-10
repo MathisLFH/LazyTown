@@ -5,5 +5,6 @@ import StartseiteContent from '@/components/StartseiteContent.vue';
 
 <template>
     <Head title="Startseite" />
+    
     <StartseiteContent />
 </template>

@@ -12,7 +12,6 @@ import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { useProfileAvatar } from '@/composables/useProfileAvatar';
 import {
     hallenplan,
-    hallenplanBearbeiten,
     home,
     meinTeam,
     spielplan,
@@ -47,9 +46,7 @@ const administrationItems = computed(() => {
         return [];
     }
 
-    const items: NavigationItem[] = [
-        { label: 'Hallenplan bearbeiten', href: hallenplanBearbeiten().url },
-    ];
+    const items: NavigationItem[] = [];
 
     if (currentTeam.value) {
         items.push({

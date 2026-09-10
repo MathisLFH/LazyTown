@@ -27,28 +27,11 @@ test('authenticated users can open the placeholder pages', function () {
         'mein-team',
         'profil',
         'paesse-beantragen',
-        'hallenplan-bearbeiten',
         'bezahlung',
     ] as $routeName) {
         $this->get(route($routeName))
             ->assertOk();
     }
-});
-
-test('users without the required role see the permission page', function () {
-    $user = User::factory()->create([
-        'roles' => ['spieler'],
-        'active_role' => 'spieler',
-    ]);
-    $team = Team::factory()->create();
-    $team->members()->attach($user, ['role' => TeamRole::Member->value]);
-
-    $this->actingAs($user)
-        ->get(route('hallenplan-bearbeiten'))
-        ->assertForbidden()
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('errors/PermissionDenied')
-            ->where('requiredRole', 'verwaltung'));
 });
 
 test('trainers can access trainer pages but not administration pages', function () {
