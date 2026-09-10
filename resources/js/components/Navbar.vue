@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { Bell, ChevronDown, CircleUserRound, Search } from '@lucide/vue';
+import { Bell, CircleUserRound, Search } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import {
     DropdownMenu,
@@ -15,8 +15,6 @@ import {
     hallenplanBearbeiten,
     home,
     meinTeam,
-    paesseBeantragen,
-    spielendeHinzufuegen,
     spielplan,
 } from '@/routes';
 import { edit as profile } from '@/routes/profile';
@@ -44,12 +42,6 @@ const navigationItems: NavigationItem[] = [
     { label: 'Mein Team', href: meinTeam().url },
 ];
 
-const trainerNavigationItems: NavigationItem[] = [
-    { label: 'Pässe beantragen', href: paesseBeantragen().url },
-    { label: 'Mannschaft verwalten', href: spielendeHinzufuegen().url }, 
-];
-
-const trainerItems = computed(() => userRoles.value.includes('trainer') ? trainerNavigationItems : []);
 const administrationItems = computed(() => {
     if (!userRoles.value.includes('verwaltung')) {
         return [];
@@ -69,9 +61,6 @@ const administrationItems = computed(() => {
     return items;
 });
 
-const isTrainerActive = computed(() =>
-    trainerItems.value.some((item) => isCurrentUrl(item.href)),
-);
 const isAdministrationActive = computed(() =>
     administrationItems.value.some((item) => isCurrentUrl(item.href)),
 );
@@ -113,38 +102,6 @@ const isAdministrationActive = computed(() =>
                         {{ item.label }}
                     </Link>
                 </template>
-
-                <DropdownMenu v-if="trainerItems.length > 0">
-                    <DropdownMenuTrigger as-child>
-                        <button
-                            type="button"
-                            class="inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
-                            :class="{
-                                'bg-accent text-foreground': isTrainerActive,
-                            }"
-                        >
-                            Trainer
-                            <ChevronDown class="size-4" aria-hidden="true" />
-                        </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" class="w-56">
-                        <DropdownMenuItem
-                            v-for="item in trainerItems"
-                            :key="item.label"
-                            as-child
-                        >
-                            <Link
-                                :href="item.href"
-                                class="w-full"
-                                :class="{
-                                    'bg-accent text-accent-foreground': isCurrentUrl(item.href),
-                                }"
-                            >
-                                {{ item.label }}
-                            </Link>
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
 
                 <DropdownMenu v-if="administrationItems.length > 0">
                     <DropdownMenuTrigger as-child>

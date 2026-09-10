@@ -19,17 +19,19 @@ class ProfileUpdateRequest extends FormRequest
             $roles = [];
         }
 
-        if (! $this->user()->hasRole('trainer')) {
-            $roles = array_values(array_filter($roles, fn (mixed $role): bool => $role !== 'trainer'));
-        }
-
         if ($roles === []) {
             $roles = ['spieler'];
         }
 
+        $activeRole = $this->input('active_role');
+
+        if (! is_string($activeRole) || ! in_array($activeRole, $roles, true)) {
+            $activeRole = $roles[0];
+        }
+
         $this->merge([
             'roles' => $roles,
-            'active_role' => $this->input('active_role', $this->user()->active_role ?: $roles[0]),
+            'active_role' => $activeRole,
         ]);
     }
 

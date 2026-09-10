@@ -103,7 +103,7 @@ test('the team edit page can be rendered', function () {
         );
 });
 
-test('the player management page contains members and pending invitations', function () {
+test('the my team page contains members and pending invitations', function () {
     $user = User::factory()->create(['roles' => ['trainer'], 'active_role' => 'trainer']);
     $member = User::factory()->create();
     $team = Team::factory()->create();
@@ -119,10 +119,10 @@ test('the player management page contains members and pending invitations', func
     ]);
 
     $this->actingAs($user)
-        ->get(route('spielende-hinzufuegen'))
+        ->get(route('mein-team'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('SpielendeHinzufuegen')
+            ->component('MeinTeam')
             ->where('members.1.id', $member->id)
             ->where('members.0.role_label', 'Trainer')
             ->where('members.1.role_label', 'Spieler')
@@ -130,8 +130,12 @@ test('the player management page contains members and pending invitations', func
         );
 });
 
-test('the my team page shows read-only members with their roles and contact details', function () {
-    $trainer = User::factory()->create(['phone' => '+49 111 222333']);
+test('the my team page uses the member management view with role-based permissions', function () {
+    $trainer = User::factory()->create([
+        'phone' => '+49 111 222333',
+        'roles' => ['trainer'],
+        'active_role' => 'trainer',
+    ]);
     $player = User::factory()->create(['phone' => '+49 444 555666']);
     $team = Team::factory()->create();
 
@@ -150,7 +154,23 @@ test('the my team page shows read-only members with their roles and contact deta
             ->where('members.1.name', $player->name)
             ->where('members.1.role_label', 'Spieler')
             ->where('members.1.phone', $player->phone)
-            ->missing('permissions'),
+            ->where('permissions.canCreateInvitation', true)
+        );
+});
+
+test('players can view the shared my team page without member invitation permission', function () {
+    $player = User::factory()->create(['roles' => ['spieler'], 'active_role' => 'spieler']);
+    $team = Team::factory()->create();
+
+    $team->members()->attach($player, ['role' => TeamRole::Member->value]);
+    $player->update(['current_team_id' => $team->id]);
+
+    $this->actingAs($player)
+        ->get(route('mein-team'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('MeinTeam')
+            ->where('permissions.canCreateInvitation', false),
         );
 });
 

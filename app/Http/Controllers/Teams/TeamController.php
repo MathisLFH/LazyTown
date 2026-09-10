@@ -25,25 +25,12 @@ class TeamController extends Controller
         return $this->edit($request, $request->user()->currentTeam()->firstOrFail());
     }
 
-    public function spielendeHinzufuegen(Request $request): Response
+    public function meinTeam(Request $request): Response
     {
-        return Inertia::render('SpielendeHinzufuegen', $this->memberManagementProps(
+        return Inertia::render('MeinTeam', $this->memberManagementProps(
             $request->user(),
             $request->user()->currentTeam()->firstOrFail(),
         ));
-    }
-
-    public function meinTeam(Request $request): Response
-    {
-        $props = $this->memberManagementProps(
-            $request->user(),
-            $request->user()->currentTeam()->firstOrFail(),
-        );
-
-        return Inertia::render('MeinTeam', [
-            'team' => $props['team'],
-            'members' => $props['members'],
-        ]);
     }
 
     /**

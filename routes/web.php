@@ -27,11 +27,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('verein/{team}/beitritt-bestaetigen', [TeamMemberController::class, 'confirm'])->name('teams.members.confirm');
     Route::get('verein-erstellen', [ClubOnboardingController::class, 'create'])->middleware('role:trainer')->name('club.onboarding');
     Route::post('verein-erstellen', [ClubOnboardingController::class, 'store'])->middleware('role:trainer')->name('club.onboarding.store');
-    Route::middleware(['club.access', 'role:trainer'])->group(function () {
-        Route::inertia('paesse-beantragen', 'PaesseBeantragen')->name('paesse-beantragen');
-        Route::get('spielende-hinzufuegen', [TeamController::class, 'spielendeHinzufuegen'])->name('spielende-hinzufuegen');
-        Route::inertia('mannschaft-bearbeiten', 'MannschaftBearbeiten')->name('mannschaft-bearbeiten');
-    });
     Route::middleware(['club.access', 'role:verwaltung'])->group(function () {
         Route::inertia('hallenplan-bearbeiten', 'HallenplanBearbeiten')->name('hallenplan-bearbeiten');
     });

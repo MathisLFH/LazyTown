@@ -20,16 +20,10 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
-        $roleOptions = UserRole::options();
-
-        if (! $request->user()->hasRole('trainer')) {
-            $roleOptions = array_values(array_filter($roleOptions, fn (array $role): bool => $role['value'] !== 'trainer'));
-        }
-
         return Inertia::render('settings/Profile', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
-            'roleOptions' => $roleOptions,
+            'roleOptions' => UserRole::options(),
         ]);
     }
 

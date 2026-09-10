@@ -30,7 +30,6 @@ const page = usePage();
 const user = computed(() => page.props.auth.user);
 const roleOptions = computed(() => page.props.roleOptions as { value: string; label: string }[]);
 const selectedRoles = computed(() => (user.value.roles as string[] | undefined) ?? ['spieler']);
-const selectedRoleOptions = computed(() => roleOptions.value.filter((role) => selectedRoles.value.includes(role.value)));
 const { avatarDataUrl, setAvatar } = useProfileAvatar(user.value?.id ?? null);
 const birthDateValue = computed(() => user.value.birth_date?.slice(0, 10) ?? '');
 const isEditing = ref(false);
@@ -229,19 +228,11 @@ function handleAvatarChange(event: Event): void {
                 <input type="hidden" name="email" :value="user.email" />
                 <div class="grid gap-3 sm:grid-cols-3">
                     <label v-for="role in roleOptions" :key="role.value" class="flex items-center gap-2 text-sm">
-                        <input type="checkbox" name="roles[]" :value="role.value" :checked="selectedRoles.includes(role.value)" :disabled="!isEditing" />
+                        <input type="checkbox" name="roles[]" :value="role.value" :checked="selectedRoles.includes(role.value)" />
                         {{ role.label }}
                     </label>
                 </div>
-                <label class="grid max-w-sm gap-2 text-sm" for="active-role">
-                    Aktive Rolle
-                    <select id="active-role" name="active_role" :value="user.active_role ?? selectedRoles[0]" class="h-10 rounded-md border border-input bg-background px-3 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground" :disabled="!isEditing">
-                        <option v-for="role in selectedRoleOptions" :key="role.value" :value="role.value">
-                            {{ role.label }}
-                        </option>
-                    </select>
-                </label>
-                <Button v-if="isEditing" type="submit" :disabled="processing">Rollen speichern</Button>
+                <Button type="submit" :disabled="processing">Rollen speichern</Button>
             </Form>
         </section>
 

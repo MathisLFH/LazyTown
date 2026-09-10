@@ -9,7 +9,12 @@ test('profile page is displayed', function () {
         ->actingAs($user)
         ->get(route('profile.edit'));
 
-    $response->assertOk();
+    $response
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('settings/Profile')
+            ->where('roleOptions.1.value', 'trainer'),
+        );
 });
 
 test('profile page shares the saved birth date', function () {
@@ -71,7 +76,26 @@ test('a user can save multiple roles and an active role', function () {
         ->and($user->active_role)->toBe('trainer');
 });
 
-test('users cannot assign themselves the trainer role in their profile', function () {
+test('a user can save multiple roles without selecting an active role', function () {
+    $user = User::factory()->create([
+        'roles' => ['spieler', 'trainer'],
+        'active_role' => 'trainer',
+    ]);
+
+    $this
+        ->actingAs($user)
+        ->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'roles' => ['spieler', 'verwaltung'],
+        ])
+        ->assertSessionHasNoErrors();
+
+    expect($user->refresh()->roles)->toBe(['spieler', 'verwaltung'])
+        ->and($user->active_role)->toBe('spieler');
+});
+
+test('users can assign themselves the trainer role in their profile', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user)
@@ -83,7 +107,7 @@ test('users cannot assign themselves the trainer role in their profile', functio
         ])
         ->assertSessionHasNoErrors();
 
-    expect($user->refresh()->roles)->toBe(['spieler']);
+    expect($user->refresh()->roles)->toBe(['spieler', 'trainer']);
 });
 
 test('email verification status is unchanged when the email address is unchanged', function () {

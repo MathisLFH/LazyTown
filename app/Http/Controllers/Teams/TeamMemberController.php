@@ -31,7 +31,7 @@ class TeamMemberController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Mitglied wurde zur Bestätigung zugeordnet.']);
 
-        return to_route('spielende-hinzufuegen');
+        return to_route('mein-team');
     }
 
     public function confirm(Request $request, Team $team): RedirectResponse
@@ -66,7 +66,7 @@ class TeamMemberController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Member role updated.')]);
 
-        return to_route('spielende-hinzufuegen');
+        return to_route('mein-team');
     }
 
     /**
@@ -89,6 +89,6 @@ class TeamMemberController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Member removed.')]);
 
-        return to_route('spielende-hinzufuegen');
+        return to_route('mein-team');
     }
 }

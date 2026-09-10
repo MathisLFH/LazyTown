@@ -18,7 +18,7 @@ test('team members can be added by public user id', function () {
             'role' => 'spieler',
         ]);
 
-    $response->assertRedirect(route('spielende-hinzufuegen'));
+    $response->assertRedirect(route('mein-team'));
 
     $this->assertDatabaseHas('team_members', [
         'team_id' => $team->id,
@@ -44,7 +44,7 @@ test('team member roles can be updated by owners', function () {
             'role' => TeamRole::Admin->value,
         ]);
 
-    $response->assertRedirect(route('spielende-hinzufuegen'));
+    $response->assertRedirect(route('mein-team'));
 
     expect($team->members()->where('user_id', $member->id)->first()->pivot->role->value)->toEqual(TeamRole::Admin->value);
 });
@@ -80,7 +80,7 @@ test('team members can be removed by owners', function () {
         ->actingAs($owner)
         ->delete(route('teams.members.destroy', [$team, $member]));
 
-    $response->assertRedirect(route('spielende-hinzufuegen'));
+    $response->assertRedirect(route('mein-team'));
 
     expect($member->fresh()->belongsToTeam($team))->toBeFalse();
 });

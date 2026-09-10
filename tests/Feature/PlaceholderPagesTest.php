@@ -27,7 +27,6 @@ test('authenticated users can open the placeholder pages', function () {
         'mein-team',
         'profil',
         'paesse-beantragen',
-        'spielende-hinzufuegen',
         'hallenplan-bearbeiten',
         'bezahlung',
     ] as $routeName) {
