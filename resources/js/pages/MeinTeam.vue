@@ -164,7 +164,7 @@ defineOptions({
                 </article>
             </div>
             <p v-else class="rounded-lg border border-dashed p-6 text-center text-muted-foreground">
-                Noch keine {{ group.title.toLowerCase() }} im Team.
+                Noch keine {{ group.title }} im Team.
             </p>
         </section>
 

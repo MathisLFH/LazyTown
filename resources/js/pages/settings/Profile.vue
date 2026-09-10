@@ -285,7 +285,7 @@ function handleAvatarChange(event: Event): void {
                 class="rounded-md border px-3 py-2 text-sm font-medium transition hover:bg-accent"
                 data-test="profile-logout-button"
             >
-                Logout
+                Ausloggen
             </Link>
         </section>
     </div>
