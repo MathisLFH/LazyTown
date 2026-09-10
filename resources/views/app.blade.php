@@ -44,13 +44,13 @@
     <body class="font-sans antialiased">
         <x-inertia::app />
     </body>
-     <footer class="bg-gray-100 border-t border-gray-200">
+     <footer class=" border-gray-200">
         <div class="max-w-7xl mx-auto px-6 py-8">
 
             <div class="flex flex-col md:flex-row justify-between items-center gap-4">
 
                 <p class="text-sm text-gray-500">
-                    © 2026 Unser Verein
+                    © 2026 Lazytown
                 </p>
 
                 <nav class="flex gap-6 text-sm">

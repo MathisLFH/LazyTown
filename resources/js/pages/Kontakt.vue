@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { login, register } from '@/routes';
+import { login, register, home, logout } from '@/routes';
 </script>
 
 <template>
@@ -8,9 +8,18 @@ import { login, register } from '@/routes';
     <main
         class="flex min-h-screen items-center justify-center bg-muted/30 p-6"
     >
+     
         <section
             class="w-full max-w-20xl rounded-2xl border border-sidebar-border/70 bg-background p-8 text-center shadow-sm sm:p-12"
         >
+        <button>
+     <Link
+        :href="home().url"
+        class="rounded-md border px-3 py-2 text-sm transition-colors hover:bg-muted"
+    >
+        Zurück zur Startseite
+    </Link>
+    </button>
             <div>
                 LT
             <h2 class="text-xl font-semibold tracking-tight"> 

@@ -273,11 +273,11 @@ function submit() {
         <div v-if="form.errors.password">{{ form.errors.password }}</div>
 
         <button type="submit" :disabled="form.processing">
-            Create User
+            Nutzer erstellen
         </button>
     </form>
 </template>
-```
+
 
 ## Inertia v3 Features
 
@@ -307,7 +307,7 @@ function search() {
     <input v-model="http.query" @input="search" />
     <div v-if="http.processing">Searching...</div>
 </template>
-```
+
 
 ### Optimistic Updates
 

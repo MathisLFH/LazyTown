@@ -1,6 +1,22 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
-import { login, register, home, logout } from '@/routes';
+import { usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import AppContent from '@/components/AppContent.vue';
+import AppShell from '@/components/AppShell.vue';
+import HotReloadTimer from '@/components/HotReloadTimer.vue';
+import Navbar from '@/components/Navbar.vue';
+import { Toaster } from '@/components/ui/sonner';
+import { home, logout } from '@/routes';
+
+
+const props = defineProps<{
+    title?: string;
+}>();
+const page = usePage();
+const isAuthenticated = computed(() => Boolean(page.props.auth.user));
+const hasClubMembership = computed(() =>
+    page.props.teams.some((team) => !team.isPersonal),
+);
 </script>
 
 <template>
@@ -23,10 +39,9 @@ import { login, register, home, logout } from '@/routes';
             <div>
                <h1> LOGO</h1>
             <h2 class="text-3xl font-bold">
-                Wir bekommen alle Daten, lol
+                {{ title ?? 'Impressum' }}
             </h2>
-
-            
+            <slot />          
             </div>
         </section>
     </main>
