@@ -29,7 +29,6 @@ Route::middleware(['auth'])->group(function () {
     });
     Route::middleware(['club.access', 'role:verwaltung'])->group(function () {
         Route::inertia('hallenplan-bearbeiten', 'HallenplanBearbeiten')->name('hallenplan-bearbeiten');
-        Route::inertia('bezahlung', 'Bezahlung')->name('bezahlung');
     });
 
 });
