@@ -11,7 +11,6 @@ import {
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { useProfileAvatar } from '@/composables/useProfileAvatar';
 import {
-    bezahlung,
     hallenplan,
     hallenplanBearbeiten,
     home,
@@ -21,6 +20,7 @@ import {
     spielplan,
 } from '@/routes';
 import { edit as profile } from '@/routes/profile';
+import { edit as payment } from '@/routes/teams/payment';
 
 type NavigationItem = {
     label: string;
@@ -31,6 +31,7 @@ const searchQuery = ref('');
 const { isCurrentUrl } = useCurrentUrl();
 const page = usePage();
 const currentUser = computed(() => page.props.auth.user);
+const currentTeam = computed(() => page.props.currentTeam);
 const { avatarDataUrl } = useProfileAvatar(currentUser.value?.id ?? null);
 const isAuthenticated = computed(() => Boolean(page.props.auth.user));
 const userRoles = computed(() => (currentUser.value?.roles ?? []) as string[]);
@@ -45,16 +46,28 @@ const navigationItems: NavigationItem[] = [
 
 const trainerNavigationItems: NavigationItem[] = [
     { label: 'Pässe beantragen', href: paesseBeantragen().url },
-    { label: 'Verein verwalten', href: spielendeHinzufuegen().url },
-];
-
-const administrationNavigationItems: NavigationItem[] = [
-    { label: 'Hallenplan bearbeiten', href: hallenplanBearbeiten().url },
-    { label: 'Bezahlung für das Tool', href: bezahlung().url },
+    { label: 'Mannschaft verwalten', href: spielendeHinzufuegen().url }, 
 ];
 
 const trainerItems = computed(() => userRoles.value.includes('trainer') ? trainerNavigationItems : []);
-const administrationItems = computed(() => userRoles.value.includes('verwaltung') ? administrationNavigationItems : []);
+const administrationItems = computed(() => {
+    if (!userRoles.value.includes('verwaltung')) {
+        return [];
+    }
+
+    const items: NavigationItem[] = [
+        { label: 'Hallenplan bearbeiten', href: hallenplanBearbeiten().url },
+    ];
+
+    if (currentTeam.value) {
+        items.push({
+            label: 'Bezahlung für das Tool',
+            href: payment(currentTeam.value.slug).url,
+        });
+    }
+
+    return items;
+});
 
 const isTrainerActive = computed(() =>
     trainerItems.value.some((item) => isCurrentUrl(item.href)),
