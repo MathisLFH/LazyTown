@@ -131,7 +131,7 @@ const confirmCancelInvitation = (invitation: TeamInvitation) => {
                 </div>
             </div>
             <p v-else class="rounded-lg border border-dashed p-6 text-center text-muted-foreground">
-                Noch keine Spielenden im Verein. Füge den ersten Account hinzu.
+                Noch keine Spieler im Verein. Füge das erste Mitglied hinzu.
             </p>
         </section>
 

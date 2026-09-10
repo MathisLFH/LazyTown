@@ -31,8 +31,8 @@ onUnmounted(() => clearTwoFactorAuthData());
     <div v-if="canManageTwoFactor" class="space-y-6">
         <Heading
             variant="small"
-            title="Two-factor authentication"
-            description="Manage your two-factor authentication settings"
+            title="Zwei-Faktor Authentifizierung"
+            description="Verwalte deine Zwei-Faktor Authentifizierungseinstellungen"
         />
 
         <div
@@ -40,9 +40,9 @@ onUnmounted(() => clearTwoFactorAuthData());
             class="flex flex-col items-start justify-start space-y-4"
         >
             <p class="text-sm text-muted-foreground">
-                When you enable two-factor authentication, you will be prompted
-                for a secure pin during login. This pin can be retrieved from a
-                TOTP-supported application on your phone.
+                Wenn du die Zwei-Faktor-Authentifizierung aktivierst, wirst du
+                beim Anmelden nach einer sicheren PIN gefragt. Diese PIN kann
+                aus einer TOTP-kompatiblen Anwendung auf deinem Telefon abgerufen werden.
             </p>
 
             <div>
@@ -64,9 +64,8 @@ onUnmounted(() => clearTwoFactorAuthData());
 
         <div v-else class="flex flex-col items-start justify-start space-y-4">
             <p class="text-sm text-muted-foreground">
-                You will be prompted for a secure, random pin during login,
-                which you can retrieve from the TOTP-supported application on
-                your phone.
+                Du wirst beim Anmelden nach einer sicheren, zufälligen PIN gefragt,
+                die du aus der TOTP-kompatiblen Anwendung auf deinem Telefon abrufen kannst.
             </p>
 
             <div class="relative inline">
@@ -76,7 +75,7 @@ onUnmounted(() => clearTwoFactorAuthData());
                         type="submit"
                         :disabled="processing"
                     >
-                        Disable 2FA
+                        Deaktifiere 2FA
                     </Button>
                 </Form>
             </div>

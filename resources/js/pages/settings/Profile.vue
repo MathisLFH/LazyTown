@@ -64,9 +64,9 @@ function handleAvatarChange(event: Event): void {
 </script>
 
 <template>
-    <Head title="Profile settings" />
+    <Head title="Profileinstellungen" />
 
-    <h1 class="sr-only">Profile settings</h1>
+    <h1 class="sr-only">Profileinstellungen</h1>
 
     <Link
         :href="home().url"
@@ -74,12 +74,12 @@ function handleAvatarChange(event: Event): void {
     >
         Zurück zur Startseite
     </Link>
-
+    <br/><br/>
     <div class="flex flex-col space-y-6">
         <Heading
             variant="small"
-            title="Profile"
-            description="Update your name and email address"
+            title="Profil"
+            description="Aktualisiere deinen Namen und deine E-Mail-Adresse"
         />
 
         <Button type="button" variant="outline" class="w-fit" @click="isEditing = !isEditing">
