@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
+import { home, logout } from '@/routes';
 </script>
 
 <template>
@@ -7,6 +8,12 @@ import { Head, Link } from '@inertiajs/vue3';
     <main
         class="flex min-h-screen items-center justify-center bg-muted/30 p-6"
     >
+        <Link
+            :href="home().url"
+            class="rounded-md border px-3 py-2 text-sm transition-colors hover:bg-muted"
+        >
+            Zurück zur Startseite------------
+        </Link>
         <section
             class="w-full max-w-20xl rounded-2xl border border-sidebar-border/70 bg-background p-8 text-center shadow-sm sm:p-12"
         >
@@ -53,17 +60,7 @@ import { Head, Link } from '@inertiajs/vue3';
             <b>Fax:</b> Keiner benutzt mehr Fax<br>
             <b>Adresse:</b> Musterstraße 1, 12345 Musterstadt
             </p>
-            <footer class="mt-12 bg-gray-100 py-8 text-gray-600">
-                <div class="mx-auto max-w-7xl px-6 text-center">
-                    <div class="mb-4 flex justify-center gap-6">
-                        <Link href="/impressum" class="hover:text-gray-900">Impressum</Link>
-                        <Link href="/datenschutzerklaerung" class="hover:text-gray-900">Datenschutz</Link>
-                        <Link href="/kontakt" class="hover:text-gray-900">Kontakt</Link>
-                        <Link href="/about-us" class="hover:text-gray-900">Über uns</Link>
-                    </div>
-                    <p class="text-sm text-gray-500">© 2026 Unser Verein. Alle Rechte vorbehalten.</p>
-                </div>
-            </footer>
+            
             </section>
     </main>
     </template>
