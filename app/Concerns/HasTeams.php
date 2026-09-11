@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\URL;
+use Spatie\Permission\Models\Permission;
 
 trait HasTeams
 {
@@ -192,6 +193,21 @@ trait HasTeams
      */
     public function hasTeamPermission(Team $team, TeamPermission $permission): bool
     {
-        return $this->teamRole($team)?->hasPermission($permission) ?? false;
+        $membership = $this->teamMemberships()
+            ->where('team_id', $team->id)
+            ->where('status', 'active')
+            ->first();
+
+        if ($membership === null) {
+            return false;
+        }
+
+        $permissionExists = Permission::query()
+            ->where('name', $permission->value)
+            ->where('guard_name', config('auth.defaults.guard', 'web'))
+            ->exists();
+
+        return ($permissionExists && $membership->hasPermissionTo($permission))
+            || $membership->role->hasPermission($permission) === true;
     }
 }

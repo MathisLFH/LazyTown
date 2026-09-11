@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Support\Carbon;
+use Spatie\Permission\Traits\HasRoles;
 
 /**
  * @property int $id
@@ -22,6 +23,10 @@ use Illuminate\Support\Carbon;
 #[Fillable(['team_id', 'user_id', 'role', 'status'])]
 class Membership extends Pivot
 {
+    use HasRoles;
+
+    protected string $guard_name = 'web';
+
     /**
      * The table associated with the model.
      *
