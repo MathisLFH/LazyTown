@@ -65,7 +65,7 @@ const handleCancel = () => {
     </div>
 
     <Button v-else-if="!showForm" variant="outline" @click="showForm = true">
-        Add passkey
+        Passkey hinzufügen
     </Button>
 
     <form

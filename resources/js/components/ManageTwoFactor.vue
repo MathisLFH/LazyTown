@@ -47,7 +47,7 @@ onUnmounted(() => clearTwoFactorAuthData());
 
             <div>
                 <Button v-if="hasSetupData" @click="showSetupModal = true">
-                    <ShieldCheck />Continue setup
+                    <ShieldCheck />Setup fortsetzen
                 </Button>
                 <Form
                     v-else
@@ -56,7 +56,7 @@ onUnmounted(() => clearTwoFactorAuthData());
                     #default="{ processing }"
                 >
                     <Button type="submit" :disabled="processing">
-                        Enable 2FA
+                        Zwei-Faktor Authentifizierung aktivieren
                     </Button>
                 </Form>
             </div>
@@ -75,7 +75,7 @@ onUnmounted(() => clearTwoFactorAuthData());
                         type="submit"
                         :disabled="processing"
                     >
-                        Deaktifiere 2FA
+                        Deaktiviere 2FA
                     </Button>
                 </Form>
             </div>
