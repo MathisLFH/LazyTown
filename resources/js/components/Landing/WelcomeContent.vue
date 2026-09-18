@@ -4,9 +4,7 @@ import { login, register } from '@/routes';
 </script>
 
 <template>
-    <main
-        class="flex min-h-screen items-center justify-center bg-muted/30 p-6"
-    >
+    <main class="flex min-h-screen items-center justify-center bg-muted/30 p-6">
         <section
             class="w-full max-w-2xl rounded-2xl border border-sidebar-border/70 bg-background p-8 text-center shadow-sm sm:p-12"
         >
@@ -16,7 +14,7 @@ import { login, register } from '@/routes';
                 LT
             </div>
             <p
-                class="mb-3 text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground"
+                class="mb-3 text-sm font-medium tracking-[0.2em] text-muted-foreground uppercase"
             >
                 Vereinsverwaltung
             </p>
@@ -38,10 +36,10 @@ import { login, register } from '@/routes';
                     Anmelden
                 </Link>
                 <Link
-                    :href="register()"
+                    @click="console.log('verein registrieren clicked')"
                     class="rounded-md border px-5 py-2.5 text-sm font-medium transition hover:bg-accent"
                 >
-                    Konto erstellen
+                    Verein registrieren
                 </Link>
             </div>
         </section>

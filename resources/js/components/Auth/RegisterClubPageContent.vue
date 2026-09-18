@@ -25,6 +25,19 @@ defineProps<{
         action="Register"
     />
 
+    <!-- <div class="text-center text-sm text-muted-foreground">
+        <p>
+            By creating an account, you agree to our
+            <TextLink href="/terms" class="underline underline-offset-4">
+                Terms of Service
+            </TextLink>
+            and
+            <TextLink href="/privacy" class="underline underline-offset-4">
+                Privacy Policy
+            </TextLink>
+        </p>
+    </div> -->
+
     <Form
         v-bind="store.form()"
         :reset-on-success="['password', 'password_confirmation']"
@@ -47,7 +60,7 @@ defineProps<{
                 <InputError :message="errors.name" />
             </div>
 
-            <div class="grid gap-2">
+            <!-- <div class="grid gap-2">
                 <Label for="email">Email address</Label>
                 <Input
                     id="email"
@@ -59,7 +72,7 @@ defineProps<{
                     placeholder="email@example.com"
                 />
                 <InputError :message="errors.email" />
-            </div>
+            </div> -->
 
             <div class="grid gap-2">
                 <Label for="password">Password</Label>
@@ -89,7 +102,7 @@ defineProps<{
                 <InputError :message="errors.password_confirmation" />
             </div>
 
-            <fieldset class="grid gap-3">
+            <!-- <fieldset class="grid gap-3">
                 <legend class="text-sm font-medium">Wie möchtest du starten?</legend>
                 <div class="grid gap-2 sm:grid-cols-2">
                     <label class="flex items-center gap-2 rounded-md border p-3 text-sm">
@@ -102,7 +115,7 @@ defineProps<{
                     </label>
                 </div>
                 <InputError :message="errors.start_role" />
-            </fieldset>
+            </fieldset> -->
 
             <Button
                 type="submit"

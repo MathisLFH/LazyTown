@@ -19,7 +19,7 @@ defineOptions({
 <template>
     <Head title="Register" />
 
-    <RegisterPageContent
+    <RegisterClubPageContent
         :password-rules="passwordRules"
         :team-invitation="teamInvitation"
     />

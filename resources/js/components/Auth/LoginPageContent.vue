@@ -101,22 +101,5 @@ defineProps<{
                 Anmelden
             </Button>
         </div>
-
-        <div class="text-center text-sm text-muted-foreground">
-            Du hast noch kein Konto?
-            <TextLink
-                :href="
-                    register({
-                        query: {
-                            invitation: teamInvitation?.code,
-                        },
-                    })
-                "
-                :tabindex="5"
-                data-test="register-link"
-            >
-                Registrieren
-            </TextLink>
-        </div>
     </Form>
 </template>
