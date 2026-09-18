@@ -55,10 +55,10 @@ const handleOpenChange = (nextOpen: boolean) => {
                 @success="handleOpenChange(false)"
             >
                 <DialogHeader>
-                    <DialogTitle>Are you sure?</DialogTitle>
+                    <DialogTitle>Bist du sicher?</DialogTitle>
                     <DialogDescription>
-                        This action cannot be undone. This will permanently
-                        delete the team
+                        Diese Aktion kann nicht rückgängig gemacht werden. Dies wird das Team
+                        dauerhaft löschen
                         <strong>"{{ props.team.name }}"</strong>.
                     </DialogDescription>
                 </DialogHeader>
@@ -66,15 +66,15 @@ const handleOpenChange = (nextOpen: boolean) => {
                 <div class="space-y-4 py-4">
                     <div class="grid gap-2">
                         <Label for="confirmation-name">
-                            Type
-                            <strong>"{{ props.team.name }}"</strong> to confirm
+                            Gib
+                            <strong>"{{ props.team.name }}"</strong> ein, um zu bestätigen
                         </Label>
                         <Input
                             id="confirmation-name"
                             name="name"
                             data-test="delete-team-name"
                             v-model="confirmationName"
-                            placeholder="Enter team name"
+                            placeholder="Team Name eingeben"
                             autocomplete="off"
                         />
                         <InputError :message="errors.name" />
@@ -83,7 +83,7 @@ const handleOpenChange = (nextOpen: boolean) => {
 
                 <DialogFooter class="gap-2">
                     <DialogClose as-child>
-                        <Button variant="secondary"> Cancel </Button>
+                        <Button variant="secondary"> Abbrechen </Button>
                     </DialogClose>
 
                     <Button
@@ -92,7 +92,7 @@ const handleOpenChange = (nextOpen: boolean) => {
                         type="submit"
                         :disabled="!canDeleteTeam || processing"
                     >
-                        Delete team
+                        Team löschen
                     </Button>
                 </DialogFooter>
             </Form>
