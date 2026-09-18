@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import RegisterPageContent from '@/components/Auth/RegisterPageContent.vue';
+import RegisterClubPageContent from '@/components/Auth/RegisterClubPageContent.vue';
 import type { TeamInvitationContext } from '@/types';
 
 defineProps<{
@@ -8,16 +8,16 @@ defineProps<{
     teamInvitation?: TeamInvitationContext | null;
 }>();
 
-defineOptions({
-    layout: {
-        title: 'Create an account',
-        description: 'Enter your details below to create your account',
-    },
-});
+// defineOptions({
+//     layout: {
+//         title: 'Create an account',
+//         description: 'Enter your details below to create your account',
+//     },
+// });
 </script>
 
 <template>
-    <Head title="Register" />
+    <!-- <Head title="Register" /> -->
 
     <RegisterClubPageContent
         :password-rules="passwordRules"

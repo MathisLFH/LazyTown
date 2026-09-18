@@ -1,21 +1,22 @@
 <script setup lang="ts">
+import { ref } from 'vue';
 import { Form } from '@inertiajs/vue3';
 import InputError from '@/components/InputError.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import TeamInvitationAlert from '@/components/TeamInvitationAlert.vue';
-import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import { login } from '@/routes';
 import { store } from '@/routes/register';
 import type { TeamInvitationContext } from '@/types';
+import RegisterFormText from '@/components/Auth/RegisterFormText.vue';
 
 defineProps<{
     passwordRules: string;
     teamInvitation?: TeamInvitationContext | null;
 }>();
+
+const registerSection = ref<number>(0);
 </script>
 
 <template>
@@ -24,19 +25,12 @@ defineProps<{
         :invitation="teamInvitation"
         action="Register"
     />
-
-    <!-- <div class="text-center text-sm text-muted-foreground">
-        <p>
-            By creating an account, you agree to our
-            <TextLink href="/terms" class="underline underline-offset-4">
-                Terms of Service
-            </TextLink>
-            and
-            <TextLink href="/privacy" class="underline underline-offset-4">
-                Privacy Policy
-            </TextLink>
+    <h2 class="text-center">
+        <h2 class="text-2xl font-bold">Verein registrieren</h2>
+        <p class="text-muted-foreground">
+            Registriere deinen Verein, um die Funktionen von LazyTown zu nutzen.
         </p>
-    </div> -->
+    </h2>
 
     <Form
         v-bind="store.form()"
@@ -44,35 +38,59 @@ defineProps<{
         v-slot="{ errors, processing }"
         class="flex flex-col gap-6"
     >
-        <div class="grid gap-6">
-            <div class="grid gap-2">
-                <Label for="name">Name</Label>
-                <Input
-                    id="name"
-                    type="text"
-                    required
-                    autofocus
-                    :tabindex="1"
-                    autocomplete="name"
-                    name="name"
-                    placeholder="Full name"
-                />
-                <InputError :message="errors.name" />
-            </div>
+        <section
+            id="club-information"
+            class="grid gap-6"
+            v-show="registerSection === 0"
+        >
+            <h3 class="text-lg font-medium">Vereinsname</h3>
 
-            <!-- <div class="grid gap-2">
-                <Label for="email">Email address</Label>
-                <Input
-                    id="email"
-                    type="email"
-                    required
-                    :tabindex="2"
-                    autocomplete="email"
-                    name="email"
-                    placeholder="email@example.com"
-                />
-                <InputError :message="errors.email" />
-            </div> -->
+            <RegisterFormText
+                field="Name"
+                type="text"
+                placeholder="Ninjas in Pyjamas"
+            />
+        </section>
+        <section
+            id="club-responsible"
+            class="grid gap-6"
+            v-show="registerSection === 1"
+        >
+            <h3 class="text-lg font-medium">Vereinsverantwortlicher</h3>
+            <RegisterFormText field="Vorname" type="text" placeholder="Max" />
+            <!-- :error-message="errors.firstName" -->
+            <RegisterFormText
+                field="Nachname"
+                type="text"
+                placeholder="Mustermann"
+            />
+            <!-- :error-message="errors.lastName" -->
+
+            <RegisterFormText
+                field="Geburtsdatum"
+                type="date"
+                placeholder="dd.mm.yyyy"
+            />
+            <!-- :error-message="errors.dateOfBirth" -->
+            <RegisterFormText
+                field="Geburtsort"
+                type="text"
+                placeholder="Musterland"
+            />
+            <!-- :error-message="errors.placeOfBirth" -->
+            <RegisterFormText
+                field="Adresse"
+                type="text"
+                placeholder="Musterstraße 1"
+            />
+
+            <RegisterFormText
+                field="Ort"
+                type="text"
+                placeholder="Musterstadt"
+            />
+
+            <RegisterFormText field="PLZ" type="number" placeholder="12345" />
 
             <div class="grid gap-2">
                 <Label for="password">Password</Label>
@@ -85,7 +103,7 @@ defineProps<{
                     placeholder="Password"
                     :passwordrules="passwordRules"
                 />
-                <InputError :message="errors.password" />
+                <InputError />
             </div>
 
             <div class="grid gap-2">
@@ -101,52 +119,66 @@ defineProps<{
                 />
                 <InputError :message="errors.password_confirmation" />
             </div>
-
-            <!-- <fieldset class="grid gap-3">
-                <legend class="text-sm font-medium">Wie möchtest du starten?</legend>
-                <div class="grid gap-2 sm:grid-cols-2">
-                    <label class="flex items-center gap-2 rounded-md border p-3 text-sm">
-                        <input type="radio" name="start_role" value="spieler" checked />
-                        Als Spieler
-                    </label>
-                    <label class="flex items-center gap-2 rounded-md border p-3 text-sm">
-                        <input type="radio" name="start_role" value="trainer" />
-                        Als Trainer
-                    </label>
-                </div>
-                <InputError :message="errors.start_role" />
-            </fieldset> -->
-
-            <Button
-                type="submit"
-                class="mt-2 w-full"
-                tabindex="5"
-                :disabled="processing"
-                data-test="register-user-button"
-            >
-                <Spinner v-if="processing" />
-                Create account
-            </Button>
-        </div>
-
-        <div class="text-center text-sm text-muted-foreground">
-            Already have an account?
-            <TextLink
-                :href="
-                    teamInvitation
-                        ? login.url({
-                              query: {
-                                  invitation: teamInvitation.code,
-                              },
-                          })
-                        : login()
-                "
-                class="underline underline-offset-4"
-                :tabindex="6"
-                data-test="team-invitation-login-link"
-            >
-                Log in
-            </TextLink>
-        </div>
+        </section>
+        <section
+            id="subscription-information"
+            class=""
+            v-show="registerSection === 2"
+        >
+            <h3 class="text-lg font-medium">Feature wählen</h3>
+            <div class="gap-2">
+                <article
+                    class="w-50 rounded-lg border p-4"
+                    v-for="range in 5"
+                    :key="range"
+                >
+                    <div
+                        class="flex flex-col items-center justify-center gap-2"
+                    >
+                        <h4 class="text-lg font-medium">Basis</h4>
+                        <p class="text-muted-foreground">Kostenlos</p>
+                    </div>
+                </article>
+            </div>
+        </section>
+        <section id="button-section">
+            <div class="flex justify-between">
+                <Button
+                    type="button"
+                    class="w-1/3"
+                    tabindex="5"
+                    @click="registerSection--"
+                    :disabled="registerSection === 0"
+                >
+                    Zurück
+                </Button>
+                <Button
+                    type="button"
+                    class="w-1/3"
+                    tabindex="5"
+                    :disabled="registerSection === 3"
+                    @click="registerSection++"
+                >
+                    Weiter
+                </Button>
+            </div>
+        </section>
+        <Button
+            v-if="registerSection === 2"
+            type="submit"
+            class="w-full"
+            tabindex="5"
+            :disabled="processing"
+            data-test="register-user-button"
+        >
+            <Spinner v-if="processing" />
+            Erstellen
+        </Button>
     </Form>
 </template>
+
+<style scoped>
+article {
+    aspect-ratio: 7/5;
+}
+</style>
