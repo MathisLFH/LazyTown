@@ -20,9 +20,10 @@ class TeamPermissionSynchronizer
         DB::transaction(function () use ($team): void {
             setPermissionsTeamId($team->id);
             $this->ensurePermissions();
+            $guardName = config('auth.defaults.guard', 'web');
 
             foreach (TeamRole::cases() as $teamRole) {
-                $role = Role::findOrCreate($teamRole->value, 'web');
+                $role = Role::findOrCreate($teamRole->value, $guardName);
                 $role->syncPermissions($teamRole->permissions());
             }
 
@@ -39,16 +40,19 @@ class TeamPermissionSynchronizer
     {
         setPermissionsTeamId($membership->team_id);
         $this->ensurePermissions();
+        $guardName = config('auth.defaults.guard', 'web');
 
-        $role = Role::findOrCreate($membership->role->value, 'web');
+        $role = Role::findOrCreate($membership->role->value, $guardName);
         $role->syncPermissions($membership->role->permissions());
         $membership->syncRoles([$role]);
     }
 
     private function ensurePermissions(): void
     {
+        $guardName = config('auth.defaults.guard', 'web');
+
         foreach (TeamPermission::cases() as $permission) {
-            Permission::findOrCreate($permission->value, 'web');
+            Permission::findOrCreate($permission->value, $guardName);
         }
     }
 }

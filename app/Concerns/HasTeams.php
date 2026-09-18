@@ -166,17 +166,15 @@ trait HasTeams
      */
     public function toTeamPermissions(Team $team): TeamPermissions
     {
-        $role = $this->teamRole($team);
-
         return new TeamPermissions(
-            canUpdateTeam: $role?->hasPermission(TeamPermission::UpdateTeam) ?? false,
-            canDeleteTeam: $role?->hasPermission(TeamPermission::DeleteTeam) ?? false,
-            canAddMember: $role?->hasPermission(TeamPermission::AddMember) ?? false,
-            canUpdateMember: $role?->hasPermission(TeamPermission::UpdateMember) ?? false,
-            canRemoveMember: $role?->hasPermission(TeamPermission::RemoveMember) ?? false,
+            canUpdateTeam: $this->hasTeamPermission($team, TeamPermission::UpdateTeam),
+            canDeleteTeam: $this->hasTeamPermission($team, TeamPermission::DeleteTeam),
+            canAddMember: $this->hasTeamPermission($team, TeamPermission::AddMember),
+            canUpdateMember: $this->hasTeamPermission($team, TeamPermission::UpdateMember),
+            canRemoveMember: $this->hasTeamPermission($team, TeamPermission::RemoveMember),
             canCreateInvitation: $this->hasRole('trainer')
-                && ($role?->hasPermission(TeamPermission::CreateInvitation) ?? false),
-            canCancelInvitation: $role?->hasPermission(TeamPermission::CancelInvitation) ?? false,
+                && $this->hasTeamPermission($team, TeamPermission::CreateInvitation),
+            canCancelInvitation: $this->hasTeamPermission($team, TeamPermission::CancelInvitation),
         );
     }
 
@@ -193,6 +191,8 @@ trait HasTeams
      */
     public function hasTeamPermission(Team $team, TeamPermission $permission): bool
     {
+        setPermissionsTeamId($team->id);
+
         $membership = $this->teamMemberships()
             ->where('team_id', $team->id)
             ->where('status', 'active')
