@@ -5,11 +5,14 @@ namespace App\Actions\Teams;
 use App\Enums\TeamRole;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\Teams\TeamPermissionSynchronizer;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class CreateTeam
 {
+    public function __construct(private TeamPermissionSynchronizer $permissionSynchronizer) {}
+
     /**
      * Create a new team and optionally add the user as owner.
      */
@@ -29,10 +32,12 @@ class CreateTeam
             ]);
 
             if ($addOwner) {
-                $team->memberships()->create([
+                $membership = $team->memberships()->create([
                     'user_id' => $user->id,
                     'role' => TeamRole::Owner,
                 ]);
+
+                $this->permissionSynchronizer->synchronizeMembership($membership);
 
                 $user->switchTeam($team);
             }

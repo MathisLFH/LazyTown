@@ -4,6 +4,7 @@ use App\Http\Middleware\EnsureClubAccess;
 use App\Http\Middleware\EnsureUserRole;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\SetPermissionTeam;
 use App\Http\Middleware\SetTeamUrlDefaults;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -21,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => EnsureUserRole::class,
             'club.access' => EnsureClubAccess::class,
+            'permission.team' => SetPermissionTeam::class,
         ]);
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
@@ -29,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
             SetTeamUrlDefaults::class,
+            SetPermissionTeam::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
