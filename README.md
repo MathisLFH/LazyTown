@@ -8,6 +8,8 @@ A modern Laravel application with Inertia.js, Team management, Two-Factor Authen
 https://drive.google.com/file/d/138h61cUHgIPvP5xJYaqKCmR0bhETEy24/view?usp=sharing
 ```
 
+Datei -> Öffnen -> draw.io
+
 ## Permission System
 
 ```bash
