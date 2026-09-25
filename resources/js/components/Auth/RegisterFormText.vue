@@ -10,8 +10,9 @@
             :autocomplete="field"
             :name="field"
             :placeholder="placeholder"
+            :disabled="disabled"
+            :value="modelValue"
         />
-        <!-- <InputError :message="errors.name" /> -->
     </div>
 </template>
 
@@ -24,7 +25,11 @@ interface Props {
     field: string;
     placeholder: string;
     type: string;
+    disabled?: boolean;
+    modelValue?: string | number | null;
 }
+
+const modelValue = defineModel<string | number | null>();
 
 const props = defineProps<Props>();
 </script>

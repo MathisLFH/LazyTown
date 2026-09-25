@@ -1,15 +1,30 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { reactive, ref } from 'vue';
 import { Form } from '@inertiajs/vue3';
-import InputError from '@/components/InputError.vue';
-import PasswordInput from '@/components/PasswordInput.vue';
 import TeamInvitationAlert from '@/components/TeamInvitationAlert.vue';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { store } from '@/routes/register';
+import InputError from '@/components/InputError.vue';
+import PasswordInput from '@/components/PasswordInput.vue';
+import RegisterClubSection from '@/components/Auth/RegisterSection/Club.vue';
+import RegisterAdminSection from '@/components/Auth/RegisterSection/Admin.vue';
+import RegisterSubscriptionSection from '@/components/Auth/RegisterSection/Subcription.vue';
+import RegisterPaymentSection from '@/components/Auth/RegisterSection/Payment.vue';
 import type { TeamInvitationContext } from '@/types';
-import RegisterFormText from '@/components/Auth/RegisterFormText.vue';
+
+interface CreateClubData {
+    club: string;
+    admin: {
+        firstname: string;
+        lastname: string;
+        email: string;
+        password: string;
+        password_confirmation: string;
+    };
+    subscriptionmodel: 'Free' | 'Premium';
+    paymenttype: 'Paypal' | 'Creditcard';
+}
 
 defineProps<{
     passwordRules: string;
@@ -17,6 +32,18 @@ defineProps<{
 }>();
 
 const registerSection = ref<number>(0);
+const createClubData = reactive<CreateClubData>({
+    club: '',
+    admin: {
+        firstname: '',
+        lastname: '',
+        email: '',
+        password: '',
+        password_confirmation: '',
+    },
+    subscriptionmodel: 'Free',
+    paymenttype: 'Paypal',
+});
 </script>
 
 <template>
@@ -38,60 +65,14 @@ const registerSection = ref<number>(0);
         v-slot="{ errors, processing }"
         class="flex flex-col gap-6"
     >
-        <section
-            id="club-information"
-            class="grid gap-6"
+        <RegisterClubSection
             v-show="registerSection === 0"
-        >
-            <h3 class="text-lg font-medium">Vereinsname</h3>
-
-            <RegisterFormText
-                field="Name"
-                type="text"
-                placeholder="Ninjas in Pyjamas"
-            />
-        </section>
-        <section
-            id="club-responsible"
-            class="grid gap-6"
+            v-model="createClubData.club"
+        />
+        <RegisterAdminSection
             v-show="registerSection === 1"
+            v-model="createClubData.admin"
         >
-            <h3 class="text-lg font-medium">Vereinsverantwortlicher</h3>
-            <RegisterFormText field="Vorname" type="text" placeholder="Max" />
-            <!-- :error-message="errors.firstName" -->
-            <RegisterFormText
-                field="Nachname"
-                type="text"
-                placeholder="Mustermann"
-            />
-            <!-- :error-message="errors.lastName" -->
-
-            <RegisterFormText
-                field="Geburtsdatum"
-                type="date"
-                placeholder="dd.mm.yyyy"
-            />
-            <!-- :error-message="errors.dateOfBirth" -->
-            <RegisterFormText
-                field="Geburtsort"
-                type="text"
-                placeholder="Musterland"
-            />
-            <!-- :error-message="errors.placeOfBirth" -->
-            <RegisterFormText
-                field="Adresse"
-                type="text"
-                placeholder="Musterstraße 1"
-            />
-
-            <RegisterFormText
-                field="Ort"
-                type="text"
-                placeholder="Musterstadt"
-            />
-
-            <RegisterFormText field="PLZ" type="number" placeholder="12345" />
-
             <div class="grid gap-2">
                 <Label for="password">Password</Label>
                 <PasswordInput
@@ -103,7 +84,7 @@ const registerSection = ref<number>(0);
                     placeholder="Password"
                     :passwordrules="passwordRules"
                 />
-                <InputError />
+                <InputError :message="errors.password" />
             </div>
 
             <div class="grid gap-2">
@@ -119,28 +100,17 @@ const registerSection = ref<number>(0);
                 />
                 <InputError :message="errors.password_confirmation" />
             </div>
-        </section>
-        <section
-            id="subscription-information"
-            class=""
+        </RegisterAdminSection>
+
+        <RegisterSubscriptionSection
             v-show="registerSection === 2"
-        >
-            <h3 class="text-lg font-medium">Feature wählen</h3>
-            <div class="gap-2">
-                <article
-                    class="w-50 rounded-lg border p-4"
-                    v-for="range in 5"
-                    :key="range"
-                >
-                    <div
-                        class="flex flex-col items-center justify-center gap-2"
-                    >
-                        <h4 class="text-lg font-medium">Basis</h4>
-                        <p class="text-muted-foreground">Kostenlos</p>
-                    </div>
-                </article>
-            </div>
-        </section>
+            v-model="createClubData.subscriptionmodel"
+        />
+        <RegisterPaymentSection
+            v-show="registerSection === 3"
+            v-model="createClubData.paymenttype"
+        />
+
         <section id="button-section">
             <div class="flex justify-between">
                 <Button
