@@ -2,6 +2,20 @@
 
 A modern Laravel application with Inertia.js, Team management, Two-Factor Authentication, and Passkeys support.
 
+## DB Model
+
+```bash
+https://drive.google.com/file/d/138h61cUHgIPvP5xJYaqKCmR0bhETEy24/view?usp=sharing
+```
+
+Datei -> Öffnen -> draw.io
+
+## Permission System
+
+```bash
+composer dump-autoload --optimize
+```
+
 ## Quickstart
 
 Start the local development environment

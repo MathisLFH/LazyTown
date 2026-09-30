@@ -63,9 +63,17 @@ function handleAvatarChange(event: Event): void {
                 <img v-if="avatarDataUrl" :src="avatarDataUrl" alt="Profilbild" class="size-full object-cover" />
                 <span v-else class="text-2xl">{{ user.name.charAt(0).toUpperCase() }}</span>
             </div>
-            <label class="grid gap-2 text-sm">Profilbild auswählen
-                <input type="file" accept="image/*" class="block max-w-full text-sm disabled:cursor-not-allowed disabled:opacity-50" :disabled="!isEditing" @change="handleAvatarChange" />
-            </label>
+            <div class="grid gap-2 text-sm">
+                <span>Profilbild</span>
+                <label
+                    for="profile-avatar"
+                    class="inline-flex w-fit items-center rounded-md border border-input px-3 py-2 font-medium transition-colors focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
+                    :class="isEditing ? 'cursor-pointer hover:bg-accent hover:text-accent-foreground' : 'cursor-not-allowed opacity-50'"
+                >
+                    Profilbild auswählen
+                </label>
+                <input id="profile-avatar" type="file" accept="image/*" class="sr-only" :disabled="!isEditing" @change="handleAvatarChange" />
+            </div>
         </section>
 
         <Form v-bind="ProfileController.update.form()" class="space-y-6" @success="isEditing = false" v-slot="{ errors, processing }">

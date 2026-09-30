@@ -6,6 +6,7 @@ use App\Enums\TeamRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Teams\ProcessTeamPaymentRequest;
 use App\Models\Team;
+use App\Services\Teams\TeamPermissionSynchronizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +17,8 @@ use Inertia\Response;
 
 class TeamPaymentController extends Controller
 {
+    public function __construct(private TeamPermissionSynchronizer $permissionSynchronizer) {}
+
     public function edit(Request $request, Team $team): Response
     {
         Gate::authorize('update', $team);
@@ -73,10 +76,12 @@ class TeamPaymentController extends Controller
                 'active_role' => 'trainer',
             ]);
 
-            $team->memberships()->updateOrCreate(
+            $membership = $team->memberships()->updateOrCreate(
                 ['user_id' => $user->id],
                 ['role' => TeamRole::Owner],
             );
+
+            $this->permissionSynchronizer->synchronizeMembership($membership);
 
             $user->switchTeam($team);
         });

@@ -9,12 +9,16 @@ use App\Http\Requests\Teams\AddTeamMemberRequest;
 use App\Http\Requests\Teams\UpdateTeamMemberRequest;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\Teams\TeamPermissionSynchronizer;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 class TeamMemberController extends Controller
 {
+    public function __construct(private TeamPermissionSynchronizer $permissionSynchronizer) {}
+
     public function store(AddTeamMemberRequest $request, Team $team): RedirectResponse
     {
         Gate::authorize('addMember', $team);
@@ -24,10 +28,12 @@ class TeamMemberController extends Controller
             : User::where('email', $request->validated('email'))->firstOrFail();
         $teamRole = InvitationRole::from($request->validated('role'))->teamRole();
 
-        $team->memberships()->updateOrCreate(
+        $membership = $team->memberships()->updateOrCreate(
             ['user_id' => $member->id],
             ['role' => $teamRole, 'status' => 'pending'],
         );
+
+        $this->permissionSynchronizer->synchronizeMembership($membership);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Mitglied wurde zur Bestätigung zugeordnet.']);
 
@@ -58,11 +64,13 @@ class TeamMemberController extends Controller
 
         $newRole = TeamRole::from($request->validated('role'));
 
-        $team->memberships()
+        $membership = $team->memberships()
             ->where('user_id', $user->id)
             ->where('status', 'active')
-            ->firstOrFail()
-            ->update(['role' => $newRole]);
+            ->firstOrFail();
+
+        $membership->update(['role' => $newRole]);
+        $this->permissionSynchronizer->synchronizeMembership($membership->fresh());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Member role updated.')]);
 

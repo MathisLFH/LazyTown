@@ -10,6 +10,7 @@ use App\Http\Requests\Teams\RespondToTeamInvitationRequest;
 use App\Models\Team;
 use App\Models\TeamInvitation;
 use App\Notifications\Teams\TeamInvitation as TeamInvitationNotification;
+use App\Services\Teams\TeamPermissionSynchronizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -18,6 +19,8 @@ use Inertia\Inertia;
 
 class TeamInvitationController extends Controller
 {
+    public function __construct(private TeamPermissionSynchronizer $permissionSynchronizer) {}
+
     /**
      * Store a newly created invitation.
      */
@@ -66,10 +69,12 @@ class TeamInvitationController extends Controller
         DB::transaction(function () use ($user, $invitation) {
             $team = $invitation->team;
 
-            $team->memberships()->firstOrCreate(
+            $membership = $team->memberships()->firstOrCreate(
                 ['user_id' => $user->id],
                 ['role' => $invitation->role],
             );
+
+            $this->permissionSynchronizer->synchronizeMembership($membership);
 
             $invitation->update(['accepted_at' => now()]);
 

@@ -1,10 +1,12 @@
 <?php
 
+use App\Enums\TeamPermission;
 use App\Enums\TeamRole;
 use App\Models\Team;
 use App\Models\TeamInvitation;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
+use Spatie\Permission\Models\Permission;
 
 test('the teams index page can be rendered', function () {
     $user = User::factory()->create();
@@ -172,6 +174,38 @@ test('players can view the shared my team page without member invitation permiss
             ->component('MeinTeam')
             ->where('permissions.canCreateInvitation', false),
         );
+});
+
+test('direct team permissions are reflected in authorization and page permissions', function () {
+    $player = User::factory()->create(['roles' => ['spieler'], 'active_role' => 'spieler']);
+    $team = Team::factory()->create();
+
+    $team->members()->attach($player, ['role' => TeamRole::Member->value]);
+    $membership = $player->teamMemberships()->where('team_id', $team->id)->firstOrFail();
+
+    $permission = Permission::findOrCreate(TeamPermission::UpdateTeam->value, 'web');
+    setPermissionsTeamId($team->id);
+    $membership->givePermissionTo($permission);
+
+    expect($player->hasTeamPermission($team, TeamPermission::UpdateTeam))->toBeTrue()
+        ->and($player->toTeamPermissions($team)->canUpdateTeam)->toBeTrue();
+});
+
+test('direct team permissions do not leak between teams', function () {
+    $player = User::factory()->create(['roles' => ['spieler'], 'active_role' => 'spieler']);
+    $permittedTeam = Team::factory()->create();
+    $otherTeam = Team::factory()->create();
+
+    $permittedTeam->members()->attach($player, ['role' => TeamRole::Member->value]);
+    $otherTeam->members()->attach($player, ['role' => TeamRole::Member->value]);
+
+    $membership = $player->teamMemberships()->where('team_id', $permittedTeam->id)->firstOrFail();
+    $permission = Permission::findOrCreate(TeamPermission::UpdateTeam->value, 'web');
+    setPermissionsTeamId($permittedTeam->id);
+    $membership->givePermissionTo($permission);
+
+    expect($player->hasTeamPermission($permittedTeam, TeamPermission::UpdateTeam))->toBeTrue()
+        ->and($player->hasTeamPermission($otherTeam, TeamPermission::UpdateTeam))->toBeFalse();
 });
 
 test('the team settings page does not expose member management data', function () {

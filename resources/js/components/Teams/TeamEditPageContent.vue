@@ -57,11 +57,11 @@ const confirmCancelInvitation = (invitation: TeamInvitation) => {
     <h1 class="sr-only">{{ pageTitle }}</h1>
     <div class="flex flex-col space-y-10">
         <div v-if="permissions.canUpdateTeam" class="space-y-6">
-            <Heading variant="small" title="Team settings" description="Update your team name and settings" />
+            <Heading variant="small" title="Team Einstellungen" description="Teamname und Einstellungen aktualisieren" />
             <Button variant="outline" as-child><Link :href="paymentEdit(team.slug)"><CreditCard /> Zahlung</Link></Button>
             <Form v-bind="update.form(team.slug)" class="space-y-6" v-slot="{ errors, processing }">
                 <div class="grid gap-2"><Label for="name">Team name</Label><Input id="name" name="name" data-test="team-name-input" :default-value="team.name" required /><InputError :message="errors.name" /></div>
-                <div class="flex items-center gap-4"><Button type="submit" data-test="team-save-button" :disabled="processing">Save</Button></div>
+                <div class="flex items-center gap-4"><Button type="submit" data-test="team-save-button" :disabled="processing">Speichern</Button></div>
             </Form>
         </div>
         <div v-else class="space-y-6"><Heading variant="small" :title="team.name" /></div>
@@ -82,8 +82,8 @@ const confirmCancelInvitation = (invitation: TeamInvitation) => {
         </div>
 
         <div v-if="permissions.canDeleteTeam && !team.isPersonal" class="space-y-6">
-            <Heading variant="small" title="Delete team" description="Permanently delete your team" />
-            <div class="space-y-4 rounded-lg border border-red-100 bg-red-50 p-4 dark:border-red-200/10 dark:bg-red-700/10"><div class="relative space-y-0.5 text-red-600 dark:text-red-100"><p class="font-medium">Warning</p><p class="text-sm">Please proceed with caution, this cannot be undone.</p></div><Button data-test="delete-team-button" variant="destructive" @click="deleteDialogOpen = true">Delete team</Button></div>
+            <Heading variant="small" title="Team löschen" description="Lösche dein Team dauerhaft" />
+            <div class="space-y-4 rounded-lg border border-red-100 bg-red-50 p-4 dark:border-red-200/10 dark:bg-red-700/10"><div class="relative space-y-0.5 text-red-600 dark:text-red-100"><p class="font-medium">Warnung</p><p class="text-sm">Bitte gehe vorsichtig vor, dies kann nicht rückgängig gemacht werden.</p></div><Button data-test="delete-team-button" variant="destructive" @click="deleteDialogOpen = true">Team löschen</Button></div>
         </div>
     </div>
 

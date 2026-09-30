@@ -4,15 +4,15 @@ import ConfirmPasswordPageContent from '@/components/Auth/ConfirmPasswordPageCon
 
 defineOptions({
     layout: {
-        title: 'Confirm password',
+        title: 'Passwort bestätigen',
         description:
-            'This is a secure area of the application. Please confirm your password before continuing.',
+            'Dies ist ein sicherer Bereich der Anwendung. Bitte bestätigen Sie Ihr Passwort, bevor Sie fortfahren.',
     },
 });
 </script>
 
 <template>
-    <Head title="Confirm password" />
+    <Head title="Passwort bestätigen" />
 
     <ConfirmPasswordPageContent />
 </template>
