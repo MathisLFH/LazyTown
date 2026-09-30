@@ -14,11 +14,20 @@ import RegisterPaymentSection from '@/components/Auth/RegisterSection/Payment.vu
 import type { TeamInvitationContext } from '@/types';
 
 interface CreateClubData {
-    club: string;
+    club: {
+        name: string;
+        subdomain: string;
+    };
     admin: {
         firstname: string;
         lastname: string;
         email: string;
+        birthdate: Date | null;
+        birthplace: string;
+        nationality: string;
+        adresse: string;
+        plz: number | null;
+        city: string;
         password: string;
         password_confirmation: string;
     };
@@ -33,11 +42,20 @@ defineProps<{
 
 const registerSection = ref<number>(0);
 const createClubData = reactive<CreateClubData>({
-    club: '',
+    club: {
+        name: '',
+        subdomain: '',
+    },
     admin: {
         firstname: '',
         lastname: '',
         email: '',
+        birthdate: null,
+        birthplace: '',
+        nationality: '',
+        adresse: '',
+        plz: null,
+        city: '',
         password: '',
         password_confirmation: '',
     },
