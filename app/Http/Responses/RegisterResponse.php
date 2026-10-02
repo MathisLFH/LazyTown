@@ -10,8 +10,14 @@ class RegisterResponse implements RegisterResponseContract
 {
     public function toResponse($request): Response
     {
-        return $request->wantsJson()
-            ? new JsonResponse(['two_factor' => false], 201)
+        if ($request->wantsJson()) {
+            return new JsonResponse(['two_factor' => false], 201);
+        }
+
+        $tenant = $request->user()?->tenant;
+
+        return $tenant
+            ? redirect()->to($tenant->url())
             : redirect()->route('home');
     }
 }

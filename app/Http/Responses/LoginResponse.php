@@ -10,8 +10,10 @@ class LoginResponse implements LoginResponseContract
 {
     public function toResponse($request): Response
     {
+        $redirect = $request->user()?->tenant?->url() ?? route('home');
+
         return $request->wantsJson()
             ? new JsonResponse(['two_factor' => false], 200)
-            : redirect()->route('home');
+            : redirect()->intended($redirect);
     }
 }

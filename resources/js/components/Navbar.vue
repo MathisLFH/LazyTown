@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { Bell, CircleUserRound, Search } from '@lucide/vue';
+import { Bell, ChevronDown, CircleUserRound, Search } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import {
     DropdownMenu,
@@ -10,12 +10,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { useProfileAvatar } from '@/composables/useProfileAvatar';
-import {
-    hallenplan,
-    home,
-    meinTeam,
-    spielplan,
-} from '@/routes';
+import { hallenplan, home, meinTeam, spielplan } from '@/routes';
+import { index as manageTeams } from '@/routes/admin/teams';
 import { edit as profile } from '@/routes/profile';
 import { edit as payment } from '@/routes/teams/payment';
 
@@ -55,6 +51,11 @@ const administrationItems = computed(() => {
         });
     }
 
+    items.push(
+        { label: 'Teams verwalten', href: manageTeams().url },
+        { label: 'Team erstellen', href: manageTeams().url },
+    );
+
     return items;
 });
 
@@ -82,7 +83,7 @@ const isAdministrationActive = computed(() =>
                         v-model="searchQuery"
                         type="search"
                         placeholder="Suche..."
-                        class="h-10 w-full rounded-md border border-input bg-background pr-3 pl-9 text-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30"
+                        class="h-10 w-full rounded-md border border-input bg-background pr-3 pl-9 text-sm transition outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
                     />
                 </label>
             </div>
@@ -93,7 +94,9 @@ const isAdministrationActive = computed(() =>
                         :href="item.href"
                         class="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground"
                         :class="{
-                            'bg-accent text-foreground': isCurrentUrl(item.href),
+                            'bg-accent text-foreground': isCurrentUrl(
+                                item.href,
+                            ),
                         }"
                     >
                         {{ item.label }}
@@ -105,18 +108,28 @@ const isAdministrationActive = computed(() =>
                         <button
                             type="button"
                             class="inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
-                            :class="{ 'bg-accent text-foreground': isAdministrationActive }"
+                            :class="{
+                                'bg-accent text-foreground':
+                                    isAdministrationActive,
+                            }"
                         >
                             Verwaltung
                             <ChevronDown class="size-4" aria-hidden="true" />
                         </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" class="w-56">
-                        <DropdownMenuItem v-for="item in administrationItems" :key="item.label" as-child>
+                        <DropdownMenuItem
+                            v-for="item in administrationItems"
+                            :key="item.label"
+                            as-child
+                        >
                             <Link
                                 :href="item.href"
                                 class="w-full"
-                                :class="{ 'bg-accent text-accent-foreground': isCurrentUrl(item.href) }"
+                                :class="{
+                                    'bg-accent text-accent-foreground':
+                                        isCurrentUrl(item.href),
+                                }"
                             >
                                 {{ item.label }}
                             </Link>
@@ -138,15 +151,23 @@ const isAdministrationActive = computed(() =>
                     class="inline-flex items-center gap-2 rounded-md border border-input px-2 py-1 text-sm font-medium text-foreground transition hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
                     aria-label="Profil öffnen"
                 >
-                    <span class="max-w-32 truncate">{{ currentUser?.name }}</span>
-                    <span class="inline-flex size-8 items-center justify-center overflow-hidden rounded-full border border-input text-muted-foreground">
+                    <span class="max-w-32 truncate">{{
+                        currentUser?.name
+                    }}</span>
+                    <span
+                        class="inline-flex size-8 items-center justify-center overflow-hidden rounded-full border border-input text-muted-foreground"
+                    >
                         <img
                             v-if="isAuthenticated && avatarDataUrl"
                             :src="avatarDataUrl"
                             :alt="currentUser?.name ?? 'Profilbild'"
                             class="size-full object-cover"
                         />
-                        <CircleUserRound v-else class="size-5" aria-hidden="true" />
+                        <CircleUserRound
+                            v-else
+                            class="size-5"
+                            aria-hidden="true"
+                        />
                     </span>
                 </Link>
             </div>

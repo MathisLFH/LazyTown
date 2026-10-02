@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Teams;
 
 use App\Actions\Teams\CreateTeam;
+use App\Actions\Teams\DeleteTeam;
 use App\Enums\InvitationRole;
 use App\Enums\TeamRole;
 use App\Http\Controllers\Controller;
@@ -187,29 +188,14 @@ class TeamController extends Controller
     /**
      * Delete the specified team.
      */
-    public function destroy(DeleteTeamRequest $request, Team $team): RedirectResponse
+    public function destroy(DeleteTeamRequest $request, Team $team, DeleteTeam $deleteTeam): RedirectResponse
     {
-        $user = $request->user();
-        $fallbackTeam = $user->isCurrentTeam($team)
-            ? $user->fallbackTeam($team)
-            : null;
-
-        DB::transaction(function () use ($user, $team) {
-            User::where('current_team_id', $team->id)
-                ->where('id', '!=', $user->id)
-                ->each(fn (User $affectedUser) => $affectedUser->switchTeam($affectedUser->personalTeam()));
-
-            $team->invitations()->delete();
-            $team->memberships()->delete();
-            $team->delete();
-        });
-
-        if ($fallbackTeam) {
-            $user->switchTeam($fallbackTeam);
-        }
+        $deleteTeam->handle($request->user(), $team);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Team deleted.')]);
 
-        return to_route('teams.index');
+        return $request->routeIs('admin.teams.destroy')
+            ? to_route('admin.teams.index')
+            : to_route('teams.index');
     }
 }

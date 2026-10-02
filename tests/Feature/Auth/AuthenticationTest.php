@@ -3,6 +3,7 @@
 use App\Enums\TeamRole;
 use App\Models\Team;
 use App\Models\TeamInvitation;
+use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -47,6 +48,20 @@ test('users can authenticate using the login screen', function () {
 
     $this->assertAuthenticated();
     $response->assertRedirect(route('home'));
+});
+
+test('tenant users are redirected to their subdomain after login', function () {
+    config(['app.url' => 'https://lazytown.test']);
+    $tenant = Tenant::factory()->create(['subdomain' => 'club-login']);
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+
+    $response = $this->post('https://lazytown.test/login', [
+        'email' => $user->email,
+        'password' => 'password',
+    ]);
+
+    $this->assertAuthenticatedAs($user);
+    $response->assertRedirect('https://club-login.lazytown.test');
 });
 
 test('passkey login response redirects to the home page', function () {

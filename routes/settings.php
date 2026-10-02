@@ -3,6 +3,7 @@
 use App\Http\Controllers\Settings\DataExportController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
+use App\Http\Controllers\Teams\TeamAdministrationController;
 use App\Http\Controllers\Teams\TeamController;
 use App\Http\Controllers\Teams\TeamInvitationController;
 use App\Http\Controllers\Teams\TeamMemberController;
@@ -35,6 +36,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('user-password.update');
 
     Route::inertia('settings/appearance', 'settings/Appearance')->middleware('club.access')->name('appearance.edit');
+
+    Route::patch('verwaltung/benutzer/{user}/rollen', [TeamAdministrationController::class, 'updateUserRoles'])
+        ->middleware('role:verwaltung')
+        ->name('admin.users.roles.update');
+
+    Route::prefix('verwaltung/teams')
+        ->name('admin.teams.')
+        ->middleware('role:verwaltung')
+        ->controller(TeamAdministrationController::class)
+        ->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::post('/', 'store')->name('store');
+            Route::patch('/{team}/trainer', 'updateTrainer')->name('trainer.update');
+            Route::delete('/{team}', [TeamController::class, 'destroy'])->name('destroy');
+        });
 
     Route::get('settings/teams', [TeamController::class, 'index'])->middleware('club.access')->name('teams.index');
     Route::post('settings/teams', [TeamController::class, 'store'])->middleware('club.access')->name('teams.store');

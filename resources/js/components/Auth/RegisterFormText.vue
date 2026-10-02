@@ -1,35 +1,35 @@
 <template>
     <div class="grid gap-2">
-        <Label :for="field">{{ field }}</Label>
+        <Label :for="name">{{ field }}</Label>
         <Input
-            :id="field"
+            :id="name"
             :type="type"
-            required
-            autofocus
-            :tabindex="1"
-            :autocomplete="field"
-            :name="field"
+            v-model="modelValue"
+            :required="required ?? true"
+            :autocomplete="autocomplete ?? 'off'"
+            :name="name"
             :placeholder="placeholder"
-            :disabled="disabled"
-            :value="modelValue"
         />
+        <InputError :message="error" />
     </div>
 </template>
 
 <script setup lang="ts">
+import InputError from '@/components/InputError.vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-// import InputError from '@/components/InputError.vue';
 
 interface Props {
     field: string;
+    name: string;
     placeholder: string;
     type: string;
-    disabled?: boolean;
-    modelValue?: string | number | null;
+    required?: boolean;
+    autocomplete?: string;
+    error?: string;
 }
 
-const modelValue = defineModel<string | number | null>();
+const modelValue = defineModel<string | number>();
 
-const props = defineProps<Props>();
+defineProps<Props>();
 </script>

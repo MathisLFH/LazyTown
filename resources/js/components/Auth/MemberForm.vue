@@ -1,74 +1,111 @@
 <template>
-    <RegisterFormText field="Vorname" type="text" placeholder="Max" />
-    <RegisterFormText field="Nachname" type="text" placeholder="Mustermann" />
-
     <RegisterFormText
-        field="Geburtsdatum"
-        type="date"
-        placeholder="dd.mm.yyyy"
+        v-model="admin.first_name"
+        field="Vorname"
+        name="first_name"
+        type="text"
+        placeholder="Max"
+        autocomplete="given-name"
+        :error="errors?.first_name"
+    />
+    <RegisterFormText
+        v-model="admin.last_name"
+        field="Nachname"
+        name="last_name"
+        type="text"
+        placeholder="Mustermann"
+        autocomplete="family-name"
+        :error="errors?.last_name"
+    />
+    <RegisterFormText
+        v-model="admin.email"
+        field="E-Mail-Adresse"
+        name="email"
+        type="email"
+        placeholder="max@example.de"
+        autocomplete="email"
+        :error="errors?.email"
     />
 
-    <RegisterFormText field="Geburtsort" type="text" placeholder="Musterland" />
-
-    <RegisterFormText field="Nationalität" type="text" placeholder="Deutsch" />
+    <RegisterFormText
+        v-model="admin.birth_date"
+        field="Geburtsdatum"
+        name="birth_date"
+        type="date"
+        placeholder=""
+        autocomplete="bday"
+        :required="false"
+        :error="errors?.birth_date"
+    />
 
     <RegisterFormText
-        field="Adresse"
+        v-model="admin.birth_place"
+        field="Geburtsort"
+        name="birth_place"
+        type="text"
+        placeholder="Berlin"
+        :required="false"
+        :error="errors?.birth_place"
+    />
+
+    <RegisterFormText
+        v-model="admin.nationality"
+        field="Nationalität"
+        name="nationality"
+        type="text"
+        placeholder="Deutsch"
+        autocomplete="country-name"
+        :required="false"
+        :error="errors?.nationality"
+    />
+
+    <RegisterFormText
+        v-model="admin.address"
+        field="Anschrift"
+        name="address"
         type="text"
         placeholder="Musterstraße 1"
+        autocomplete="street-address"
+        :required="false"
+        :error="errors?.address"
     />
 
-    <div class="grid gap-2">
-        <Label for="plz">PLZ</Label>
-        <Input
-            id="plz"
-            type="number"
-            required
-            autofocus
-            :tabindex="1"
-            autocomplete="plz"
-            v-model="data.plz"
-            placeholder="12345"
-            @blur="updateCity"
-        />
-    </div>
     <RegisterFormText
+        v-model="admin.postcode"
+        field="Postleitzahl"
+        name="postcode"
+        type="text"
+        placeholder="01234"
+        autocomplete="postal-code"
+        :required="false"
+        :error="errors?.postcode"
+    />
+    <RegisterFormText
+        v-model="admin.city"
         field="Ort"
+        name="city"
         type="text"
         placeholder="Musterstadt"
-        disabled
+        autocomplete="address-level2"
+        :required="false"
+        :error="errors?.city"
     />
 </template>
 
 <script setup lang="ts">
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import RegisterFormText from '@/components/Auth/RegisterFormText.vue';
-import { reactive } from 'vue';
 
-const data = reactive({
-    firstName: '',
-    lastName: '',
-    dateOfBirth: '',
-    placeOfBirth: '',
-    nationality: '',
-    address: '',
-    plz: '',
-    city: '',
-});
+defineProps<{ errors?: Record<string, string> }>();
 
-const updateCity = async () => {
-    const response = await fetch(
-        `https://openplzapi.org/de/Localities?postalCode=${data.plz}`,
-    );
-
-    if (response.ok) {
-        const result = await response.json();
-        data.city = result.localities[0].name;
-    } else {
-        data.city = '';
-    }
-
-    console.log(data.plz, data.city);
-};
+const admin = defineModel<{
+    first_name: string;
+    last_name: string;
+    email: string;
+    birth_date: string;
+    birth_place: string;
+    nationality: string;
+    address: string;
+    postcode: string;
+    city: string;
+}>({ required: true });
 </script>

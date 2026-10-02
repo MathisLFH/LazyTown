@@ -58,22 +58,12 @@ class TeamPaymentController extends Controller
     private function completePayment(Request $request, Team $team, string $status, string $referencePrefix): void
     {
         $user = $request->user();
-        $roles = $user->roles ?: ['spieler'];
 
-        if (! in_array('trainer', $roles, true)) {
-            $roles[] = 'trainer';
-        }
-
-        DB::transaction(function () use ($team, $user, $roles, $status, $referencePrefix): void {
+        DB::transaction(function () use ($team, $user, $status, $referencePrefix): void {
             $team->update([
                 'payment_status' => $status,
                 'payment_reference' => $referencePrefix.strtoupper(Str::random(10)),
                 'payment_paid_at' => now(),
-            ]);
-
-            $user->update([
-                'roles' => $roles,
-                'active_role' => 'trainer',
             ]);
 
             $membership = $team->memberships()->updateOrCreate(

@@ -13,7 +13,7 @@ test('trainers can open club onboarding before payment', function () {
 });
 
 test('team owners can complete the payment form', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['roles' => ['spieler'], 'active_role' => 'spieler']);
     $team = Team::factory()->create();
     $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
 
@@ -26,8 +26,8 @@ test('team owners can complete the payment form', function () {
 
     $response->assertRedirect(route('teams.edit', $team));
     $this->assertDatabaseHas('teams', ['id' => $team->id, 'payment_status' => 'paid']);
-    expect($user->refresh()->roles)->toContain('trainer')
-        ->and($user->active_role)->toBe('trainer');
+    expect($user->refresh()->roles)->toBe(['spieler'])
+        ->and($user->active_role)->toBe('spieler');
 });
 
 test('club onboarding creates an unowned pending team until payment', function () {

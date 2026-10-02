@@ -36,7 +36,7 @@ import { login, register } from '@/routes';
                     Anmelden
                 </Link>
                 <Link
-                    @click="console.log('verein registrieren clicked')"
+                    :href="register()"
                     class="rounded-md border px-5 py-2.5 text-sm font-medium transition hover:bg-accent"
                 >
                     Verein registrieren

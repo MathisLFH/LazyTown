@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Teams;
 
 use App\Enums\InvitationRole;
-use App\Enums\TeamRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Teams\CreateTeamInvitationRequest;
 use App\Http\Requests\Teams\RespondToTeamInvitationRequest;
@@ -77,14 +76,6 @@ class TeamInvitationController extends Controller
             $this->permissionSynchronizer->synchronizeMembership($membership);
 
             $invitation->update(['accepted_at' => now()]);
-
-            $roles = $user->roles ?: ['spieler'];
-
-            if ($invitation->role === TeamRole::Admin && ! in_array('trainer', $roles, true)) {
-                $roles[] = 'trainer';
-            }
-
-            $user->update(['roles' => $roles]);
 
             $user->switchTeam($team);
         });

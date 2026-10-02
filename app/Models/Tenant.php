@@ -16,6 +16,22 @@ class Tenant extends Model
     /** @use HasFactory<TenantFactory> */
     use HasFactory;
 
+    public static function rootDomain(): string
+    {
+        $host = parse_url((string) config('app.url'), PHP_URL_HOST);
+
+        return is_string($host) ? $host : 'localhost';
+    }
+
+    public function url(): string
+    {
+        $baseUrl = parse_url((string) config('app.url'));
+        $scheme = $baseUrl['scheme'] ?? 'http';
+        $port = isset($baseUrl['port']) ? ':'.$baseUrl['port'] : '';
+
+        return $scheme.'://'.$this->subdomain.'.'.static::rootDomain().$port;
+    }
+
     /**
      * @return BelongsTo<User, $this>
      */

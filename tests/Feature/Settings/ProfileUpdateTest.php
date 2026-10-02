@@ -13,7 +13,7 @@ test('profile page is displayed', function () {
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('settings/Profile')
-            ->where('roleOptions.1.value', 'trainer'),
+            ->missing('roleOptions'),
         );
 });
 
@@ -56,10 +56,10 @@ test('profile information can be updated', function () {
     expect($user->email_verified_at)->toBeNull();
 });
 
-test('a user can save multiple roles and an active role', function () {
+test('users cannot assign themselves trainer or administration roles in their profile', function () {
     $user = User::factory()->create([
-        'roles' => ['spieler', 'trainer'],
-        'active_role' => 'trainer',
+        'roles' => ['spieler'],
+        'active_role' => 'spieler',
     ]);
 
     $this
@@ -68,18 +68,18 @@ test('a user can save multiple roles and an active role', function () {
             'name' => $user->name,
             'email' => $user->email,
             'roles' => ['spieler', 'trainer', 'verwaltung'],
-            'active_role' => 'trainer',
+            'active_role' => 'verwaltung',
         ])
-        ->assertSessionHasNoErrors();
+        ->assertSessionHasErrors(['roles', 'active_role']);
 
-    expect($user->refresh()->roles)->toBe(['spieler', 'trainer', 'verwaltung'])
-        ->and($user->active_role)->toBe('trainer');
+    expect($user->refresh()->roles)->toBe(['spieler'])
+        ->and($user->active_role)->toBe('spieler');
 });
 
-test('a user can save multiple roles without selecting an active role', function () {
+test('users cannot change their active role in their profile', function () {
     $user = User::factory()->create([
         'roles' => ['spieler', 'trainer'],
-        'active_role' => 'trainer',
+        'active_role' => 'spieler',
     ]);
 
     $this
@@ -87,16 +87,38 @@ test('a user can save multiple roles without selecting an active role', function
         ->patch(route('profile.update'), [
             'name' => $user->name,
             'email' => $user->email,
-            'roles' => ['spieler', 'verwaltung'],
+            'active_role' => 'trainer',
         ])
-        ->assertSessionHasNoErrors();
+        ->assertSessionHasErrors('active_role');
 
-    expect($user->refresh()->roles)->toBe(['spieler', 'verwaltung'])
+    expect($user->refresh()->roles)->toBe(['spieler', 'trainer'])
         ->and($user->active_role)->toBe('spieler');
 });
 
-test('users can assign themselves the trainer role in their profile', function () {
-    $user = User::factory()->create();
+test('empty role payloads cannot clear roles through the profile', function () {
+    $user = User::factory()->create([
+        'roles' => ['spieler', 'trainer'],
+        'active_role' => 'trainer',
+    ]);
+
+    $this->actingAs($user)
+        ->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'roles' => [],
+            'active_role' => null,
+        ])
+        ->assertRedirect(route('profile.edit'));
+
+    expect($user->refresh()->roles)->toBe(['spieler', 'trainer'])
+        ->and($user->active_role)->toBe('trainer');
+});
+
+test('users cannot assign themselves the trainer role in their profile', function () {
+    $user = User::factory()->create([
+        'roles' => ['spieler'],
+        'active_role' => 'spieler',
+    ]);
 
     $this->actingAs($user)
         ->patch(route('profile.update'), [
@@ -105,9 +127,9 @@ test('users can assign themselves the trainer role in their profile', function (
             'roles' => ['spieler', 'trainer'],
             'active_role' => 'spieler',
         ])
-        ->assertSessionHasNoErrors();
+        ->assertSessionHasErrors('roles');
 
-    expect($user->refresh()->roles)->toBe(['spieler', 'trainer']);
+    expect($user->refresh()->roles)->toBe(['spieler']);
 });
 
 test('email verification status is unchanged when the email address is unchanged', function () {

@@ -22,6 +22,7 @@ declare module '@inertiajs/core' {
             sidebarOpen: boolean;
             currentTeam: Team | null;
             teams: Team[];
+            tenant: { name: string; subdomain: string } | null;
             [key: string]: unknown;
         };
     }

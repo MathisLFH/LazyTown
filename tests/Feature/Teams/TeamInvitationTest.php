@@ -210,6 +210,30 @@ test('team invitations can be accepted', function () {
     expect($invitation->fresh()->accepted_at)->not->toBeNull();
 });
 
+test('accepting a trainer invitation does not grant a global trainer role', function () {
+    $owner = User::factory()->create(['roles' => ['trainer'], 'active_role' => 'trainer']);
+    $invitedUser = User::factory()->create([
+        'email' => 'invited@example.com',
+        'roles' => ['spieler'],
+        'active_role' => 'spieler',
+    ]);
+    $team = Team::factory()->create();
+    $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
+    $invitation = TeamInvitation::factory()->create([
+        'team_id' => $team->id,
+        'email' => $invitedUser->email,
+        'role' => TeamRole::Admin,
+        'invited_by' => $owner->id,
+    ]);
+
+    $this->actingAs($invitedUser)
+        ->post(route('invitations.accept', $invitation))
+        ->assertRedirect(route('home'));
+
+    expect($invitedUser->fresh()->roles)->toBe(['spieler'])
+        ->and($invitedUser->fresh()->teamRole($team))->toBe(TeamRole::Admin);
+});
+
 test('team invitations can be declined by the invited user', function () {
     $owner = User::factory()->create();
     $invitedUser = User::factory()->create(['email' => 'invited@example.com']);
