@@ -21,6 +21,7 @@ class TeamFactory extends Factory
         $name = fake()->unique()->company();
 
         return [
+            'tenant_id' => null,
             'name' => $name,
             'slug' => Str::slug($name),
             'is_personal' => false,

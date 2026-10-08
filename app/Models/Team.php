@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -16,17 +17,25 @@ use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
+ * @property int|null $tenant_id
  * @property string $name
+ * @property int|null $created_by
  * @property string $slug
  * @property bool $is_personal
+ * @property string $payment_status
+ * @property string|null $payment_reference
+ * @property Carbon|null $payment_paid_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
  * @property-read Collection<int, TeamInvitation> $invitations
+ * @property-read Tenant|null $tenant
+ * @property-read Collection<int, Training> $trainings
+ * @property-read Collection<int, ClubMatch> $matches
  * @property-read Collection<int, Membership> $memberships
  * @property-read Collection<int, User> $members
  */
-#[Fillable(['name', 'slug', 'is_personal'])]
+#[Fillable(['tenant_id', 'name', 'slug', 'is_personal', 'created_by', 'payment_status', 'payment_reference', 'payment_paid_at'])]
 class Team extends Model
 {
     /** @use HasFactory<TeamFactory> */
@@ -71,8 +80,34 @@ class Team extends Model
     {
         return $this->belongsToMany(User::class, 'team_members', 'team_id', 'user_id')
             ->using(Membership::class)
-            ->withPivot(['role'])
+            ->withPivot(['role', 'status', 'tenant_id', 'role_id'])
             ->withTimestamps();
+    }
+
+    /**
+     * Get the tenant that owns this team.
+     *
+     * @return BelongsTo<Tenant, $this>
+     */
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class);
+    }
+
+    /**
+     * @return HasMany<Training, $this>
+     */
+    public function trainings(): HasMany
+    {
+        return $this->hasMany(Training::class);
+    }
+
+    /**
+     * @return HasMany<ClubMatch, $this>
+     */
+    public function matches(): HasMany
+    {
+        return $this->hasMany(ClubMatch::class);
     }
 
     /**
@@ -104,6 +139,7 @@ class Team extends Model
     {
         return [
             'is_personal' => 'boolean',
+            'payment_paid_at' => 'datetime',
         ];
     }
 

@@ -36,7 +36,7 @@ import UserMenuContent from '@/components/UserMenuContent.vue';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { getInitials } from '@/composables/useInitials';
 import { toUrl } from '@/lib/utils';
-import { dashboard } from '@/routes';
+import { home } from '@/routes';
 import type { BreadcrumbItem, NavItem } from '@/types';
 
 type Props = {
@@ -51,17 +51,15 @@ const page = usePage();
 const auth = computed(() => page.props.auth);
 const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
 
-const dashboardUrl = computed(() =>
-    page.props.currentTeam ? dashboard(page.props.currentTeam.slug).url : '/',
-);
+const homeUrl = computed(() => home().url);
 
 const activeItemStyles =
     'text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100';
 
 const mainNavItems = computed<NavItem[]>(() => [
     {
-        title: 'Dashboard',
-        href: dashboardUrl.value,
+        title: 'Startseite',
+        href: homeUrl.value,
         icon: LayoutGrid,
     },
 ]);
@@ -151,7 +149,7 @@ const rightNavItems: NavItem[] = [
                     </Sheet>
                 </div>
 
-                <Link :href="dashboardUrl" class="flex items-center gap-x-2">
+                <Link :href="homeUrl" class="flex items-center gap-x-2">
                     <AppLogo />
                 </Link>
 

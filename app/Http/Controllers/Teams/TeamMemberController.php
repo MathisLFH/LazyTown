@@ -2,17 +2,59 @@
 
 namespace App\Http\Controllers\Teams;
 
+use App\Enums\InvitationRole;
 use App\Enums\TeamRole;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Teams\AddTeamMemberRequest;
 use App\Http\Requests\Teams\UpdateTeamMemberRequest;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\Teams\TeamPermissionSynchronizer;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 class TeamMemberController extends Controller
 {
+    public function __construct(private TeamPermissionSynchronizer $permissionSynchronizer) {}
+
+    public function store(AddTeamMemberRequest $request, Team $team): RedirectResponse
+    {
+        Gate::authorize('addMember', $team);
+
+        $member = $request->validated('public_id')
+            ? User::where('public_id', $request->validated('public_id'))->firstOrFail()
+            : User::where('email', $request->validated('email'))->firstOrFail();
+        $teamRole = InvitationRole::from($request->validated('role'))->teamRole();
+
+        $membership = $team->memberships()->updateOrCreate(
+            ['user_id' => $member->id],
+            ['role' => $teamRole, 'status' => 'pending'],
+        );
+
+        $this->permissionSynchronizer->synchronizeMembership($membership);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Mitglied wurde zur Bestätigung zugeordnet.']);
+
+        return to_route('mein-team');
+    }
+
+    public function confirm(Request $request, Team $team): RedirectResponse
+    {
+        $membership = $team->memberships()
+            ->where('user_id', $request->user()->id)
+            ->where('status', 'pending')
+            ->firstOrFail();
+
+        $membership->update(['status' => 'active']);
+        $request->user()->switchTeam($team);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Vereinsbeitritt bestätigt.']);
+
+        return to_route('home');
+    }
+
     /**
      * Update the specified team member's role.
      */
@@ -22,14 +64,17 @@ class TeamMemberController extends Controller
 
         $newRole = TeamRole::from($request->validated('role'));
 
-        $team->memberships()
+        $membership = $team->memberships()
             ->where('user_id', $user->id)
-            ->firstOrFail()
-            ->update(['role' => $newRole]);
+            ->where('status', 'active')
+            ->firstOrFail();
+
+        $membership->update(['role' => $newRole]);
+        $this->permissionSynchronizer->synchronizeMembership($membership->fresh());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Member role updated.')]);
 
-        return to_route('teams.edit', ['team' => $team->slug]);
+        return to_route('mein-team');
     }
 
     /**
@@ -43,6 +88,7 @@ class TeamMemberController extends Controller
 
         $team->memberships()
             ->where('user_id', $user->id)
+            ->where('status', 'active')
             ->delete();
 
         if ($user->isCurrentTeam($team)) {
@@ -51,6 +97,6 @@ class TeamMemberController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Member removed.')]);
 
-        return to_route('teams.edit', ['team' => $team->slug]);
+        return to_route('mein-team');
     }
 }

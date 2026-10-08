@@ -9,7 +9,24 @@ test('profile page is displayed', function () {
         ->actingAs($user)
         ->get(route('profile.edit'));
 
-    $response->assertOk();
+    $response
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('settings/Profile')
+            ->missing('roleOptions'),
+        );
+});
+
+test('profile page shares the saved birth date', function () {
+    $user = User::factory()->create(['birth_date' => '1995-04-12']);
+
+    $this->actingAs($user)
+        ->get(route('profil'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Profil')
+            ->where('auth.user.birth_date', fn (string $birthDate): bool => str_starts_with($birthDate, '1995-04-12')),
+        );
 });
 
 test('profile information can be updated', function () {
@@ -19,6 +36,9 @@ test('profile information can be updated', function () {
         ->actingAs($user)
         ->patch(route('profile.update'), [
             'name' => 'Test User',
+            'birth_date' => '1995-04-12',
+            'city' => 'Köln',
+            'phone' => '+49 221 1234567',
             'email' => 'test@example.com',
         ]);
 
@@ -29,8 +49,87 @@ test('profile information can be updated', function () {
     $user->refresh();
 
     expect($user->name)->toBe('Test User');
+    expect($user->birth_date?->toDateString())->toBe('1995-04-12');
+    expect($user->city)->toBe('Köln');
+    expect($user->phone)->toBe('+49 221 1234567');
     expect($user->email)->toBe('test@example.com');
     expect($user->email_verified_at)->toBeNull();
+});
+
+test('users cannot assign themselves trainer or administration roles in their profile', function () {
+    $user = User::factory()->create([
+        'roles' => ['spieler'],
+        'active_role' => 'spieler',
+    ]);
+
+    $this
+        ->actingAs($user)
+        ->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'roles' => ['spieler', 'trainer', 'verwaltung'],
+            'active_role' => 'verwaltung',
+        ])
+        ->assertSessionHasErrors(['roles', 'active_role']);
+
+    expect($user->refresh()->roles)->toBe(['spieler'])
+        ->and($user->active_role)->toBe('spieler');
+});
+
+test('users cannot change their active role in their profile', function () {
+    $user = User::factory()->create([
+        'roles' => ['spieler', 'trainer'],
+        'active_role' => 'spieler',
+    ]);
+
+    $this
+        ->actingAs($user)
+        ->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'active_role' => 'trainer',
+        ])
+        ->assertSessionHasErrors('active_role');
+
+    expect($user->refresh()->roles)->toBe(['spieler', 'trainer'])
+        ->and($user->active_role)->toBe('spieler');
+});
+
+test('empty role payloads cannot clear roles through the profile', function () {
+    $user = User::factory()->create([
+        'roles' => ['spieler', 'trainer'],
+        'active_role' => 'trainer',
+    ]);
+
+    $this->actingAs($user)
+        ->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'roles' => [],
+            'active_role' => null,
+        ])
+        ->assertRedirect(route('profile.edit'));
+
+    expect($user->refresh()->roles)->toBe(['spieler', 'trainer'])
+        ->and($user->active_role)->toBe('trainer');
+});
+
+test('users cannot assign themselves the trainer role in their profile', function () {
+    $user = User::factory()->create([
+        'roles' => ['spieler'],
+        'active_role' => 'spieler',
+    ]);
+
+    $this->actingAs($user)
+        ->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'roles' => ['spieler', 'trainer'],
+            'active_role' => 'spieler',
+        ])
+        ->assertSessionHasErrors('roles');
+
+    expect($user->refresh()->roles)->toBe(['spieler']);
 });
 
 test('email verification status is unchanged when the email address is unchanged', function () {

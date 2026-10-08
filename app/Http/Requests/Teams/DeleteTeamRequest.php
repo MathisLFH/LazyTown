@@ -16,7 +16,13 @@ class DeleteTeamRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Gate::allows('delete', $this->route('team'));
+        $team = $this->route('team');
+
+        if ($this->routeIs('admin.teams.destroy')) {
+            abort_unless($team instanceof Team && $this->user()?->tenant_id === $team->tenant_id, 404);
+        }
+
+        return Gate::allows('delete', $team);
     }
 
     /**

@@ -27,7 +27,10 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
+            'tenant_id' => null,
             'name' => fake()->name(),
+            'first_name' => fake()->firstName(),
+            'last_name' => fake()->lastName(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
@@ -45,6 +48,7 @@ class UserFactory extends Factory
     {
         return $this->afterCreating(function ($user) {
             $team = Team::factory()->personal()->create([
+                'tenant_id' => $user->tenant_id,
                 'name' => $user->name."'s Team",
             ]);
 

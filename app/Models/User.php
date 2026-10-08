@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -18,8 +20,16 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 
 /**
  * @property int $id
+ * @property int|null $tenant_id
+ * @property int|null $role_id
+ * @property string $public_id
  * @property string $name
+ * @property string|null $birth_date
+ * @property string|null $city
+ * @property string|null $phone
  * @property string $email
+ * @property array<int, string> $roles
+ * @property string|null $active_role
  * @property Carbon|null $email_verified_at
  * @property string $password
  * @property string|null $two_factor_secret
@@ -33,13 +43,27 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property-read Collection<int, Team> $ownedTeams
  * @property-read Collection<int, Membership> $teamMemberships
  * @property-read Collection<int, Team> $teams
+ * @property-read Tenant|null $tenant
+ * @property-read ClubRole|null $role
+ * @property-read Collection<int, Message> $messages
  */
-#[Fillable(['name', 'email', 'password', 'current_team_id'])]
+#[Fillable(['tenant_id', 'role_id', 'name', 'first_name', 'last_name', 'birth_date', 'birth_place', 'nationality', 'sex', 'address', 'city', 'postcode', 'phone', 'email', 'password', 'current_team_id', 'roles', 'active_role'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasTeams, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+
+    protected static function booted(): void
+    {
+        static::creating(function (User $user): void {
+            do {
+                $publicId = (string) random_int(10000000, 99999999);
+            } while (self::where('public_id', $publicId)->exists());
+
+            $user->public_id = $publicId;
+        });
+    }
 
     /**
      * Get the attributes that should be cast.
@@ -50,8 +74,39 @@ class User extends Authenticatable implements PasskeyUser
     {
         return [
             'email_verified_at' => 'datetime',
+            'birth_date' => 'date',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
+            'roles' => 'array',
         ];
+    }
+
+    public function hasRole(string $role): bool
+    {
+        return in_array($role, $this->roles ?: [], true);
+    }
+
+    /**
+     * @return BelongsTo<Tenant, $this>
+     */
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class);
+    }
+
+    /**
+     * @return BelongsTo<ClubRole, $this>
+     */
+    public function role(): BelongsTo
+    {
+        return $this->belongsTo(ClubRole::class, 'role_id');
+    }
+
+    /**
+     * @return BelongsToMany<Message, $this>
+     */
+    public function messages(): BelongsToMany
+    {
+        return $this->belongsToMany(Message::class, 'user_messages');
     }
 }

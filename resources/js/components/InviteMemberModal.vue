@@ -21,12 +21,12 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { store as storeInvitation } from '@/routes/teams/invitations';
+import { store as addMember } from '@/routes/teams/members';
 import type { RoleOption, Team } from '@/types';
 
 type Props = {
     team: Team;
-    availableRoles: RoleOption[];
+    availableInvitationRoles: RoleOption[];
     open: boolean;
 };
 
@@ -35,14 +35,14 @@ const emit = defineEmits<{
     'update:open': [value: boolean];
 }>();
 
-const inviteRole = ref('member');
+const memberRole = ref('spieler');
 const formKey = ref(0);
 
 function handleOpenChange(value: boolean) {
     emit('update:open', value);
 
     if (!value) {
-        inviteRole.value = 'member';
+        memberRole.value = 'spieler';
         formKey.value++;
     }
 }
@@ -53,36 +53,48 @@ function handleOpenChange(value: boolean) {
         <DialogContent>
             <Form
                 :key="formKey"
-                v-bind="storeInvitation.form(props.team.slug)"
+                v-bind="addMember.form(props.team.slug)"
                 class="space-y-6"
                 v-slot="{ errors, processing }"
                 @success="emit('update:open', false)"
             >
                 <DialogHeader>
-                    <DialogTitle>Invite a team member</DialogTitle>
+                    <DialogTitle>Mitglied hinzufügen</DialogTitle>
                     <DialogDescription>
-                        Send an invitation to join this team.
+                        Ordne einen bestehenden Account direkt diesem Verein zu.
                     </DialogDescription>
                 </DialogHeader>
 
                 <div class="grid gap-4">
                     <div class="grid gap-2">
-                        <Label for="email">Email address</Label>
+                        <Label for="email">E-Mail-Adresse</Label>
                         <Input
                             id="email"
                             name="email"
                             data-test="invite-email"
                             type="email"
-                            placeholder="colleague@example.com"
+                            placeholder="spieler@example.com"
                             required
                         />
                         <InputError :message="errors.email" />
                     </div>
 
                     <div class="grid gap-2">
-                        <Label for="role">Role</Label>
+                        <Label for="public_id">Oder Benutzer-ID</Label>
+                        <Input
+                            id="public_id"
+                            name="public_id"
+                            type="number"
+                            min="1"
+                            placeholder="z. B. 12345678"
+                        />
+                        <InputError :message="errors.public_id" />
+                    </div>
+
+                    <div class="grid gap-2">
+                        <Label for="role">Typ</Label>
                         <Select
-                            v-model="inviteRole"
+                            v-model="memberRole"
                             name="role"
                             data-test="invite-role"
                         >
@@ -91,7 +103,7 @@ function handleOpenChange(value: boolean) {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem
-                                    v-for="role in props.availableRoles"
+                                    v-for="role in props.availableInvitationRoles"
                                     :key="role.value"
                                     :value="role.value"
                                 >
@@ -113,7 +125,7 @@ function handleOpenChange(value: boolean) {
                         data-test="invite-submit"
                         :disabled="processing"
                     >
-                        Send invitation
+                        Mitglied hinzufügen
                     </Button>
                 </DialogFooter>
             </Form>

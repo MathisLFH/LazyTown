@@ -37,7 +37,8 @@ class TeamPolicy
      */
     public function update(User $user, Team $team): bool
     {
-        return $user->hasTeamPermission($team, TeamPermission::UpdateTeam);
+        return ($team->payment_status === 'pending' && $team->created_by === $user->id)
+            || $user->hasTeamPermission($team, TeamPermission::UpdateTeam);
     }
 
     /**
@@ -55,7 +56,8 @@ class TeamPolicy
      */
     public function addMember(User $user, Team $team): bool
     {
-        return $user->hasTeamPermission($team, TeamPermission::AddMember);
+        return $user->hasRole('trainer')
+            && $user->hasTeamPermission($team, TeamPermission::AddMember);
     }
 
     /**
@@ -79,7 +81,8 @@ class TeamPolicy
      */
     public function inviteMember(User $user, Team $team): bool
     {
-        return $user->hasTeamPermission($team, TeamPermission::CreateInvitation);
+        return $user->hasRole('trainer')
+            && $user->hasTeamPermission($team, TeamPermission::CreateInvitation);
     }
 
     /**

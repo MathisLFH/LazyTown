@@ -1,21 +1,34 @@
 <?php
 
-use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\StartseiteController;
+use App\Http\Controllers\Teams\ClubOnboardingController;
+use App\Http\Controllers\Teams\TeamController;
 use App\Http\Controllers\Teams\TeamInvitationController;
-use App\Http\Middleware\EnsureTeamMembership;
+use App\Http\Controllers\Teams\TeamMemberController;
 use Illuminate\Support\Facades\Route;
 
-Route::inertia('/', 'Welcome')->name('home');
+Route::get('/', StartseiteController::class)->name('home');
+Route::inertia('contact/about-us', 'AboutUs')->name('aboutus');
+Route::inertia('contact/kontakt', 'Kontakt')->name('kontakt');
+Route::inertia('contact/impressum', 'Impressum')->name('impressum');
+Route::inertia('contact/datenschutzerklaerung', 'Datenschutzerklaerung')->name('datenschutzerklaerung');
+Route::inertia('startseite', 'Startseite')->name('startseite');
 
-Route::prefix('{current_team}')
-    ->middleware(['auth', 'verified', EnsureTeamMembership::class])
-    ->group(function () {
-        Route::get('dashboard', DashboardController::class)->name('dashboard');
-    });
+
 
 Route::middleware(['auth'])->group(function () {
     Route::post('invitations/{invitation}/accept', [TeamInvitationController::class, 'accept'])->name('invitations.accept');
     Route::delete('invitations/{invitation}', [TeamInvitationController::class, 'decline'])->name('invitations.decline');
+
+    Route::middleware('club.access')->group(function () {
+        Route::inertia('spielplan', 'Spielplan')->name('spielplan');
+        Route::inertia('hallenplan', 'Hallenplan')->name('hallenplan');
+        Route::get('mein-team', [TeamController::class, 'meinTeam'])->name('mein-team');
+    });
+    Route::inertia('profil', 'Profil')->name('profil');
+    Route::post('verein/{team}/beitritt-bestaetigen', [TeamMemberController::class, 'confirm'])->name('teams.members.confirm');
+    Route::get('verein-erstellen', [ClubOnboardingController::class, 'create'])->middleware('role:trainer')->name('club.onboarding');
+    Route::post('verein-erstellen', [ClubOnboardingController::class, 'store'])->middleware('role:trainer')->name('club.onboarding.store');
 });
 
 require __DIR__.'/settings.php';

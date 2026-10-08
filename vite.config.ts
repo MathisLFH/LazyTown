@@ -6,7 +6,7 @@ import laravel from 'laravel-vite-plugin';
 import { bunny } from 'laravel-vite-plugin/fonts';
 import { defineConfig } from 'vite';
 
-export default defineConfig({
+export default defineConfig(({ isSsrBuild }) => ({
     plugins: [
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.ts'],
@@ -17,7 +17,9 @@ export default defineConfig({
                 }),
             ],
         }),
-        inertia(),
+        inertia({
+            ssr: isSsrBuild,
+        }),
         tailwindcss(),
         vue({
             template: {
@@ -32,6 +34,11 @@ export default defineConfig({
         }),
     ],
     server: {
+        hmr: {
+            host: 'lazytown.test',
+            protocol: 'wss',
+            port: 5173,
+        },
         watch: {
             ignored: [
                 '**/.agents/**',
@@ -42,4 +49,4 @@ export default defineConfig({
             ],
         },
     },
-});
+}));

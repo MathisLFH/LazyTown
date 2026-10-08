@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers\Teams;
 
-use App\Enums\TeamRole;
+use App\Enums\InvitationRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Teams\CreateTeamInvitationRequest;
 use App\Http\Requests\Teams\RespondToTeamInvitationRequest;
 use App\Models\Team;
 use App\Models\TeamInvitation;
 use App\Notifications\Teams\TeamInvitation as TeamInvitationNotification;
+use App\Services\Teams\TeamPermissionSynchronizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -17,6 +18,8 @@ use Inertia\Inertia;
 
 class TeamInvitationController extends Controller
 {
+    public function __construct(private TeamPermissionSynchronizer $permissionSynchronizer) {}
+
     /**
      * Store a newly created invitation.
      */
@@ -26,7 +29,7 @@ class TeamInvitationController extends Controller
 
         $invitation = $team->invitations()->create([
             'email' => $request->validated('email'),
-            'role' => TeamRole::from($request->validated('role')),
+            'role' => InvitationRole::from($request->validated('role'))->teamRole(),
             'invited_by' => $request->user()->id,
             'expires_at' => now()->addDays(3),
         ]);
@@ -36,7 +39,7 @@ class TeamInvitationController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Invitation sent.')]);
 
-        return to_route('teams.edit', ['team' => $team->slug]);
+        return to_route('mein-team');
     }
 
     /**
@@ -52,7 +55,7 @@ class TeamInvitationController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Invitation cancelled.')]);
 
-        return to_route('teams.edit', ['team' => $team->slug]);
+        return to_route('mein-team');
     }
 
     /**
@@ -65,10 +68,12 @@ class TeamInvitationController extends Controller
         DB::transaction(function () use ($user, $invitation) {
             $team = $invitation->team;
 
-            $team->memberships()->firstOrCreate(
+            $membership = $team->memberships()->firstOrCreate(
                 ['user_id' => $user->id],
                 ['role' => $invitation->role],
             );
+
+            $this->permissionSynchronizer->synchronizeMembership($membership);
 
             $invitation->update(['accepted_at' => now()]);
 
@@ -77,7 +82,7 @@ class TeamInvitationController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Invitation accepted.')]);
 
-        return to_route('dashboard');
+        return to_route('home');
     }
 
     /**
@@ -89,6 +94,6 @@ class TeamInvitationController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Invitation declined.')]);
 
-        return to_route('dashboard');
+        return to_route('home');
     }
 }

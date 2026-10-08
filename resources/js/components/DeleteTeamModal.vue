@@ -14,15 +14,19 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { destroy as destroyAdminTeam } from '@/routes/admin/teams';
 import { destroy } from '@/routes/teams';
 import type { Team } from '@/types';
 
 type Props = {
     team: Team;
     open: boolean;
+    administration?: boolean;
 };
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    administration: false,
+});
 const emit = defineEmits<{
     'update:open': [value: boolean];
 }>();
@@ -33,6 +37,11 @@ const formKey = ref(0);
 const canDeleteTeam = computed(() => {
     return confirmationName.value === props.team.name;
 });
+const deleteForm = computed(() =>
+    props.administration
+        ? destroyAdminTeam.form(props.team.slug)
+        : destroy.form(props.team.slug),
+);
 
 const handleOpenChange = (nextOpen: boolean) => {
     emit('update:open', nextOpen);
@@ -49,16 +58,16 @@ const handleOpenChange = (nextOpen: boolean) => {
         <DialogContent>
             <Form
                 :key="formKey"
-                v-bind="destroy.form(props.team.slug)"
+                v-bind="deleteForm"
                 class="space-y-6"
                 v-slot="{ errors, processing }"
                 @success="handleOpenChange(false)"
             >
                 <DialogHeader>
-                    <DialogTitle>Are you sure?</DialogTitle>
+                    <DialogTitle>Bist du sicher?</DialogTitle>
                     <DialogDescription>
-                        This action cannot be undone. This will permanently
-                        delete the team
+                        Diese Aktion kann nicht rückgängig gemacht werden. Dies
+                        wird das Team dauerhaft löschen
                         <strong>"{{ props.team.name }}"</strong>.
                     </DialogDescription>
                 </DialogHeader>
@@ -66,15 +75,16 @@ const handleOpenChange = (nextOpen: boolean) => {
                 <div class="space-y-4 py-4">
                     <div class="grid gap-2">
                         <Label for="confirmation-name">
-                            Type
-                            <strong>"{{ props.team.name }}"</strong> to confirm
+                            Gib
+                            <strong>"{{ props.team.name }}"</strong> ein, um zu
+                            bestätigen
                         </Label>
                         <Input
                             id="confirmation-name"
                             name="name"
                             data-test="delete-team-name"
                             v-model="confirmationName"
-                            placeholder="Enter team name"
+                            placeholder="Team Name eingeben"
                             autocomplete="off"
                         />
                         <InputError :message="errors.name" />
@@ -83,7 +93,7 @@ const handleOpenChange = (nextOpen: boolean) => {
 
                 <DialogFooter class="gap-2">
                     <DialogClose as-child>
-                        <Button variant="secondary"> Cancel </Button>
+                        <Button variant="secondary"> Abbrechen </Button>
                     </DialogClose>
 
                     <Button
@@ -92,7 +102,7 @@ const handleOpenChange = (nextOpen: boolean) => {
                         type="submit"
                         :disabled="!canDeleteTeam || processing"
                     >
-                        Delete team
+                        Team löschen
                     </Button>
                 </DialogFooter>
             </Form>

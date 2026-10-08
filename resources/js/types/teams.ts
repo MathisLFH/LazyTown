@@ -8,12 +8,15 @@ export type Team = {
     role?: TeamRole;
     roleLabel?: string;
     isCurrent?: boolean;
+    paymentStatus?: 'pending' | 'paid' | 'skipped' | 'not_required';
 };
 
 export type TeamMember = {
     id: number;
+    public_id: string;
     name: string;
     email: string;
+    phone?: string | null;
     avatar?: string | null;
     role: TeamRole;
     role_label: string;
@@ -52,6 +55,6 @@ export type TeamPermissions = {
 };
 
 export type RoleOption = {
-    value: TeamRole;
+    value: TeamRole | 'spieler' | 'trainer';
     label: string;
 };

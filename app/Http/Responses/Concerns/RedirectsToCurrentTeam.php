@@ -11,10 +11,14 @@ trait RedirectsToCurrentTeam
     protected function redirectPathForCurrentTeam(Request $request, string $redirect): string
     {
         $team = $this->currentTeam($request);
+        $tenant = $request->user()->tenant;
+        $teamPath = "/{$team->slug}{$redirect}";
 
         URL::defaults(['current_team' => $team->slug]);
 
-        return "/{$team->slug}{$redirect}";
+        return $tenant
+            ? rtrim($tenant->url(), '/').$teamPath
+            : $teamPath;
     }
 
     protected function currentTeam(Request $request): Team

@@ -166,6 +166,15 @@
     * {
         @apply border-border outline-ring/50;
     }
+
+    :where(
+        button:not(:disabled),
+        select:not(:disabled),
+        [role='button']:not([aria-disabled='true'])
+    ) {
+        cursor: pointer;
+    }
+
     body {
         @apply bg-background text-foreground;
     }
