@@ -31,7 +31,6 @@ interface CreateClubData {
         city: string;
     };
     subscription: 'free' | 'premium';
-    paymentMethod: 'paypal' | 'card';
 }
 
 defineProps<{
@@ -57,7 +56,6 @@ const createClubData = reactive<CreateClubData>({
         city: '',
     },
     subscription: 'free',
-    paymentMethod: 'paypal',
 });
 
 const steps = computed(() =>
@@ -209,9 +207,7 @@ function handleRegistrationErrors(errors: Record<string, string>): void {
                 v-show="registerSection === 3"
                 data-register-step="3"
             >
-                <RegisterPaymentSection
-                    v-model="createClubData.paymentMethod"
-                />
+                <RegisterPaymentSection />
             </div>
 
             <section id="button-section">
@@ -247,7 +243,11 @@ function handleRegistrationErrors(errors: Record<string, string>): void {
                 data-test="register-user-button"
             >
                 <Spinner v-if="processing" />
-                Verein registrieren
+                {{
+                    createClubData.subscription === 'premium'
+                        ? 'Verein registrieren & bezahlen'
+                        : 'Verein registrieren'
+                }}
             </Button>
         </Form>
     </div>

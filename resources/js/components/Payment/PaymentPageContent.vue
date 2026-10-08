@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import { Form, Link } from '@inertiajs/vue3';
 import { ArrowLeft, CheckCircle, CreditCard } from '@lucide/vue';
-import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { edit, skip, update } from '@/routes/teams/payment';
+import { edit as editTeam } from '@/routes/teams';
+import { skip, update } from '@/routes/teams/payment';
 
 type Props = {
     team: {
@@ -13,6 +11,9 @@ type Props = {
         slug: string;
         paymentStatus: string;
         paidAt: string | null;
+        amount: string;
+        allowSkip: boolean;
+        checkoutState: 'cancelled' | 'pending' | null;
     };
 };
 const props = defineProps<Props>();
@@ -21,7 +22,7 @@ const props = defineProps<Props>();
 <template>
     <main class="mx-auto max-w-2xl space-y-6 p-6">
         <Link
-            :href="edit(props.team.slug).url"
+            :href="editTeam(props.team.slug).url"
             class="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
             ><ArrowLeft class="size-4" /> Zurück zum Verein</Link
         >
@@ -57,68 +58,51 @@ const props = defineProps<Props>();
             >
         </section>
         <section v-else class="rounded-lg border border-sidebar-border/70 p-6">
+            <div
+                v-if="props.team.checkoutState === 'cancelled'"
+                class="mb-5 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
+                role="status"
+            >
+                Die Zahlung wurde abgebrochen. Du kannst es erneut versuchen.
+            </div>
+            <div
+                v-else-if="props.team.checkoutState === 'pending'"
+                class="mb-5 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
+                role="status"
+            >
+                Die Zahlung wird noch bestätigt. Bitte lade diese Seite in Kürze
+                erneut.
+            </div>
             <div class="mb-6 flex items-center gap-3">
                 <CreditCard class="size-5" />
-                <h2 class="text-lg font-semibold">Zahlungsdaten</h2>
+                <h2 class="text-lg font-semibold">Sichere Zahlung</h2>
             </div>
-            <Form
-                v-bind="update.form(props.team.slug)"
-                class="grid gap-5"
-                v-slot="{ errors, processing }"
-            >
-                <div class="grid gap-2">
-                    <Label for="cardholder">Name auf der Karte</Label
-                    ><Input
-                        id="cardholder"
-                        name="cardholder"
-                        autocomplete="cc-name"
-                        required
-                    /><InputError :message="errors.cardholder" />
-                </div>
-                <div class="grid gap-2">
-                    <Label for="card_number">Kartennummer</Label
-                    ><Input
-                        id="card_number"
-                        name="card_number"
-                        inputmode="numeric"
-                        autocomplete="cc-number"
-                        required
-                    /><InputError :message="errors.card_number" />
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="grid gap-2">
-                        <Label for="expiry">Gültig bis</Label
-                        ><Input
-                            id="expiry"
-                            name="expiry"
-                            placeholder="MM/JJ"
-                            autocomplete="cc-exp"
-                            required
-                        /><InputError :message="errors.expiry" />
-                    </div>
-                    <div class="grid gap-2">
-                        <Label for="cvc">CVC</Label
-                        ><Input
-                            id="cvc"
-                            name="cvc"
-                            inputmode="numeric"
-                            autocomplete="cc-csc"
-                            required
-                        /><InputError :message="errors.cvc" />
-                    </div>
-                </div>
-                <Button type="submit" :disabled="processing">{{
-                    processing ? 'Wird verarbeitet...' : 'Zahlung abschließen'
-                }}</Button>
+            <div class="mb-5 flex items-center justify-between gap-4">
+                <span class="text-sm text-muted-foreground">Jahreszugang</span>
+                <span class="text-lg font-semibold">{{ props.team.amount }}</span>
+            </div>
+            <Form v-bind="update.form(props.team.slug)" v-slot="{ processing }">
+                <Button type="submit" class="w-full" :disabled="processing">
+                    {{
+                        processing
+                            ? 'Weiterleitung zu Stripe...'
+                            : 'Sicher über Stripe bezahlen'
+                    }}
+                </Button>
             </Form>
-            <Form v-bind="skip.form(props.team.slug)" class="mt-3"
-                ><Button type="submit" variant="outline" class="w-full"
-                    >Zahlung vorübergehend überspringen</Button
-                ></Form
+            <Form
+                v-if="props.team.allowSkip"
+                v-bind="skip.form(props.team.slug)"
+                class="mt-3"
             >
+                <Button type="submit" variant="outline" class="w-full">
+                    Zahlung vorübergehend überspringen
+                </Button>
+            </Form>
             <p class="mt-4 text-xs text-muted-foreground">
-                Dies ist eine Test-Zahlungsseite. Es werden keine echten
-                Zahlungen ausgelöst.
+                Die Zahlung wird sicher über Stripe abgewickelt. Diese
+                Projektseite nutzt ausschließlich den Testmodus; es werden
+                keine echten Zahlungen ausgelöst.
             </p>
         </section>
     </main>

@@ -112,7 +112,11 @@ class CreateNewUser implements CreatesNewUsers
 
             $user->update(['tenant_id' => $tenant->id]);
 
-            $team = $this->createTeam->handle($user, $data['club_name']);
+            $team = $this->createTeam->handle(
+                $user,
+                $data['club_name'],
+                addOwner: $data['subscription'] !== 'premium',
+            );
             $team->update([
                 'tenant_id' => $tenant->id,
                 'payment_status' => $data['subscription'] === 'premium' ? 'pending' : 'not_required',

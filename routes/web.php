@@ -2,19 +2,19 @@
 
 use App\Http\Controllers\StartseiteController;
 use App\Http\Controllers\Teams\ClubOnboardingController;
+use App\Http\Controllers\Teams\StripeWebhookController;
 use App\Http\Controllers\Teams\TeamController;
 use App\Http\Controllers\Teams\TeamInvitationController;
 use App\Http\Controllers\Teams\TeamMemberController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', StartseiteController::class)->name('home');
+Route::post('stripe/webhook', StripeWebhookController::class)->name('stripe.webhook');
 Route::inertia('contact/about-us', 'AboutUs')->name('aboutus');
 Route::inertia('contact/kontakt', 'Kontakt')->name('kontakt');
 Route::inertia('contact/impressum', 'Impressum')->name('impressum');
 Route::inertia('contact/datenschutzerklaerung', 'Datenschutzerklaerung')->name('datenschutzerklaerung');
 Route::inertia('startseite', 'Startseite')->name('startseite');
-
-
 
 Route::middleware(['auth'])->group(function () {
     Route::post('invitations/{invitation}/accept', [TeamInvitationController::class, 'accept'])->name('invitations.accept');

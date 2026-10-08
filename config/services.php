@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'stripe' => [
+        'secret' => env('STRIPE_SECRET'),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+        'annual_access_amount_cents' => (int) env('STRIPE_ANNUAL_ACCESS_AMOUNT_CENTS', 2999),
+    ],
+
 ];

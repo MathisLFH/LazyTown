@@ -2,46 +2,28 @@
     <section class="payment-section">
         <div class="payment-section__header">
             <h3>Zahlungsart</h3>
-            <p>Die Zahlungsabwicklung ist noch nicht verfügbar.</p>
+            <p>Einmalige Zahlung für deinen Premium-Jahreszugang.</p>
         </div>
 
-        <div
-            class="payment-methods"
-            role="group"
-            aria-label="Zahlungsart auswählen"
-        >
-            <button
-                type="button"
-                class="payment-method"
-                :class="{ 'payment-method--active': method === 'paypal' }"
-                :aria-pressed="method === 'paypal'"
-                @click="method = 'paypal'"
-            >
-                <strong>PayPal</strong>
-                <span>Platzhalter</span>
-            </button>
-            <button
-                type="button"
-                class="payment-method"
-                :class="{ 'payment-method--active': method === 'card' }"
-                :aria-pressed="method === 'card'"
-                @click="method = 'card'"
-            >
-                <strong>Kreditkarte</strong>
-                <span>Platzhalter</span>
-            </button>
+        <div class="payment-method payment-method--active">
+            <div class="payment-method__details">
+                <strong>Sicher bezahlen mit Stripe Checkout</strong>
+                <span>
+                    Stripe zeigt dir im nächsten Schritt die verfügbaren
+                    Zahlungsmethoden an. Deine Zahlungsdaten gibst du direkt
+                    bei Stripe ein.
+                </span>
+            </div>
+            <strong class="payment-method__price">29,99 €</strong>
         </div>
 
-        <div class="payment-pseudo" aria-live="polite">
-            {{ method === 'paypal' ? 'PayPal' : 'Kreditkarte' }} ist ausgewählt.
-            Diese Auswahl wird nicht gespeichert und löst keine Zahlung aus.
+        <div class="payment-pseudo">
+            Einmalzahlung für 12 Monate, keine automatische Verlängerung.
+            Studienprojekt: Stripe-Testmodus, es wird kein echtes Geld
+            eingezogen.
         </div>
     </section>
 </template>
-
-<script setup lang="ts">
-const method = defineModel<'paypal' | 'card'>({ required: true });
-</script>
 
 <style scoped>
 .payment-section {
@@ -61,32 +43,35 @@ const method = defineModel<'paypal' | 'card'>({ required: true });
     margin: 0;
     color: #6b7280;
 }
-.payment-methods {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 24px;
-}
 .payment-method {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
     padding: 16px;
     border: 1px solid #d1d5db;
     border-radius: 6px;
     background: #fff;
-    text-align: left;
-    cursor: pointer;
 }
 .payment-method--active {
     border-color: #2563eb;
     box-shadow: 0 0 0 1px #2563eb;
 }
-.payment-method strong,
-.payment-method span {
+.payment-method__details {
+    min-width: 0;
+}
+.payment-method__details strong,
+.payment-method__details span {
     display: block;
 }
-.payment-method span {
+.payment-method__details span {
     margin-top: 4px;
     color: #6b7280;
     font-size: 0.875rem;
+}
+.payment-method__price {
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 .payment-pseudo {
     padding: 16px;
@@ -94,10 +79,5 @@ const method = defineModel<'paypal' | 'card'>({ required: true });
     border-radius: 6px;
     color: #4b5563;
     font-size: 0.875rem;
-}
-@media (max-width: 480px) {
-    .payment-methods {
-        grid-template-columns: 1fr;
-    }
 }
 </style>
