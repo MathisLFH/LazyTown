@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Settings\DataExportController;
+use App\Http\Controllers\Settings\NotificationSettingsController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
 use App\Http\Controllers\Teams\TeamAdministrationController;
@@ -18,6 +19,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::get('settings/profile/export', DataExportController::class)->name('profile.export');
+    Route::get('settings/notifications', [NotificationSettingsController::class, 'edit'])->name('notifications.edit');
+    Route::patch('settings/notifications', [NotificationSettingsController::class, 'update'])->name('notifications.update');
 
     Route::get('settings/teams/{team}/payment', [TeamPaymentController::class, 'edit'])->name('teams.payment.edit');
     Route::post('settings/teams/{team}/payment', [TeamPaymentController::class, 'update'])->name('teams.payment.update');

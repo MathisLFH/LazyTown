@@ -29,6 +29,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string|null $phone
  * @property string $email
  * @property array<int, string> $roles
+ * @property array<string, bool>|null $notification_settings
  * @property string|null $active_role
  * @property Carbon|null $email_verified_at
  * @property string $password
@@ -47,7 +48,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property-read ClubRole|null $role
  * @property-read Collection<int, Message> $messages
  */
-#[Fillable(['tenant_id', 'role_id', 'name', 'first_name', 'last_name', 'birth_date', 'birth_place', 'nationality', 'sex', 'address', 'city', 'postcode', 'phone', 'email', 'password', 'current_team_id', 'roles', 'active_role'])]
+#[Fillable(['tenant_id', 'role_id', 'name', 'first_name', 'last_name', 'birth_date', 'birth_place', 'nationality', 'sex', 'address', 'city', 'postcode', 'phone', 'email', 'password', 'current_team_id', 'roles', 'active_role', 'notification_settings'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {
@@ -78,6 +79,7 @@ class User extends Authenticatable implements PasskeyUser
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
             'roles' => 'array',
+            'notification_settings' => 'array',
         ];
     }
 
