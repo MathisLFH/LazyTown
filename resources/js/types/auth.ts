@@ -22,6 +22,8 @@ export type Auth = {
 
 export type NotificationItem = {
     id: string;
+    type: string;
+    category: string | null;
     title: string;
     text: string;
     url: string;

@@ -50,6 +50,8 @@ class HandleInertiaRequests extends Middleware
                 ->get()
                 ->map(fn ($notification): array => [
                     'id' => $notification->id,
+                    'type' => $notification->type,
+                    'category' => $notification->data['category'] ?? null,
                     'title' => $notification->data['title'] ?? 'Benachrichtigung',
                     'text' => $notification->data['text'] ?? '',
                     'url' => $notification->data['url'] ?? route('home'),

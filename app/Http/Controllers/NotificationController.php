@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Notifications\TestNotification;
+use App\Services\Notifications\NotificationDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class NotificationController extends Controller
 {
+    public function __construct(private NotificationDispatcher $notificationDispatcher) {}
+
     /**
      * Mark all notifications for the current user as read.
      */
@@ -36,7 +39,11 @@ class NotificationController extends Controller
     {
         abort_unless(app()->environment(['local', 'testing']), 404);
 
-        $request->user()->notify(new TestNotification);
+        $this->notificationDispatcher->sendToUser(
+            $request->user(),
+            new TestNotification,
+            TestNotification::CATEGORY,
+        );
 
         Inertia::flash('toast', [
             'type' => 'success',

@@ -6,6 +6,8 @@ use Illuminate\Notifications\Notification;
 
 class TestNotification extends Notification
 {
+    public const CATEGORY = 'test';
+
     /**
      * Get the notification's delivery channels.
      *
@@ -27,7 +29,7 @@ class TestNotification extends Notification
             'title' => 'Testbenachrichtigung',
             'text' => 'Diese Benachrichtigung wurde zum Testen des Notification-Dropdowns erstellt.',
             'url' => route('home'),
-            'category' => 'test',
+            'category' => self::CATEGORY,
         ];
     }
 }
