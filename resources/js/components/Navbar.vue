@@ -13,7 +13,6 @@ import { useProfileAvatar } from '@/composables/useProfileAvatar';
 import { hallenplan, home, meinTeam, spielplan } from '@/routes';
 import { index as manageTeams } from '@/routes/admin/teams';
 import { edit as profile } from '@/routes/profile';
-import { edit as payment } from '@/routes/teams/payment';
 
 type NavigationItem = {
     label: string;
@@ -24,7 +23,6 @@ const searchQuery = ref('');
 const { isCurrentUrl } = useCurrentUrl();
 const page = usePage();
 const currentUser = computed(() => page.props.auth.user);
-const currentTeam = computed(() => page.props.currentTeam);
 const { avatarDataUrl } = useProfileAvatar(currentUser.value?.id ?? null);
 const isAuthenticated = computed(() => Boolean(page.props.auth.user));
 const userRoles = computed(() => (currentUser.value?.roles ?? []) as string[]);
@@ -43,13 +41,6 @@ const administrationItems = computed(() => {
     }
 
     const items: NavigationItem[] = [];
-
-    if (currentTeam.value) {
-        items.push({
-            label: 'Bezahlung für das Tool',
-            href: payment(currentTeam.value.slug).url,
-        });
-    }
 
     items.push(
         { label: 'Teams verwalten', href: manageTeams().url },

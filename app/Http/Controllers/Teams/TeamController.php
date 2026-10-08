@@ -54,12 +54,11 @@ class TeamController extends Controller
     public function store(SaveTeamRequest $request, CreateTeam $createTeam): RedirectResponse
     {
         $team = $createTeam->handle($request->user(), $request->validated('name'));
+        $team->update(['payment_status' => 'not_required']);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Team created.')]);
 
-        return $request->user()->hasRole('trainer')
-            ? to_route('teams.payment.edit', ['team' => $team->slug])
-            : to_route('teams.edit', ['team' => $team->slug]);
+        return to_route('teams.edit', ['team' => $team->slug]);
     }
 
     /**

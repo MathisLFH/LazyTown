@@ -85,7 +85,9 @@ class CreateNewUser implements CreatesNewUsers
             'password' => $this->passwordRules(),
         ])->validate();
 
-        $subscriptionPrice = $data['subscription'] === 'premium' ? 29.99 : 0;
+        $subscriptionPrice = $data['subscription'] === 'premium'
+            ? (int) config('services.stripe.annual_access_amount_cents') / 100
+            : 0;
 
         return DB::transaction(function () use ($data, $subscriptionPrice): User {
             $user = User::create([

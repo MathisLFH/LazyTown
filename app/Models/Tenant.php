@@ -33,6 +33,17 @@ class Tenant extends Model
     }
 
     /**
+     * A club is awaiting payment until its registration team is confirmed.
+     */
+    public function isAwaitingPayment(): bool
+    {
+        $clubTeams = $this->teams()->where('is_personal', false);
+
+        return (clone $clubTeams)->where('payment_status', 'pending')->exists()
+            && (clone $clubTeams)->where('payment_status', '!=', 'pending')->doesntExist();
+    }
+
+    /**
      * @return BelongsTo<User, $this>
      */
     public function admin(): BelongsTo

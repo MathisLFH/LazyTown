@@ -136,6 +136,11 @@ class StripeCheckoutService
         return $amount;
     }
 
+    public function annualAccessPriceLabel(): string
+    {
+        return number_format($this->annualAccessAmountInCents() / 100, 2, ',', '.').' €';
+    }
+
     private function client(): StripeClient
     {
         if ($this->client instanceof StripeClient) {

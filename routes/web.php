@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\StartseiteController;
 use App\Http\Controllers\Teams\ClubOnboardingController;
+use App\Http\Controllers\Teams\RegistrationPaymentController;
 use App\Http\Controllers\Teams\StripeWebhookController;
 use App\Http\Controllers\Teams\TeamController;
 use App\Http\Controllers\Teams\TeamInvitationController;
@@ -18,6 +19,8 @@ Route::inertia('startseite', 'Startseite')->name('startseite');
 
 Route::middleware(['auth'])->group(function () {
     Route::post('invitations/{invitation}/accept', [TeamInvitationController::class, 'accept'])->name('invitations.accept');
+    Route::get('register/payment', [RegistrationPaymentController::class, 'show'])->name('register.payment');
+    Route::post('register/payment', [RegistrationPaymentController::class, 'store'])->name('register.payment.store');
     Route::delete('invitations/{invitation}', [TeamInvitationController::class, 'decline'])->name('invitations.decline');
 
     Route::middleware('club.access')->group(function () {

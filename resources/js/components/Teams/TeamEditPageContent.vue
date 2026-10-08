@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Form, Link, router } from '@inertiajs/vue3';
-import { ChevronDown, CreditCard, Mail, UserPlus, X } from '@lucide/vue';
+import { Form, router } from '@inertiajs/vue3';
+import { ChevronDown, Mail, UserPlus, X } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import CancelInvitationModal from '@/components/CancelInvitationModal.vue';
 import DeleteTeamModal from '@/components/DeleteTeamModal.vue';
@@ -18,7 +18,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useInitials } from '@/composables/useInitials';
 import { update } from '@/routes/teams';
 import { update as updateMember } from '@/routes/teams/members';
-import { edit as paymentEdit } from '@/routes/teams/payment';
 import type { RoleOption, Team, TeamInvitation, TeamMember, TeamPermissions } from '@/types';
 
 type Props = {
@@ -58,7 +57,6 @@ const confirmCancelInvitation = (invitation: TeamInvitation) => {
     <div class="flex flex-col space-y-10">
         <div v-if="permissions.canUpdateTeam" class="space-y-6">
             <Heading variant="small" title="Team Einstellungen" description="Teamname und Einstellungen aktualisieren" />
-            <Button variant="outline" as-child><Link :href="paymentEdit(team.slug)"><CreditCard /> Zahlung</Link></Button>
             <Form v-bind="update.form(team.slug)" class="space-y-6" v-slot="{ errors, processing }">
                 <div class="grid gap-2"><Label for="name">Team name</Label><Input id="name" name="name" data-test="team-name-input" :default-value="team.name" required /><InputError :message="errors.name" /></div>
                 <div class="flex items-center gap-4"><Button type="submit" data-test="team-save-button" :disabled="processing">Speichern</Button></div>

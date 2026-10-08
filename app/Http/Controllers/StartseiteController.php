@@ -17,6 +17,10 @@ class StartseiteController extends Controller
             return Inertia::render('Welcome');
         }
 
+        if ($request->user()->tenant?->isAwaitingPayment()) {
+            return to_route('register.payment');
+        }
+
         if ($request->user()->hasRole('trainer') && $request->user()->teams()->where('is_personal', false)->wherePivot('status', 'active')->doesntExist()) {
             return to_route('club.onboarding');
         }

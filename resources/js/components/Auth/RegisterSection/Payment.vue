@@ -1,3 +1,7 @@
+<script setup lang="ts">
+defineProps<{ price: string }>();
+</script>
+
 <template>
     <section class="payment-section">
         <div class="payment-section__header">
@@ -14,7 +18,7 @@
                     bei Stripe ein.
                 </span>
             </div>
-            <strong class="payment-method__price">29,99 €</strong>
+            <strong class="payment-method__price">{{ price }}</strong>
         </div>
 
         <div class="payment-pseudo">

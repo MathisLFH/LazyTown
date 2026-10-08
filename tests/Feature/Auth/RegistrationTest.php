@@ -66,8 +66,7 @@ test('clubs can register an administrator and subscription without storing a pay
                 ->and($team->payment_status)->toBe('pending')
                 ->and($successUrl)->toStartWith('https://lazytown.test/settings/teams/')
                 ->and($successUrl)->toContain($team->slug.'/payment/complete?session_id={CHECKOUT_SESSION_ID}')
-                ->and($cancelUrl)->toStartWith('https://lazytown.test/settings/teams/')
-                ->and($cancelUrl)->toContain($team->slug.'/payment?checkout=cancelled');
+                ->and($cancelUrl)->toBe('https://lazytown.test/register/payment?checkout=cancelled');
 
             return ['id' => 'cs_test_registration', 'url' => $checkoutUrl];
         });

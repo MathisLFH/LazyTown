@@ -36,19 +36,14 @@ class RegisterResponse implements RegisterResponseContract
         }
 
         $applicationBaseUrl = rtrim((string) config('app.url'), '/');
-        $paymentPageUrl = $applicationBaseUrl.route('teams.payment.edit', [
-            'team' => $pendingPremiumTeam->slug,
-        ], false);
+        $paymentPageUrl = $applicationBaseUrl.route('register.payment', [], false);
         $checkout = $this->stripeCheckout->createOrReuseSession(
             $pendingPremiumTeam,
             $user,
             $applicationBaseUrl.route('teams.payment.complete', [
                 'team' => $pendingPremiumTeam->slug,
             ], false).'?session_id={CHECKOUT_SESSION_ID}',
-            $applicationBaseUrl.route('teams.payment.edit', [
-                'team' => $pendingPremiumTeam->slug,
-                'checkout' => 'cancelled',
-            ], false),
+            $applicationBaseUrl.route('register.payment', ['checkout' => 'cancelled'], false),
         );
 
         if ($checkout === null) {

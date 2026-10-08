@@ -2,8 +2,10 @@
 
 use App\Enums\TeamRole;
 use App\Models\Team;
+use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Teams\StripeCheckoutService;
+use Inertia\Testing\AssertableInertia as Assert;
 use Stripe\Checkout\Session;
 use Stripe\Event;
 
@@ -15,12 +17,48 @@ test('trainers can open club onboarding before payment', function () {
         ->assertOk();
 });
 
-test('team owners can start stripe checkout without marking the team paid', function () {
-    $user = User::factory()->create(['roles' => ['spieler'], 'active_role' => 'spieler']);
-    $team = Team::factory()->create();
-    $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
-    $sessionId = 'cs_test_checkout';
+function pendingClubRegistration(): array
+{
+    $user = User::factory()->create(['roles' => ['verwaltung'], 'active_role' => 'verwaltung']);
+    $tenant = Tenant::factory()->create(['admin_id' => $user->id, 'subdomain' => 'pending-club']);
+    $user->update(['tenant_id' => $tenant->id]);
+    $team = Team::factory()->create([
+        'tenant_id' => $tenant->id,
+        'created_by' => $user->id,
+        'is_personal' => false,
+        'payment_status' => 'pending',
+    ]);
+
+    return [$user, $tenant, $team];
+}
+
+test('a pending registration can be resumed with its saved data', function () {
+    [$user, , $team] = pendingClubRegistration();
+
+    $this->actingAs($user)
+        ->get(route('register.payment', ['checkout' => 'cancelled']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('auth/Register')
+            ->where('pendingRegistration.club.name', $team->name)
+            ->where('pendingRegistration.club.subdomain', 'pending-club')
+            ->where('pendingRegistration.admin.email', $user->email)
+            ->where('pendingRegistration.checkoutState', 'cancelled')
+            ->where('annualAccessPrice', '29,99 €'),
+        );
+});
+
+test('resuming without a pending registration returns home', function () {
+    $this->actingAs(User::factory()->create())
+        ->get(route('register.payment'))
+        ->assertRedirect(route('home'));
+});
+
+test('a new checkout reuses the pending registration without creating records', function () {
+    [$user, , $team] = pendingClubRegistration();
     $checkoutUrl = 'https://checkout.stripe.com/c/pay/test';
+    $userCount = User::count();
+    $teamCount = Team::count();
 
     $stripeCheckout = Mockery::mock(StripeCheckoutService::class);
     $stripeCheckout->shouldReceive('createOrReuseSession')
@@ -30,30 +68,54 @@ test('team owners can start stripe checkout without marking the team paid', func
             User $payer,
             string $successUrl,
             string $cancelUrl,
-        ) use ($team, $user, $sessionId, $checkoutUrl): array {
+        ) use ($team, $user, $checkoutUrl): array {
             expect($checkoutTeam->is($team))->toBeTrue()
                 ->and($payer->is($user))->toBeTrue()
                 ->and($successUrl)->toContain('{CHECKOUT_SESSION_ID}')
-                ->and($cancelUrl)->toContain('checkout=cancelled');
+                ->and($cancelUrl)->toBe(route('register.payment', ['checkout' => 'cancelled']));
 
-            $checkoutTeam->update(['payment_reference' => $sessionId]);
-
-            return ['id' => $sessionId, 'url' => $checkoutUrl];
+            return ['id' => 'cs_test_checkout', 'url' => $checkoutUrl];
         });
     $this->instance(StripeCheckoutService::class, $stripeCheckout);
 
-    $response = $this->actingAs($user)
+    $this->actingAs($user)
         ->withHeader('X-Inertia', 'true')
-        ->post(route('teams.payment.update', $team));
-
-    $response->assertStatus(409)
+        ->post(route('register.payment.store'))
+        ->assertStatus(409)
         ->assertHeader('X-Inertia-Location', $checkoutUrl);
-    $this->assertDatabaseHas('teams', [
-        'id' => $team->id,
-        'payment_status' => 'pending',
-        'payment_reference' => $sessionId,
-        'payment_paid_at' => null,
-    ]);
+
+    expect(User::count())->toBe($userCount)
+        ->and(Team::count())->toBe($teamCount)
+        ->and($team->fresh()->payment_status)->toBe('pending');
+});
+
+test('tenant subdomains of unpaid clubs redirect to the payment step', function () {
+    config(['app.url' => 'https://lazytown.test']);
+    [, $tenant, $team] = pendingClubRegistration();
+
+    $this->get('https://pending-club.lazytown.test/register')
+        ->assertRedirect('https://lazytown.test/register/payment');
+
+    $team->update(['payment_status' => 'paid']);
+
+    $this->get('https://pending-club.lazytown.test/register')->assertOk();
+});
+
+test('the home page sends users with an unpaid club to the payment step', function () {
+    [$user] = pendingClubRegistration();
+
+    $this->actingAs($user)->get(route('home'))->assertRedirect(route('register.payment'));
+});
+
+test('club onboarding creates a team without payment', function () {
+    $user = User::factory()->create(['roles' => ['trainer'], 'active_role' => 'trainer']);
+
+    $response = $this->actingAs($user)->post(route('club.onboarding.store'), ['name' => 'New Club']);
+    $team = Team::where('name', 'New Club')->firstOrFail();
+
+    $response->assertRedirect(route('teams.edit', $team));
+    expect($team->payment_status)->toBe('not_required')
+        ->and($team->members()->whereKey($user->id)->exists())->toBeTrue();
 });
 
 test('team owners are activated after stripe confirms the checkout session', function () {
@@ -167,7 +229,7 @@ test('unpaid stripe sessions do not activate a team', function () {
 
     $this->actingAs($user)
         ->get(route('teams.payment.complete', ['team' => $team, 'session_id' => 'cs_test_checkout']))
-        ->assertRedirect(route('teams.payment.edit', ['team' => $team->slug, 'checkout' => 'pending']));
+        ->assertRedirect(route('register.payment', ['checkout' => 'pending']));
 
     $this->assertDatabaseHas('teams', [
         'id' => $team->id,
@@ -186,57 +248,4 @@ test('stripe webhook rejects invalid signatures', function () {
     $this->postJson(route('stripe.webhook'), ['invalid' => 'payload'], [
         'Stripe-Signature' => 't=1,v1=invalid',
     ])->assertBadRequest();
-});
-
-test('club onboarding creates an unowned pending team until payment', function () {
-    $user = User::factory()->create(['roles' => ['trainer'], 'active_role' => 'trainer']);
-
-    $response = $this->actingAs($user)->post(route('club.onboarding.store'), ['name' => 'New Club']);
-    $team = Team::where('name', 'New Club')->firstOrFail();
-
-    $response->assertRedirect(route('teams.payment.edit', $team));
-    expect($team->members()->count())->toBe(0);
-
-    $this->actingAs($user)->post(route('teams.payment.skip', $team));
-
-    expect($user->refresh()->roles)->toContain('trainer')
-        ->and($team->fresh()->members()->whereKey($user->id)->exists())->toBeTrue();
-});
-
-test('team owners can skip payment temporarily', function () {
-    $user = User::factory()->create();
-    $team = Team::factory()->create();
-    $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
-
-    $this->actingAs($user)
-        ->post(route('teams.payment.skip', $team))
-        ->assertRedirect(route('teams.edit', $team));
-
-    $this->assertDatabaseHas('teams', ['id' => $team->id, 'payment_status' => 'skipped']);
-});
-
-test('team members cannot process payment', function () {
-    $user = User::factory()->create();
-    $team = Team::factory()->create();
-    $team->members()->attach($user, ['role' => TeamRole::Member->value]);
-
-    $this->actingAs($user)
-        ->post(route('teams.payment.skip', $team))
-        ->assertForbidden();
-});
-
-test('payment can only be skipped outside production', function () {
-    $this->app['env'] = 'production';
-
-    $user = User::factory()->create();
-    $team = Team::factory()->create();
-    $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
-    $csrfToken = 'production-test-token';
-
-    $this->actingAs($user)
-        ->withSession(['_token' => $csrfToken])
-        ->post(route('teams.payment.skip', $team), ['_token' => $csrfToken])
-        ->assertNotFound();
-
-    $this->assertDatabaseHas('teams', ['id' => $team->id, 'payment_status' => 'pending']);
 });

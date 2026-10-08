@@ -19,10 +19,7 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::get('settings/profile/export', DataExportController::class)->name('profile.export');
 
-    Route::get('settings/teams/{team}/payment', [TeamPaymentController::class, 'edit'])->name('teams.payment.edit');
     Route::get('settings/teams/{team}/payment/complete', [TeamPaymentController::class, 'complete'])->name('teams.payment.complete');
-    Route::post('settings/teams/{team}/payment', [TeamPaymentController::class, 'update'])->name('teams.payment.update');
-    Route::post('settings/teams/{team}/payment/skip', [TeamPaymentController::class, 'skip'])->name('teams.payment.skip');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
