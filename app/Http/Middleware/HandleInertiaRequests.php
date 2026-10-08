@@ -44,6 +44,20 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $user,
             ],
+            'notifications' => fn () => $user?->notifications()
+                ->latest()
+                ->limit(10)
+                ->get()
+                ->map(fn ($notification): array => [
+                    'id' => $notification->id,
+                    'title' => $notification->data['title'] ?? 'Benachrichtigung',
+                    'text' => $notification->data['text'] ?? '',
+                    'created_at' => $notification->created_at?->toIso8601String(),
+                    'read_at' => $notification->read_at?->toIso8601String(),
+                ])
+                ->values()
+                ->all() ?? [],
+            'unreadNotificationsCount' => fn () => $user?->unreadNotifications()->count() ?? 0,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'currentTeam' => fn () => $user?->currentTeam ? $user->toUserTeam($user->currentTeam) : null,
             'teams' => fn () => $user?->toUserTeams(includeCurrent: true) ?? [],

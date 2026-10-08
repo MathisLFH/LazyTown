@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link, usePage } from '@inertiajs/vue3';
+import { Form, Link, usePage } from '@inertiajs/vue3';
 import { Bell, ChevronDown, CircleUserRound, Search } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import {
@@ -14,6 +14,8 @@ import { hallenplan, home, meinTeam, spielplan } from '@/routes';
 import { index as manageTeams } from '@/routes/admin/teams';
 import { edit as profile } from '@/routes/profile';
 import { edit as payment } from '@/routes/teams/payment';
+import { read } from '@/routes/notifications';
+import type { NotificationItem } from '@/types/auth';
 
 type NavigationItem = {
     label: string;
@@ -62,6 +64,23 @@ const administrationItems = computed(() => {
 const isAdministrationActive = computed(() =>
     administrationItems.value.some((item) => isCurrentUrl(item.href)),
 );
+const notifications = computed(
+    () => page.props.notifications as NotificationItem[],
+);
+const unreadNotificationsCount = computed(
+    () => page.props.unreadNotificationsCount as number,
+);
+
+function formatNotificationDate(date: string | null): string {
+    if (!date) {
+        return '';
+    }
+
+    return new Intl.DateTimeFormat('de-DE', {
+        dateStyle: 'short',
+        timeStyle: 'short',
+    }).format(new Date(date));
+}
 </script>
 
 <template>
@@ -139,13 +158,76 @@ const isAdministrationActive = computed(() =>
             </div>
 
             <div class="flex flex-1 items-center justify-end gap-1">
-                <button
-                    type="button"
-                    class="inline-flex size-10 items-center justify-center rounded-md text-muted-foreground transition hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
-                    aria-label="Benachrichtigungen"
-                >
-                    <Bell class="size-5" aria-hidden="true" />
-                </button>
+                <DropdownMenu>
+                    <DropdownMenuTrigger as-child>
+                        <button
+                            type="button"
+                            class="relative inline-flex size-10 items-center justify-center rounded-md text-muted-foreground transition hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
+                            aria-label="Benachrichtigungen"
+                        >
+                            <Bell class="size-5" aria-hidden="true" />
+                            <span
+                                v-if="unreadNotificationsCount > 0"
+                                class="absolute top-2 right-2 size-2 rounded-full bg-red-500"
+                                aria-label="Ungelesene Benachrichtigungen"
+                            />
+                        </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" class="w-80">
+                        <div
+                            class="flex items-center justify-between px-2 py-1.5"
+                        >
+                            <span class="text-sm font-semibold"
+                                >Benachrichtigungen</span
+                            >
+                            <Form
+                                v-if="unreadNotificationsCount > 0"
+                                :action="read.url()"
+                                method="post"
+                                class="shrink-0"
+                                #default="{ processing }"
+                            >
+                                <button
+                                    type="submit"
+                                    class="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                                    :disabled="processing"
+                                >
+                                    Als gelesen markieren
+                                </button>
+                            </Form>
+                        </div>
+                        <div
+                            v-if="notifications.length === 0"
+                            class="px-2 py-6 text-center text-sm text-muted-foreground"
+                        >
+                            Keine Benachrichtigungen vorhanden.
+                        </div>
+                        <div v-else class="grid gap-1">
+                            <div
+                                v-for="notification in notifications"
+                                :key="notification.id"
+                                class="rounded-sm px-2 py-2 text-sm"
+                                :class="{
+                                    'bg-accent/60': !notification.read_at,
+                                }"
+                            >
+                                <p class="font-medium">
+                                    {{ notification.title }}
+                                </p>
+                                <p class="mt-0.5 text-muted-foreground">
+                                    {{ notification.text }}
+                                </p>
+                                <p class="mt-1 text-xs text-muted-foreground">
+                                    {{
+                                        formatNotificationDate(
+                                            notification.created_at,
+                                        )
+                                    }}
+                                </p>
+                            </div>
+                        </div>
+                    </DropdownMenuContent>
+                </DropdownMenu>
                 <Link
                     :href="profileUrl"
                     class="inline-flex items-center gap-2 rounded-md border border-input px-2 py-1 text-sm font-medium text-foreground transition hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"

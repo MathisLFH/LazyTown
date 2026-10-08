@@ -3,6 +3,7 @@
 namespace App\Notifications\Teams;
 
 use App\Models\TeamInvitation as TeamInvitationModel;
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -27,7 +28,16 @@ class TeamInvitation extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['mail', 'database'];
+    }
+
+    /**
+     * Determine whether this notification should be sent.
+     */
+    public function shouldSend(object $notifiable, string $channel): bool
+    {
+        return ! $notifiable instanceof User
+            || ($notifiable->notification_settings['team_invitations'] ?? true);
     }
 
     /**
@@ -59,6 +69,12 @@ class TeamInvitation extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
+            'title' => 'Neue Team-Einladung',
+            'text' => __(':inviterName hat dich in das Team :teamName eingeladen.', [
+                'inviterName' => $this->invitation->inviter->name,
+                'teamName' => $this->invitation->team->name,
+            ]),
+            'category' => 'team_invitations',
             'invitation_id' => $this->invitation->id,
             'team_id' => $this->invitation->team_id,
             'team_name' => $this->invitation->team->name,

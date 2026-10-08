@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\StartseiteController;
 use App\Http\Controllers\Teams\ClubOnboardingController;
 use App\Http\Controllers\Teams\TeamController;
@@ -14,9 +15,8 @@ Route::inertia('contact/impressum', 'Impressum')->name('impressum');
 Route::inertia('contact/datenschutzerklaerung', 'Datenschutzerklaerung')->name('datenschutzerklaerung');
 Route::inertia('startseite', 'Startseite')->name('startseite');
 
-
-
 Route::middleware(['auth'])->group(function () {
+    Route::post('notifications/read', [NotificationController::class, 'markAllAsRead'])->name('notifications.read');
     Route::post('invitations/{invitation}/accept', [TeamInvitationController::class, 'accept'])->name('invitations.accept');
     Route::delete('invitations/{invitation}', [TeamInvitationController::class, 'decline'])->name('invitations.decline');
 
