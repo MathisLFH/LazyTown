@@ -10,12 +10,7 @@ import { home } from '@/routes';
         <section
             class="w-full max-w-20xl rounded-2xl border border-sidebar-border/70 bg-background p-8 text-center shadow-sm sm:p-12"
         >
-            <Link
-                :href="home().url"
-                class="rounded-md border px-3 py-2 text-sm transition-colors hover:bg-muted"
-            >
-                Zurück zur Startseite
-            </Link>
+            
             <div class="mt-6">
                 <div class="mb-4 text-2xl font-bold">LT</div>
                 <h2 class="text-xl font-semibold tracking-tight">

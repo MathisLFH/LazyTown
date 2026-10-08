@@ -8,11 +8,13 @@ use App\Http\Controllers\Teams\TeamMemberController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', StartseiteController::class)->name('home');
-Route::inertia('about-us', 'AboutUs')->name('aboutus');
-Route::inertia('kontakt', 'Kontakt')->name('kontakt');
-Route::inertia('impressum', 'Impressum')->name('impressum');
-Route::inertia('datenschutzerklaerung', 'Datenschutzerklaerung')->name('datenschutzerklaerung');
+Route::inertia('contact/about-us', 'AboutUs')->name('aboutus');
+Route::inertia('contact/kontakt', 'Kontakt')->name('kontakt');
+Route::inertia('contact/impressum', 'Impressum')->name('impressum');
+Route::inertia('contact/datenschutzerklaerung', 'Datenschutzerklaerung')->name('datenschutzerklaerung');
 Route::inertia('startseite', 'Startseite')->name('startseite');
+
+
 
 Route::middleware(['auth'])->group(function () {
     Route::post('invitations/{invitation}/accept', [TeamInvitationController::class, 'accept'])->name('invitations.accept');

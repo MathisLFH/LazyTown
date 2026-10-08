@@ -1,21 +1,26 @@
 import { createInertiaApp } from '@inertiajs/vue3';
 import { initializeTheme } from '@/composables/useAppearance';
 import AppLayout from '@/layouts/AppLayout.vue';
+import ContactLayout from '@/layouts/ContactLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { initializeFlashToast } from '@/lib/flashToast';
 
 const appName = import.meta.env.VITE_APP_NAME || 'LazyTown';
 
+
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
     layout: (name) => {
+        console.log('name', name)
         switch (true) {
             case name.startsWith('auth/'):
                 return AuthLayout;
             case name.startsWith('settings/'):
             case name.startsWith('teams/'):
-                return [AppLayout, SettingsLayout];
+                return [AppLayout, SettingsLayout]; //Später ändern, wenn es Contact gibt
+            case name.startsWith('AboutUs') || name.startsWith('Kontakt') || name.startsWith('Impressum') || name.startsWith('Datenschutzerklaerung'):
+                    return ContactLayout;
             default:
                 return AppLayout;
         }

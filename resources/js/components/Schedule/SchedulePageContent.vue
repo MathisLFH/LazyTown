@@ -1,27 +1,22 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { useSchedule } from '@/composables/useGameplan'; //ausgelagert in composables/useGameplan.ts wo die Daten für den Spielplan liegen
+import { onMounted } from 'vue';
 
-type ScheduleEntry = {
-    id: number;
-    title: string;
-    type: 'Spiel' | 'Training';
-    date: string;
-    time: string;
-    place: string;
-};
+const { entries, loading, error, fetchSchedule } = useSchedule();
 
-const filter = ref<'Alle' | ScheduleEntry['type']>('Alle');
+
+onMounted(() => { //wartet bis die Komponente auf der Seite ist, bevor der Spielplan abgerufen wird
+    fetchSchedule();
+});
+
+const filter = ref<'Alle' | 'Spiel' | 'Training'>('Alle');
 const view = ref<'liste' | 'kalender'>('liste');
-const entries: ScheduleEntry[] = [
-    { id: 1, title: 'Training Herren 1', type: 'Training', date: '02.09.2026', time: '18:30', place: 'Halle Nord' },
-    { id: 2, title: 'Heimspiel gegen TSV West', type: 'Spiel', date: '05.09.2026', time: '15:00', place: 'Sportzentrum' },
-    { id: 3, title: 'Training Herren 1', type: 'Training', date: '07.09.2026', time: '18:30', place: 'Halle Nord' },
-];
 
 const filteredEntries = computed(() =>
     filter.value === 'Alle'
-        ? entries
-        : entries.filter((entry) => entry.type === filter.value),
+        ? entries.value
+        : entries.value.filter((entry) => entry.type === filter.value),
 );
 </script>
 
@@ -41,25 +36,57 @@ const filteredEntries = computed(() =>
             </div>
         </div>
 
+
+
+             <!-- für die Ladezeit als Anzeige. Für Fehler und keine Einträge -->
         <section class="rounded-lg border border-sidebar-border/70 p-5">
+         <div v-if="loading" class="text-center text-muted-foreground py-8">
+             Lädt Spielplan …
+         </div>
+            <div v-else-if="error" class="text-center text-red-600 py-8">
+            {{ error }}
+           </div>
+        <div v-else-if="filteredEntries.length === 0" class="text-center text-muted-foreground py-8">
+             Keine Einträge für diesen Filter.
+        </div>
+         <template v-else>
+          <div v-if="view === 'liste'" class="space-y-3">
+          </div>
+          <div v-else class="grid gap-3 sm:grid-cols-3">
+          </div>
+        </template>
+
+            <!--Listenansicht-->
             <div v-if="view === 'liste'" class="space-y-3">
                 <article v-for="entry in filteredEntries" :key="entry.id" class="rounded-md bg-muted/50 p-4">
                     <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <h2 class="font-medium">{{ entry.title }}</h2>
                             <p class="text-sm text-muted-foreground">{{ entry.type }} · {{ entry.place }}</p>
+                            <p class="text-sm text-muted-foreground" :class="entry.status === 'abgesagt' ? 'text-red-600 font-bold' : 'text-muted-foreground'"style="font-style: italic;">
+                                {{ entry.status }}
+                            </p>
                         </div>
-                        <time class="text-sm font-medium">{{ entry.date }} · {{ entry.time }} Uhr</time>
+                        <time class="text-sm font-medium">
+                             {{ entry.date ? `${entry.date}` : 'Datum offen' }} · {{ entry.time ? `${entry.time} Uhr` : 'Zeit offen' }}
+                        </time>
                     </div>
                 </article>
             </div>
+            <!--kalenderansicht-->
             <div v-else class="grid gap-3 sm:grid-cols-3">
                 <div v-for="entry in filteredEntries" :key="entry.id" class="min-h-32 rounded-md border p-4">
-                    <p class="text-xs text-muted-foreground">{{ entry.date }}</p>
+                    <p class="text-xs text-muted-foreground">{{ entry.date ? `${entry.date}` : 'Datum offen' }}</p>
                     <h2 class="mt-2 font-medium">{{ entry.title }}</h2>
-                    <p class="text-sm text-muted-foreground">{{ entry.time }} Uhr · {{ entry.place }}</p>
+                    <p class="text-sm text-muted-foreground">
+                      {{ entry.time ? `${entry.time} Uhr` : 'Zeit offen' }} · {{ entry.place }}
+                    </p>
+                    <p class="text-sm text-muted-foreground" :class="entry.status === 'abgesagt' ? 'text-red-600 font-bold' : 'text-muted-foreground'"style="font-style: italic;">
+                     {{ entry.status }}
+                    </p>
                 </div>
             </div>
         </section>
+      
     </main>
 </template>
