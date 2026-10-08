@@ -17,6 +17,8 @@ Route::inertia('startseite', 'Startseite')->name('startseite');
 
 Route::middleware(['auth'])->group(function () {
     Route::post('notifications/read', [NotificationController::class, 'markAllAsRead'])->name('notifications.read');
+    Route::post('notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read.single');
+    Route::post('notifications/test', [NotificationController::class, 'createTest'])->name('notifications.test');
     Route::post('invitations/{invitation}/accept', [TeamInvitationController::class, 'accept'])->name('invitations.accept');
     Route::delete('invitations/{invitation}', [TeamInvitationController::class, 'decline'])->name('invitations.decline');
 

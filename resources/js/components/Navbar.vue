@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form, Link, usePage } from '@inertiajs/vue3';
+import { Form, Link, router, usePage } from '@inertiajs/vue3';
 import { Bell, ChevronDown, CircleUserRound, Search } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import {
@@ -15,6 +15,7 @@ import { index as manageTeams } from '@/routes/admin/teams';
 import { edit as profile } from '@/routes/profile';
 import { edit as payment } from '@/routes/teams/payment';
 import { read } from '@/routes/notifications';
+import { single as markAsRead } from '@/routes/notifications/read';
 import type { NotificationItem } from '@/types/auth';
 
 type NavigationItem = {
@@ -80,6 +81,17 @@ function formatNotificationDate(date: string | null): string {
         dateStyle: 'short',
         timeStyle: 'short',
     }).format(new Date(date));
+}
+
+function openNotification(notification: NotificationItem): void {
+    router.post(
+        markAsRead.url(notification.id),
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => router.visit(notification.url),
+        },
+    );
 }
 </script>
 
@@ -206,10 +218,17 @@ function formatNotificationDate(date: string | null): string {
                             <div
                                 v-for="notification in notifications"
                                 :key="notification.id"
-                                class="rounded-sm px-2 py-2 text-sm"
+                                class="cursor-pointer rounded-sm px-2 py-2 text-sm transition-colors hover:bg-accent"
                                 :class="{
                                     'bg-accent/60': !notification.read_at,
                                 }"
+                                role="button"
+                                tabindex="0"
+                                @click="openNotification(notification)"
+                                @keydown.enter="openNotification(notification)"
+                                @keydown.space.prevent="
+                                    openNotification(notification)
+                                "
                             >
                                 <p class="font-medium">
                                     {{ notification.title }}

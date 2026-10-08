@@ -3,6 +3,7 @@ import { Form } from '@inertiajs/vue3';
 import NotificationSettingsController from '@/actions/App/Http/Controllers/Settings/NotificationSettingsController';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
+import { test as createTestNotification } from '@/routes/notifications';
 
 type Category = {
     label: string;
@@ -12,6 +13,7 @@ type Category = {
 defineProps<{
     categories: Record<string, Category>;
     notificationSettings: Record<string, boolean>;
+    canCreateTestNotification: boolean;
 }>();
 </script>
 
@@ -51,5 +53,25 @@ defineProps<{
                 {{ processing ? 'Speichern...' : 'Einstellungen speichern' }}
             </Button>
         </Form>
+        <section v-if="canCreateTestNotification" class="border-t pt-6">
+            <Heading
+                variant="small"
+                title="Testbenachrichtigung"
+                description="Erstelle eine lokale Testbenachrichtigung, um die Glocke und das Dropdown zu prüfen."
+            />
+            <Form
+                v-bind="createTestNotification.form()"
+                class="mt-4"
+                #default="{ processing }"
+            >
+                <Button variant="outline" :disabled="processing">
+                    {{
+                        processing
+                            ? 'Wird erstellt...'
+                            : 'Testbenachrichtigung erstellen'
+                    }}
+                </Button>
+            </Form>
+        </section>
     </div>
 </template>

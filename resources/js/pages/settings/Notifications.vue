@@ -11,6 +11,7 @@ type Category = {
 defineProps<{
     categories: Record<string, Category>;
     notificationSettings: Record<string, boolean>;
+    canCreateTestNotification: boolean;
 }>();
 
 defineOptions({
@@ -30,5 +31,6 @@ defineOptions({
     <NotificationSettingsPageContent
         :categories="categories"
         :notification-settings="notificationSettings"
+        :can-create-test-notification="canCreateTestNotification"
     />
 </template>

@@ -21,6 +21,7 @@ class NotificationSettingsController extends Controller
         return Inertia::render('settings/Notifications', [
             'categories' => $categories,
             'notificationSettings' => $settings,
+            'canCreateTestNotification' => app()->environment(['local', 'testing']),
         ]);
     }
 

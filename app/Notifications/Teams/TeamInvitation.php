@@ -74,6 +74,7 @@ class TeamInvitation extends Notification implements ShouldQueue
                 'inviterName' => $this->invitation->inviter->name,
                 'teamName' => $this->invitation->team->name,
             ]),
+            'url' => route('mein-team'),
             'category' => 'team_invitations',
             'invitation_id' => $this->invitation->id,
             'team_id' => $this->invitation->team_id,

@@ -24,6 +24,7 @@ export type NotificationItem = {
     id: string;
     title: string;
     text: string;
+    url: string;
     created_at: string | null;
     read_at: string | null;
 };

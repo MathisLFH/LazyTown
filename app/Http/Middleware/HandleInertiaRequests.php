@@ -52,6 +52,7 @@ class HandleInertiaRequests extends Middleware
                     'id' => $notification->id,
                     'title' => $notification->data['title'] ?? 'Benachrichtigung',
                     'text' => $notification->data['text'] ?? '',
+                    'url' => $notification->data['url'] ?? route('home'),
                     'created_at' => $notification->created_at?->toIso8601String(),
                     'read_at' => $notification->read_at?->toIso8601String(),
                 ])
