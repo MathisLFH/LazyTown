@@ -173,6 +173,58 @@ Run tests:
 composer test
 ```
 
+## CI/CD
+
+GitHub Actions runs the CI workflow on every push to `master` and every pull
+request targeting `master`. The backend job runs `composer test` (Pint,
+PHPStan, and Laravel tests) using an in-memory SQLite database. The frontend
+job generates Wayfinder routes, runs ESLint, Prettier, and the TypeScript
+check, then builds the assets with Vite.
+
+Run the same checks locally:
+
+```bash
+composer test
+npm ci
+npm run lint:check
+npm run format:check
+npm run types:check
+npm run build
+```
+
+The deployment job targets the configured Linux server after its environment
+and credentials are prepared.
+
+### Production deployment
+
+After server setup, a push to `master` is deployed only when the backend and
+frontend jobs pass and the repository variable `DEPLOY_ENABLED` is set to
+`true`. The deploy job installs a new release under the configured path and
+switches the `current` symlink; it preserves the server-side `.env` and
+`storage` between releases.
+
+Configure these repository variables:
+
+- `DEPLOY_ENABLED`: set to `true` only after the production server is ready
+- `DEPLOY_HOST`: server address
+- `DEPLOY_USER`: restricted SSH user (do not use `root`)
+- `DEPLOY_PATH`: `/var/www/lazytown`
+
+Create a GitHub Actions environment named `production` and add these secrets:
+
+- `DEPLOY_SSH_KEY`: private key for the restricted deployment user
+- `DEPLOY_KNOWN_HOSTS`: verified SSH host-key line for the server
+
+The server needs PHP 8.3 or newer with the PostgreSQL extension, Composer,
+Nginx configured to serve `/var/www/lazytown/current/public`, and a persistent
+production `.env` at `/var/www/lazytown/shared/.env`. Configure HTTPS for
+`https://lazytown.schmidtflo.de` before enabling deployments. Start the
+PostgreSQL Compose service once with a stable project name (`lazytown`) and
+the production `.env` values `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD`;
+keep Docker enabled after reboot. Its named data volume persists and port 5432
+is bound to localhost only. Add the deployment user to the `www-data` group.
+Ensure PHP-FPM can write to shared storage and each release's `bootstrap/cache`.
+
 ## Database
 
 ### Migrations
