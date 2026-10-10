@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
-import { Plus, Users } from '@lucide/vue';
+import { Plus, Trash2, Users } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
@@ -16,7 +16,11 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { index as manageMembers, store as createMember } from '@/routes/admin/members';
+import {
+    destroy as deleteMember,
+    index as manageMembers,
+    store as createMember,
+} from '@/routes/admin/members';
 import { update as updateMemberRoles } from '@/routes/admin/members/roles';
 
 type Member = {
@@ -26,6 +30,8 @@ type Member = {
     roles: string[] | null;
     must_change_password: boolean;
     canManageRoles: boolean;
+    canDelete: boolean;
+    deleteBlockedReason: string | null;
 };
 
 type MemberSection = {
@@ -36,6 +42,9 @@ type MemberSection = {
 
 const props = defineProps<{ members: Member[] }>();
 const dialogOpen = ref(false);
+const deleteDialogOpen = ref(false);
+const memberToDelete = ref<Member | null>(null);
+const deleteConfirmation = ref('');
 const pageTitle = computed(() => `Mitglieder (${props.members.length})`);
 const memberSections = computed<MemberSection[]>(() => {
     const activeMembers = props.members.filter(
@@ -55,6 +64,21 @@ const memberSections = computed<MemberSection[]>(() => {
         },
     ].filter((section) => section.members.length > 0);
 });
+
+function openDeleteDialog(member: Member): void {
+    memberToDelete.value = member;
+    deleteConfirmation.value = '';
+    deleteDialogOpen.value = true;
+}
+
+function handleDeleteDialogOpen(open: boolean): void {
+    deleteDialogOpen.value = open;
+
+    if (!open) {
+        memberToDelete.value = null;
+        deleteConfirmation.value = '';
+    }
+}
 
 defineOptions({
     layout: {
@@ -108,6 +132,12 @@ defineOptions({
                             <p class="truncate text-sm text-muted-foreground">
                                 {{ member.email }}
                             </p>
+                            <p
+                                v-if="member.deleteBlockedReason"
+                                class="text-sm text-muted-foreground"
+                            >
+                                {{ member.deleteBlockedReason }}
+                            </p>
                         </div>
                     </div>
 
@@ -148,14 +178,28 @@ defineOptions({
                                 Verwaltung
                             </label>
                         </div>
-                        <Button
-                            type="submit"
-                            variant="outline"
-                            :disabled="processing"
-                            :data-test="`save-member-roles-${member.id}`"
-                        >
-                            Rollen speichern
-                        </Button>
+                        <div class="flex flex-wrap gap-2 sm:justify-end">
+                            <Button
+                                type="submit"
+                                variant="outline"
+                                :disabled="processing"
+                                :data-test="`save-member-roles-${member.id}`"
+                            >
+                                Rollen speichern
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                :disabled="!member.canDelete"
+                                :title="member.deleteBlockedReason ?? undefined"
+                                :data-test="`delete-member-${member.id}`"
+                                @click="openDeleteDialog(member)"
+                            >
+                                <Trash2 class="size-4" aria-hidden="true" />
+                                Löschen
+                            </Button>
+                        </div>
                     </Form>
                     <p v-else class="text-sm text-muted-foreground">
                         Eigene Rollen können nicht geändert werden.
@@ -170,6 +214,66 @@ defineOptions({
         >
             Noch keine Mitglieder angelegt.
         </p>
+
+        <Dialog
+            :open="deleteDialogOpen"
+            @update:open="handleDeleteDialogOpen"
+        >
+            <DialogContent>
+                <Form
+                    v-if="memberToDelete"
+                    :key="memberToDelete.id"
+                    v-bind="deleteMember.form(memberToDelete.id)"
+                    class="grid gap-5"
+                    v-slot="{ errors, processing }"
+                    @success="handleDeleteDialogOpen(false)"
+                >
+                    <DialogHeader>
+                        <DialogTitle>Mitglied wirklich löschen?</DialogTitle>
+                        <DialogDescription>
+                            Dieser Vorgang kann nicht rückgängig gemacht
+                            werden. Das Konto von
+                            <strong>{{ memberToDelete.name }}</strong>
+                            wird dauerhaft gelöscht.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div class="grid gap-2">
+                        <Label for="delete-member-confirmation">
+                            Gib den Namen des Mitglieds zur Bestätigung ein.
+                        </Label>
+                        <Input
+                            id="delete-member-confirmation"
+                            v-model="deleteConfirmation"
+                            name="name"
+                            autocomplete="off"
+                            required
+                            data-test="delete-member-confirmation"
+                        />
+                        <InputError :message="errors.name" />
+                    </div>
+
+                    <DialogFooter class="gap-2">
+                        <DialogClose as-child>
+                            <Button type="button" variant="outline">
+                                Abbrechen
+                            </Button>
+                        </DialogClose>
+                        <Button
+                            type="submit"
+                            variant="destructive"
+                            :disabled="
+                                processing ||
+                                deleteConfirmation !== memberToDelete.name
+                            "
+                            data-test="delete-member-confirm"
+                        >
+                            Mitglied löschen
+                        </Button>
+                    </DialogFooter>
+                </Form>
+            </DialogContent>
+        </Dialog>
 
         <Dialog v-model:open="dialogOpen">
             <DialogContent>

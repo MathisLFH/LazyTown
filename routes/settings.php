@@ -46,6 +46,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/', 'index')->name('index');
             Route::post('/', 'store')->name('store');
             Route::patch('/{user}/rollen', 'updateRoles')->name('roles.update');
+            Route::delete('/{user}', 'destroy')->name('destroy');
         });
 
     Route::prefix('verwaltung/teams')

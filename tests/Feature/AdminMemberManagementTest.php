@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Team;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
@@ -87,4 +88,117 @@ test('only administrators can view and create members', function () {
     ])->assertForbidden();
 
     expect(User::where('email', 'unauthorized@example.com')->exists())->toBeFalse();
+});
+
+test('administrators can delete another tenant member after confirming their name', function () {
+    $tenant = Tenant::factory()->create();
+    $administrator = User::factory()->create([
+        'tenant_id' => $tenant->id,
+        'roles' => ['verwaltung'],
+        'active_role' => 'verwaltung',
+    ]);
+    $tenant->update(['admin_id' => $administrator->id]);
+    $member = User::factory()->create([
+        'tenant_id' => $tenant->id,
+        'name' => 'Zu löschendes Mitglied',
+    ]);
+    $team = Team::factory()->create(['tenant_id' => $tenant->id]);
+    $team->members()->attach($administrator, [
+        'tenant_id' => $tenant->id,
+        'role' => 'owner',
+    ]);
+    $team->members()->attach($member, [
+        'tenant_id' => $tenant->id,
+        'role' => 'member',
+    ]);
+
+    $this->actingAs($administrator)
+        ->delete(route('admin.members.destroy', $member), [
+            'name' => 'Zu löschendes Mitglied',
+        ])
+        ->assertRedirect(route('admin.members.index'));
+
+    $this->assertDatabaseMissing('users', ['id' => $member->id]);
+    $this->assertModelExists($team);
+    expect($team->memberships()->where('user_id', $member->id)->exists())->toBeFalse();
+});
+
+test('member deletion requires the exact member name', function () {
+    $tenant = Tenant::factory()->create();
+    $administrator = User::factory()->create([
+        'tenant_id' => $tenant->id,
+        'roles' => ['verwaltung'],
+        'active_role' => 'verwaltung',
+    ]);
+    $member = User::factory()->create(['tenant_id' => $tenant->id]);
+
+    $this->actingAs($administrator)
+        ->from(route('admin.members.index'))
+        ->delete(route('admin.members.destroy', $member), ['name' => 'Wrong name'])
+        ->assertSessionHasErrors('name');
+
+    $this->assertModelExists($member);
+});
+
+test('administrators cannot delete themselves, the tenant administrator, or a team owner', function () {
+    $tenant = Tenant::factory()->create();
+    $administrator = User::factory()->create([
+        'tenant_id' => $tenant->id,
+        'roles' => ['verwaltung'],
+        'active_role' => 'verwaltung',
+    ]);
+    $tenantAdministrator = User::factory()->create([
+        'tenant_id' => $tenant->id,
+        'roles' => ['verwaltung'],
+        'active_role' => 'verwaltung',
+    ]);
+    $tenant->update(['admin_id' => $tenantAdministrator->id]);
+    $teamOwner = User::factory()->create(['tenant_id' => $tenant->id]);
+    $team = Team::factory()->create(['tenant_id' => $tenant->id]);
+    $team->members()->attach($teamOwner, [
+        'tenant_id' => $tenant->id,
+        'role' => 'owner',
+    ]);
+
+    $this->actingAs($administrator)
+        ->delete(route('admin.members.destroy', $administrator), ['name' => $administrator->name])
+        ->assertForbidden();
+
+    $this->delete(route('admin.members.destroy', $tenantAdministrator), ['name' => $tenantAdministrator->name])
+        ->assertForbidden();
+
+    $this->delete(route('admin.members.destroy', $teamOwner), ['name' => $teamOwner->name])
+        ->assertForbidden();
+
+    $this->assertModelExists($administrator);
+    $this->assertModelExists($tenantAdministrator);
+    $this->assertModelExists($teamOwner);
+    $this->assertModelExists($team);
+});
+
+test('member deletion hides foreign tenant members and forbids non administrators', function () {
+    $tenant = Tenant::factory()->create();
+    $administrator = User::factory()->create([
+        'tenant_id' => $tenant->id,
+        'roles' => ['verwaltung'],
+        'active_role' => 'verwaltung',
+    ]);
+    $foreignMember = User::factory()->create([
+        'tenant_id' => Tenant::factory()->create()->id,
+    ]);
+    $trainer = User::factory()->create([
+        'tenant_id' => $tenant->id,
+        'roles' => ['trainer'],
+        'active_role' => 'trainer',
+    ]);
+
+    $this->actingAs($administrator)
+        ->delete(route('admin.members.destroy', $foreignMember), ['name' => $foreignMember->name])
+        ->assertNotFound();
+
+    $this->actingAs($trainer)
+        ->delete(route('admin.members.destroy', $foreignMember), ['name' => $foreignMember->name])
+        ->assertForbidden();
+
+    $this->assertModelExists($foreignMember);
 });

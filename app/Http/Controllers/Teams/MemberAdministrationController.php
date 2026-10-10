@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\UpdateTenantUserRolesRequest;
 use App\Http\Requests\Teams\CreateTenantMemberRequest;
+use App\Http\Requests\Teams\DeleteTenantMemberRequest;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -24,7 +25,12 @@ class MemberAdministrationController extends Controller
             'members' => $tenant->users()
                 ->orderBy('name')
                 ->orderBy('id')
-                ->get(['id', 'name', 'email', 'roles', 'must_change_password'])
+                ->select(['id', 'name', 'email', 'roles', 'must_change_password'])
+                ->withExists([
+                    'ownedTeams as has_non_personal_owned_teams' => fn ($query) => $query
+                        ->where('teams.is_personal', false),
+                ])
+                ->get()
                 ->map(fn (User $member): array => [
                     'id' => $member->id,
                     'name' => $member->name,
@@ -32,6 +38,14 @@ class MemberAdministrationController extends Controller
                     'roles' => $member->roles,
                     'must_change_password' => $member->must_change_password,
                     'canManageRoles' => ! $member->is($currentUser),
+                    'canDelete' => ! $member->is($currentUser)
+                        && $tenant->admin_id !== $member->id
+                        && ! $member->has_non_personal_owned_teams,
+                    'deleteBlockedReason' => $member->has_non_personal_owned_teams
+                        ? 'Teamverantwortliche müssen vor dem Löschen erst die Verantwortung übertragen.'
+                        : ($tenant->admin_id === $member->id
+                            ? 'Der Vereinsadministrator kann nicht gelöscht werden.'
+                            : null),
                 ]),
         ]);
     }
@@ -90,6 +104,15 @@ class MemberAdministrationController extends Controller
         $this->tenantFor($request)->users()->save($member);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Mitglied angelegt.']);
+
+        return to_route('admin.members.index');
+    }
+
+    public function destroy(DeleteTenantMemberRequest $request, User $user): RedirectResponse
+    {
+        $user->delete();
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Mitglied gelöscht.']);
 
         return to_route('admin.members.index');
     }
