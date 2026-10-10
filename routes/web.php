@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\MemberProfileCompletionController;
 use App\Http\Controllers\StartseiteController;
 use App\Http\Controllers\Teams\ClubOnboardingController;
 use App\Http\Controllers\Teams\TeamController;
@@ -14,8 +15,6 @@ Route::inertia('contact/impressum', 'Impressum')->name('impressum');
 Route::inertia('contact/datenschutzerklaerung', 'Datenschutzerklaerung')->name('datenschutzerklaerung');
 Route::inertia('startseite', 'Startseite')->name('startseite');
 
-
-
 Route::middleware(['auth'])->group(function () {
     Route::post('invitations/{invitation}/accept', [TeamInvitationController::class, 'accept'])->name('invitations.accept');
     Route::delete('invitations/{invitation}', [TeamInvitationController::class, 'decline'])->name('invitations.decline');
@@ -24,6 +23,13 @@ Route::middleware(['auth'])->group(function () {
         Route::inertia('spielplan', 'Spielplan')->name('spielplan');
         Route::inertia('hallenplan', 'Hallenplan')->name('hallenplan');
         Route::get('mein-team', [TeamController::class, 'meinTeam'])->name('mein-team');
+    });
+
+    Route::middleware('auth')->group(function () {
+        Route::get('mitglied-profil-vervollstaendigen', [MemberProfileCompletionController::class, 'edit'])
+            ->name('member.profile-completion.edit');
+        Route::patch('mitglied-profil-vervollstaendigen', [MemberProfileCompletionController::class, 'update'])
+            ->name('member.profile-completion.update');
     });
     Route::inertia('profil', 'Profil')->name('profil');
     Route::post('verein/{team}/beitritt-bestaetigen', [TeamMemberController::class, 'confirm'])->name('teams.members.confirm');

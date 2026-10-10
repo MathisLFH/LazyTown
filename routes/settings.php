@@ -3,6 +3,7 @@
 use App\Http\Controllers\Settings\DataExportController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
+use App\Http\Controllers\Teams\MemberAdministrationController;
 use App\Http\Controllers\Teams\TeamAdministrationController;
 use App\Http\Controllers\Teams\TeamController;
 use App\Http\Controllers\Teams\TeamInvitationController;
@@ -37,9 +38,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::inertia('settings/appearance', 'settings/Appearance')->middleware('club.access')->name('appearance.edit');
 
-    Route::patch('verwaltung/benutzer/{user}/rollen', [TeamAdministrationController::class, 'updateUserRoles'])
+    Route::prefix('verwaltung/mitglieder')
+        ->name('admin.members.')
         ->middleware('role:verwaltung')
-        ->name('admin.users.roles.update');
+        ->controller(MemberAdministrationController::class)
+        ->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::post('/', 'store')->name('store');
+            Route::patch('/{user}/rollen', 'updateRoles')->name('roles.update');
+        });
 
     Route::prefix('verwaltung/teams')
         ->name('admin.teams.')

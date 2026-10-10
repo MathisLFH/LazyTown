@@ -6,7 +6,6 @@ use App\Actions\Teams\CreateTeam;
 use App\Enums\TeamRole;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Settings\UpdateTenantUserRolesRequest;
 use App\Http\Requests\Teams\AssignTeamTrainerRequest;
 use App\Http\Requests\Teams\SaveTeamRequest;
 use App\Models\Membership;
@@ -62,51 +61,7 @@ class TeamAdministrationController extends Controller
         return Inertia::render('admin/teams/Index', [
             'teams' => $teams,
             'trainers' => $trainers,
-            'users' => $tenant->users()
-                ->whereKeyNot($request->user()->id)
-                ->orderBy('name')
-                ->get(['id', 'name', 'email', 'roles']),
         ]);
-    }
-
-    public function updateUserRoles(UpdateTenantUserRolesRequest $request, User $user): RedirectResponse
-    {
-        $tenant = $this->tenantFor($request);
-        abort_unless($user->tenant_id === $tenant->id, 404);
-        abort_if($user->is($request->user()), 403);
-
-        $managedRoles = $request->validated('roles', []);
-        $roles = array_values(array_unique([
-            ...array_filter(
-                $user->roles ?: [UserRole::Player->value],
-                fn (string $role): bool => ! in_array($role, [
-                    UserRole::Coach->value,
-                    UserRole::Administration->value,
-                ], true),
-            ),
-            ...$managedRoles,
-        ]));
-
-        if ($roles === []) {
-            $roles = [UserRole::Player->value];
-        }
-
-        $activeRole = $user->active_role;
-
-        if (! in_array($activeRole, $roles, true)) {
-            $activeRole = in_array(UserRole::Player->value, $roles, true)
-                ? UserRole::Player->value
-                : $roles[0];
-        }
-
-        $user->update([
-            'roles' => $roles,
-            'active_role' => $activeRole,
-        ]);
-
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Rollen aktualisiert.']);
-
-        return to_route('admin.teams.index');
     }
 
     public function store(SaveTeamRequest $request, CreateTeam $createTeam): RedirectResponse

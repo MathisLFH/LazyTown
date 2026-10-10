@@ -39,9 +39,7 @@ test('administrators see teams and trainers from their tenant only', function ()
             ->where('teams.0.name', 'Senioren')
             ->has('trainers', 1)
             ->where('trainers.0.id', $trainer->id)
-            ->where('trainers.0.id', fn ($id) => $id !== $otherTrainer->id)
-            ->has('users', 1)
-            ->where('users.0.id', $trainer->id),
+            ->where('trainers.0.id', fn ($id) => $id !== $otherTrainer->id),
         );
 });
 
@@ -206,16 +204,16 @@ test('administrators can grant and revoke trainer and administration roles withi
     ]);
 
     $this->actingAs($administrator)
-        ->patch(route('admin.users.roles.update', $member), [
+        ->patch(route('admin.members.roles.update', $member), [
             'roles' => ['trainer', 'verwaltung'],
         ])
-        ->assertRedirect(route('admin.teams.index'));
+        ->assertRedirect(route('admin.members.index'));
 
     expect($member->fresh()->roles)->toBe(['spieler', 'trainer', 'verwaltung']);
 
-    $this->patch(route('admin.users.roles.update', $member), [
+    $this->patch(route('admin.members.roles.update', $member), [
         'roles' => [],
-    ])->assertRedirect(route('admin.teams.index'));
+    ])->assertRedirect(route('admin.members.index'));
 
     expect($member->fresh()->roles)->toBe(['spieler'])
         ->and($member->fresh()->active_role)->toBe('spieler');
@@ -235,12 +233,12 @@ test('administrators cannot grant roles across tenants or change their own roles
     ]);
 
     $this->actingAs($administrator)
-        ->patch(route('admin.users.roles.update', $foreignTenantUser), [
+        ->patch(route('admin.members.roles.update', $foreignTenantUser), [
             'roles' => ['verwaltung'],
         ])
         ->assertNotFound();
 
-    $this->patch(route('admin.users.roles.update', $administrator), [
+    $this->patch(route('admin.members.roles.update', $administrator), [
         'roles' => ['trainer'],
     ])->assertForbidden();
 
@@ -260,7 +258,7 @@ test('non-administrators cannot grant application roles', function () {
     ]);
 
     $this->actingAs($trainer)
-        ->patch(route('admin.users.roles.update', $member), [
+        ->patch(route('admin.members.roles.update', $member), [
             'roles' => ['verwaltung'],
         ])
         ->assertForbidden();
