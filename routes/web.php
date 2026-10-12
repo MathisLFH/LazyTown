@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\StartseiteController;
 use App\Http\Controllers\Teams\ClubOnboardingController;
 use App\Http\Controllers\Teams\TeamController;
@@ -14,9 +15,11 @@ Route::inertia('contact/impressum', 'Impressum')->name('impressum');
 Route::inertia('contact/datenschutzerklaerung', 'Datenschutzerklaerung')->name('datenschutzerklaerung');
 Route::inertia('startseite', 'Startseite')->name('startseite');
 
-
-
 Route::middleware(['auth'])->group(function () {
+    Route::get('suche', SearchController::class)
+        ->middleware('throttle:search')
+        ->name('search.suggestions');
+
     Route::post('invitations/{invitation}/accept', [TeamInvitationController::class, 'accept'])->name('invitations.accept');
     Route::delete('invitations/{invitation}', [TeamInvitationController::class, 'decline'])->name('invitations.decline');
 
