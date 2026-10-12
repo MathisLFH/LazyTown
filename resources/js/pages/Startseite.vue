@@ -3,6 +3,8 @@ import { Head } from '@inertiajs/vue3';
 import StartseiteContent from '@/components/StartseiteContent.vue';
 
 defineProps<{
+    hasClub: boolean;
+    pendingMembers: { team: { name: string; slug: string } }[];
     trainerName: string | null;
 }>();
 </script>
@@ -10,5 +12,5 @@ defineProps<{
 <template>
     <Head title="Startseite" />
 
-    <StartseiteContent :trainer-name="trainerName" />
+    <StartseiteContent :has-club="hasClub" :pending-members="pendingMembers" :trainer-name="trainerName" />
 </template>

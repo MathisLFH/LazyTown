@@ -45,6 +45,7 @@ test('home page includes pending invitations for the authenticated user', functi
     $response->assertOk();
     $response->assertInertia(fn (Assert $page) => $page
         ->component('Startseite')
+        ->where('hasClub', false)
         ->has('pendingInvitations', 1)
         ->where('pendingInvitations.0.code', $invitation->code)
         ->where('pendingInvitations.0.inviterName', 'Taylor Otwell')
@@ -74,6 +75,7 @@ test('home page does not include accepted invitations', function () {
     $response->assertOk();
     $response->assertInertia(fn (Assert $page) => $page
         ->component('Startseite')
+        ->where('hasClub', false)
         ->has('pendingInvitations', 0),
     );
 });
@@ -98,6 +100,7 @@ test('home page excludes expired invitations without deleting them', function ()
     $response->assertOk();
     $response->assertInertia(fn (Assert $page) => $page
         ->component('Startseite')
+        ->where('hasClub', false)
         ->has('pendingInvitations', 0),
     );
 
@@ -126,6 +129,7 @@ test('home page does not include or delete other users invitations', function ()
     $response->assertOk();
     $response->assertInertia(fn (Assert $page) => $page
         ->component('Startseite')
+        ->where('hasClub', false)
         ->has('pendingInvitations', 0),
     );
 

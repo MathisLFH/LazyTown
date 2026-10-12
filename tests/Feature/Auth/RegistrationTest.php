@@ -36,6 +36,8 @@ test('registration screen includes team invitation context', function () {
 });
 
 test('new users can register', function () {
+    config(['app.url' => 'https://lazytown.test']);
+
     $response = $this->post(route('register.store'), [
         'name' => 'Test User',
         'email' => 'test@example.com',
@@ -45,7 +47,14 @@ test('new users can register', function () {
 
     $this->assertAuthenticated();
 
-    $response->assertRedirect(route('home'));
+    $response->assertRedirect('https://lazytown.test');
+
+    $this->get('https://lazytown.test')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Startseite')
+            ->where('hasClub', false),
+        );
 });
 
 test('clubs can register an administrator and subscription without storing a payment method', function () {
