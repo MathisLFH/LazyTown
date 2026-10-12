@@ -69,7 +69,7 @@ test('clubs can register an administrator and subscription without storing a pay
         'password_confirmation' => 'password',
     ]);
 
-    $response->assertRedirect('https://ninjas-in-pyjamas.lazytown.test');
+    $response->assertRedirect('https://lazytown.test');
     $this->assertAuthenticated();
 
     $user = User::where('email', 'club-admin@example.com')->firstOrFail();
@@ -90,6 +90,24 @@ test('clubs can register an administrator and subscription without storing a pay
         ->and($tenant->subscriptions()->firstOrFail()->pivot->payment_type)->toBeNull();
 });
 
+test('inertia club registration redirects to the main domain', function () {
+    config(['app.url' => 'https://lazytown.test']);
+
+    $this->withHeader('X-Inertia', 'true')
+        ->post('https://lazytown.test/register', [
+            'club_name' => 'Local Club',
+            'subdomain' => 'local-club',
+            'first_name' => 'Eva',
+            'last_name' => 'Beispiel',
+            'email' => 'club-admin@example.com',
+            'subscription' => 'free',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ])
+        ->assertStatus(409)
+        ->assertHeader('X-Inertia-Location', 'https://lazytown.test');
+});
+
 test('free club registrations do not wait for payment', function () {
     config(['app.url' => 'https://lazytown.test']);
 
@@ -104,7 +122,7 @@ test('free club registrations do not wait for payment', function () {
         'password_confirmation' => 'password',
     ]);
 
-    $response->assertRedirect('https://local-club.lazytown.test');
+    $response->assertRedirect('https://lazytown.test');
 
     $team = Team::where('name', 'Local Club')->firstOrFail();
 

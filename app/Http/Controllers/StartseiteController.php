@@ -61,8 +61,11 @@ class StartseiteController extends Controller
             ]);
         }
 
+        $currentTeam = $request->user()->currentTeam;
+
         return Inertia::render('Startseite', [
             'pendingInvitations' => $pendingInvitations,
+            'trainerName' => $currentTeam?->assignedTrainer()->first(['users.id', 'users.name'])?->name,
         ]);
     }
 }

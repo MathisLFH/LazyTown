@@ -1,4 +1,8 @@
 <script setup lang="ts">
+defineProps<{
+    trainerName: string | null;
+}>();
+
 const upcomingEvents = [
     { title: 'Training Herren 1', date: 'Heute, 18:30 Uhr', place: 'Halle Nord' },
     { title: 'Heimspiel gegen TSV West', date: 'Samstag, 15:00 Uhr', place: 'Sportzentrum' },
@@ -27,8 +31,14 @@ const news = [
 
             <section class="rounded-lg border border-sidebar-border/70 p-5">
                 <h2 class="mb-4 text-lg font-semibold">Unser Verein</h2>
-                <div class="flex aspect-square items-center justify-center rounded-md bg-muted p-4">
-                    <img src="/images/verein-logo.svg" alt="Vereinslogo" class="max-h-full max-w-full object-contain" />
+                <div class="space-y-3">
+                    <div class="flex aspect-square items-center justify-center rounded-md bg-muted p-4">
+                        <img src="/images/verein-logo.svg" alt="Vereinslogo" class="max-h-full max-w-full object-contain" />
+                    </div>
+                    <p class="text-sm text-muted-foreground">
+                        <span class="font-medium text-foreground">Trainer:</span>
+                        {{ trainerName ?? 'Nicht zugewiesen' }}
+                    </p>
                 </div>
             </section>
         </div>

@@ -41,7 +41,7 @@ class TeamPaymentController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Zahlung erfolgreich verarbeitet.']);
 
-        return to_route('teams.edit', $team);
+        return to_route('home');
     }
 
     public function skip(Request $request, Team $team): RedirectResponse
@@ -52,7 +52,7 @@ class TeamPaymentController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Zahlung zu Testzwecken übersprungen.']);
 
-        return to_route('teams.edit', $team);
+        return to_route('home');
     }
 
     private function completePayment(Request $request, Team $team, string $status, string $referencePrefix): void

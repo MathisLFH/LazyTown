@@ -29,17 +29,11 @@ class TeamAdministrationController extends Controller
         $tenant = $this->tenantFor($request);
         $teams = $tenant->teams()
             ->where('is_personal', false)
-            ->with('members')
+            ->with('assignedTrainer')
             ->orderBy('name')
             ->get()
             ->map(function (Team $team): array {
-                $trainer = $team->members->first(function (User $member): bool {
-                    /** @var Membership $membership */
-                    $membership = $member->getRelation('pivot');
-
-                    return $membership->role === TeamRole::Admin
-                        && $member->hasRole(UserRole::Coach->value);
-                });
+                $trainer = $team->assignedTrainer->first();
 
                 return [
                     'id' => $team->id,

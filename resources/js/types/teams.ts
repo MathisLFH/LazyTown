@@ -9,6 +9,7 @@ export type Team = {
     roleLabel?: string;
     isCurrent?: boolean;
     paymentStatus?: 'pending' | 'paid' | 'skipped' | 'not_required';
+    trainerName?: string | null;
 };
 
 export type TeamMember = {

@@ -33,6 +33,42 @@ test('trainers without a club are sent to club setup', function () {
         ->assertRedirect(route('club.onboarding'));
 });
 
+test('home page shows when the selected team has no assigned trainer', function () {
+    $user = User::factory()->create();
+    $team = Team::factory()->create();
+    $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
+    $user->switchTeam($team);
+
+    $this->actingAs($user)
+        ->get(route('home'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Startseite')
+            ->where('trainerName', null),
+        );
+});
+
+test('home page shows the trainer assigned to the selected team', function () {
+    $owner = User::factory()->create();
+    $trainer = User::factory()->create(['roles' => ['trainer'], 'active_role' => 'trainer']);
+    $team = Team::factory()->create();
+
+    $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
+    $team->members()->attach($trainer, [
+        'role' => TeamRole::Admin->value,
+        'status' => 'active',
+    ]);
+    $owner->switchTeam($team);
+
+    $this->actingAs($owner)
+        ->get(route('home'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Startseite')
+            ->where('trainerName', $trainer->name),
+        );
+});
+
 test('home page includes pending invitations for the authenticated user', function () {
     $owner = User::factory()->create(['name' => 'Taylor Otwell']);
     $invitedUser = User::factory()->create(['email' => 'invited@example.com']);
