@@ -1,4 +1,14 @@
 <script setup lang="ts">
+import { Form } from '@inertiajs/vue3';
+import { Button } from '@/components/ui/button';
+import { confirm } from '@/routes/teams/members';
+
+defineProps<{
+    hasClub: boolean;
+    pendingMembers: { team: { name: string; slug: string } }[];
+    trainerName: string | null;
+}>();
+
 const upcomingEvents = [
     { title: 'Training Herren 1', date: 'Heute, 18:30 Uhr', place: 'Halle Nord' },
     { title: 'Heimspiel gegen TSV West', date: 'Samstag, 15:00 Uhr', place: 'Sportzentrum' },
@@ -14,6 +24,20 @@ const news = [
     <div class="space-y-6 p-6">
         <h1 class="text-2xl font-semibold">Startseite</h1>
 
+        <section v-if="pendingMembers.length" class="space-y-3 rounded-lg border border-sidebar-border/70 p-5">
+            <h2 class="text-lg font-semibold">Möchten Sie einem Verein beitreten?</h2>
+            <div
+                v-for="membership in pendingMembers"
+                :key="membership.team.slug"
+                class="flex items-center justify-between gap-4 rounded-md bg-muted/50 p-3 text-sm"
+            >
+                <span>{{ membership.team.name }}</span>
+                <Form v-bind="confirm.form(membership.team.slug)">
+                    <Button type="submit">Beitritt bestätigen</Button>
+                </Form>
+            </div>
+        </section>
+
         <div class="grid gap-4 lg:grid-cols-3">
             <section class="rounded-lg border border-sidebar-border/70 p-5 lg:col-span-2">
                 <h2 class="mb-4 text-lg font-semibold">Nächste Spiele & Training</h2>
@@ -25,10 +49,16 @@ const news = [
                 </div>
             </section>
 
-            <section class="rounded-lg border border-sidebar-border/70 p-5">
+            <section v-if="hasClub" class="rounded-lg border border-sidebar-border/70 p-5">
                 <h2 class="mb-4 text-lg font-semibold">Unser Verein</h2>
-                <div class="flex aspect-square items-center justify-center rounded-md bg-muted p-4">
-                    <img src="/images/verein-logo.svg" alt="Vereinslogo" class="max-h-full max-w-full object-contain" />
+                <div class="space-y-3">
+                    <div class="flex aspect-square items-center justify-center rounded-md bg-muted p-4">
+                        <img src="/images/verein-logo.svg" alt="Vereinslogo" class="max-h-full max-w-full object-contain" />
+                    </div>
+                    <p class="text-sm text-muted-foreground">
+                        <span class="font-medium text-foreground">Trainer:</span>
+                        {{ trainerName ?? 'Nicht zugewiesen' }}
+                    </p>
                 </div>
             </section>
         </div>

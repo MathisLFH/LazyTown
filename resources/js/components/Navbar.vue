@@ -12,6 +12,7 @@ import {
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { useProfileAvatar } from '@/composables/useProfileAvatar';
 import { hallenplan, home, meinTeam, spielplan } from '@/routes';
+import { index as manageMembers } from '@/routes/admin/members';
 import { index as manageTeams } from '@/routes/admin/teams';
 import { edit as profile } from '@/routes/profile';
 import { suggestions as searchSuggestions } from '@/routes/search';
@@ -202,8 +203,8 @@ const administrationItems = computed(() => {
     }
 
     items.push(
+        { label: 'Mitglieder', href: manageMembers().url },
         { label: 'Teams verwalten', href: manageTeams().url },
-        { label: 'Team erstellen', href: manageTeams().url },
     );
 
     return items;

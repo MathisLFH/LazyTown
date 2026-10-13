@@ -100,8 +100,29 @@ test('the team edit page can be rendered', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('teams/Edit')
+            ->where('team.trainerName', null)
             ->missing('members')
             ->missing('invitations'),
+        );
+});
+
+test('the team edit page shows the assigned trainer', function () {
+    $owner = User::factory()->create();
+    $trainer = User::factory()->create(['roles' => ['trainer'], 'active_role' => 'trainer']);
+    $team = Team::factory()->create();
+
+    $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
+    $team->members()->attach($trainer, [
+        'role' => TeamRole::Admin->value,
+        'status' => 'active',
+    ]);
+
+    $this->actingAs($owner)
+        ->get(route('teams.edit', $team))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('teams/Edit')
+            ->where('team.trainerName', $trainer->name),
         );
 });
 
@@ -129,6 +150,21 @@ test('the my team page contains members and pending invitations', function () {
             ->where('members.0.role_label', 'Trainer')
             ->where('members.1.role_label', 'Spieler')
             ->where('invitations.0.email', 'pending@example.com'),
+        );
+});
+
+test('the my team page uses an active club if no current team is selected', function () {
+    $user = User::factory()->create(['roles' => ['trainer'], 'active_role' => 'trainer']);
+    $team = Team::factory()->create(['name' => 'My Club']);
+    $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
+    $user->update(['current_team_id' => null]);
+
+    $this->actingAs($user)
+        ->get(route('mein-team'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('MeinTeam')
+            ->where('team.name', 'My Club'),
         );
 });
 

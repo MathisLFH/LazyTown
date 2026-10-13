@@ -17,7 +17,12 @@ class StartseiteController extends Controller
             return Inertia::render('Welcome');
         }
 
-        if ($request->user()->hasRole('trainer') && $request->user()->teams()->where('is_personal', false)->wherePivot('status', 'active')->doesntExist()) {
+        $hasClub = $request->user()->teams()
+            ->where('is_personal', false)
+            ->wherePivot('status', 'active')
+            ->exists();
+
+        if ($request->user()->hasRole('trainer') && ! $hasClub) {
             return to_route('club.onboarding');
         }
 
@@ -50,19 +55,13 @@ class StartseiteController extends Controller
                 ],
             ]);
 
-        if ($request->user()->teams()->where('is_personal', false)->wherePivot('status', 'active')->doesntExist()) {
-            return Inertia::render('NoClub', [
-                'user' => [
-                    'name' => $request->user()->name,
-                    'email' => $request->user()->email,
-                ],
-                'pendingInvitations' => $pendingInvitations,
-                'pendingMembers' => $pendingMembers,
-            ]);
-        }
+        $currentTeam = $request->user()->currentTeam;
 
         return Inertia::render('Startseite', [
+            'hasClub' => $hasClub,
             'pendingInvitations' => $pendingInvitations,
+            'pendingMembers' => $pendingMembers,
+            'trainerName' => $currentTeam?->assignedTrainer()->first(['users.id', 'users.name'])?->name,
         ]);
     }
 }

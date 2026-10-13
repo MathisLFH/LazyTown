@@ -56,6 +56,11 @@ const confirmCancelInvitation = (invitation: TeamInvitation) => {
 <template>
     <h1 class="sr-only">{{ pageTitle }}</h1>
     <div class="flex flex-col space-y-10">
+        <Heading
+            variant="small"
+            title="Trainerzuweisung"
+            :description="team.trainerName ?? 'Nicht zugewiesen'"
+        />
         <div v-if="permissions.canUpdateTeam" class="space-y-6">
             <Heading variant="small" title="Team Einstellungen" description="Teamname und Einstellungen aktualisieren" />
             <Button variant="outline" as-child><Link :href="paymentEdit(team.slug)"><CreditCard /> Zahlung</Link></Button>

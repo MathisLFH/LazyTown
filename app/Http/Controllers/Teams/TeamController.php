@@ -28,9 +28,18 @@ class TeamController extends Controller
 
     public function meinTeam(Request $request): Response
     {
+        $user = $request->user();
+        $activeClubTeams = $user->teams()
+            ->where('teams.is_personal', false)
+            ->wherePivot('status', 'active');
+        $team = (clone $activeClubTeams)
+            ->whereKey($user->current_team_id)
+            ->first()
+            ?? $activeClubTeams->firstOrFail();
+
         return Inertia::render('MeinTeam', $this->memberManagementProps(
-            $request->user(),
-            $request->user()->currentTeam()->firstOrFail(),
+            $user,
+            $team,
         ));
     }
 
@@ -68,6 +77,7 @@ class TeamController extends Controller
     public function edit(Request $request, Team $team): Response
     {
         $user = $request->user();
+        $trainer = $team->assignedTrainer()->first(['users.id', 'users.name']);
 
         return Inertia::render('teams/Edit', [
             'team' => [
@@ -76,6 +86,7 @@ class TeamController extends Controller
                 'slug' => $team->slug,
                 'isPersonal' => $team->is_personal,
                 'paymentStatus' => $team->payment_status,
+                'trainerName' => $trainer?->name,
             ],
             'permissions' => $user->toTeamPermissions($team),
         ]);

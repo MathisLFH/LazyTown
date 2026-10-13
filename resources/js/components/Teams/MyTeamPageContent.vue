@@ -73,7 +73,7 @@ const confirmCancelInvitation = (invitation: TeamInvitation) => {
         <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <Heading :title="team.name" description="Übersicht über die Mitglieder und ihre Kontaktdaten." />
             <Button v-if="permissions.canCreateInvitation" data-test="invite-member-button" @click="inviteDialogOpen = true">
-                <UserPlus /> Mitglied hinzufügen
+                <UserPlus /> Spieler hinzufügen
             </Button>
         </div>
 

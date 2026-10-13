@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Inertia\Testing\AssertableInertia as Assert;
+use Laravel\Fortify\Contracts\TwoFactorLoginResponse as TwoFactorLoginResponseContract;
 use Laravel\Fortify\Features;
 use Laravel\Passkeys\Contracts\PasskeyLoginResponse;
 
@@ -41,27 +42,43 @@ test('login screen includes team invitation context', function () {
 test('users can authenticate using the login screen', function () {
     $user = User::factory()->create();
 
-    $response = $this->post(route('login.store'), [
-        'email' => $user->email,
-        'password' => 'password',
-    ]);
+    $response = $this->withSession(['url.intended' => '/settings/profile'])
+        ->post(route('login.store'), [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
 
     $this->assertAuthenticated();
     $response->assertRedirect(route('home'));
 });
 
-test('tenant users are redirected to their subdomain after login', function () {
+test('tenant users are redirected to the main domain after login', function () {
     config(['app.url' => 'https://lazytown.test']);
     $tenant = Tenant::factory()->create(['subdomain' => 'club-login']);
     $user = User::factory()->create(['tenant_id' => $tenant->id]);
 
-    $response = $this->post('https://lazytown.test/login', [
-        'email' => $user->email,
-        'password' => 'password',
-    ]);
+    $response = $this->withSession(['url.intended' => '/settings/profile'])
+        ->post('https://lazytown.test/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
 
     $this->assertAuthenticatedAs($user);
-    $response->assertRedirect('https://club-login.lazytown.test');
+    $response->assertRedirect('https://lazytown.test');
+});
+
+test('inertia login redirects tenant users to the main domain', function () {
+    config(['app.url' => 'https://lazytown.test']);
+    $tenant = Tenant::factory()->create(['subdomain' => 'club-login']);
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+
+    $this->withHeader('X-Inertia', 'true')
+        ->post('https://lazytown.test/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ])
+        ->assertStatus(409)
+        ->assertHeader('X-Inertia-Location', 'https://lazytown.test');
 });
 
 test('passkey login response redirects to the home page', function () {
@@ -71,11 +88,26 @@ test('passkey login response redirects to the home page', function () {
         'HTTP_ACCEPT' => 'application/json',
     ]);
     $request->setLaravelSession($this->app['session.store']);
+    $request->session()->put('url.intended', '/settings/profile');
+    $request->headers->set('X-Inertia', 'true');
     $request->setUserResolver(fn () => $user);
 
     $jsonResponse = app(PasskeyLoginResponse::class)->toResponse($request);
 
     expect($jsonResponse->getData()->redirect)->toBe(route('home'));
+});
+
+test('two factor login response redirects to the home page instead of an intended url', function () {
+    $user = User::factory()->create();
+    $request = Request::create(route('login', absolute: false), 'GET');
+    $request->setLaravelSession($this->app['session.store']);
+    $request->session()->put('url.intended', '/settings/profile');
+    $request->headers->set('X-Inertia', 'true');
+    $request->setUserResolver(fn () => $user);
+
+    $response = app(TwoFactorLoginResponseContract::class)->toResponse($request);
+
+    expect($response->getTargetUrl())->toBe(route('home'));
 });
 
 test('users with two factor enabled are redirected to two factor challenge', function () {

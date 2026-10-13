@@ -3,6 +3,7 @@
 use App\Enums\TeamRole;
 use App\Models\Team;
 use App\Models\User;
+use Inertia\Testing\AssertableInertia as Assert;
 
 test('trainers can open club onboarding before payment', function () {
     $user = User::factory()->create(['roles' => ['trainer'], 'active_role' => 'trainer']);
@@ -24,7 +25,7 @@ test('team owners can complete the payment form', function () {
         'cvc' => '123',
     ]);
 
-    $response->assertRedirect(route('teams.edit', $team));
+    $response->assertRedirect(route('home'));
     $this->assertDatabaseHas('teams', ['id' => $team->id, 'payment_status' => 'paid']);
     expect($user->refresh()->roles)->toBe(['spieler'])
         ->and($user->active_role)->toBe('spieler');
@@ -39,10 +40,16 @@ test('club onboarding creates an unowned pending team until payment', function (
     $response->assertRedirect(route('teams.payment.edit', $team));
     expect($team->members()->count())->toBe(0);
 
-    $this->actingAs($user)->post(route('teams.payment.skip', $team));
+    $this->actingAs($user)
+        ->post(route('teams.payment.skip', $team))
+        ->assertRedirect(route('home'));
 
     expect($user->refresh()->roles)->toContain('trainer')
         ->and($team->fresh()->members()->whereKey($user->id)->exists())->toBeTrue();
+
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->component('Startseite'));
 });
 
 test('team owners can skip payment temporarily', function () {
@@ -52,7 +59,7 @@ test('team owners can skip payment temporarily', function () {
 
     $this->actingAs($user)
         ->post(route('teams.payment.skip', $team))
-        ->assertRedirect(route('teams.edit', $team));
+        ->assertRedirect(route('home'));
 
     $this->assertDatabaseHas('teams', ['id' => $team->id, 'payment_status' => 'skipped']);
 });

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Concerns\GeneratesUniqueTeamSlugs;
 use App\Enums\TeamRole;
+use App\Enums\UserRole;
 use Database\Factories\TeamFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Collection;
@@ -83,6 +84,19 @@ class Team extends Model
             ->using(Membership::class)
             ->withPivot(['role', 'status', 'tenant_id', 'role_id'])
             ->withTimestamps();
+    }
+
+    /**
+     * Get the active trainer assigned to this team.
+     *
+     * @return BelongsToMany<User, $this, Membership, 'pivot'>
+     */
+    public function assignedTrainer(): BelongsToMany
+    {
+        return $this->members()
+            ->wherePivot('role', TeamRole::Admin->value)
+            ->wherePivot('status', 'active')
+            ->whereJsonContains('roles', UserRole::Coach->value);
     }
 
     /**

@@ -16,13 +16,36 @@ test('guests can visit the home page', function () {
 
 test('authenticated users can visit the home page', function () {
     $user = User::factory()->create();
-    $team = $user->currentTeam;
 
-    $response = $this
+    $this
         ->actingAs($user)
-        ->get(route('home'));
+        ->get(route('home'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Startseite')
+            ->where('hasClub', false)
+            ->where('trainerName', null),
+        );
+});
 
-    $response->assertOk();
+test('home page shows pending team assignments for members without a club', function () {
+    $member = User::factory()->create();
+    $team = Team::factory()->create(['name' => 'Laravel Team']);
+    $team->members()->attach($member, [
+        'role' => TeamRole::Member->value,
+        'status' => 'pending',
+    ]);
+
+    $this->actingAs($member)
+        ->get(route('home'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Startseite')
+            ->where('hasClub', false)
+            ->has('pendingMembers', 1)
+            ->where('pendingMembers.0.team.name', 'Laravel Team')
+            ->where('pendingMembers.0.team.slug', $team->slug),
+        );
 });
 
 test('trainers without a club are sent to club setup', function () {
@@ -31,6 +54,44 @@ test('trainers without a club are sent to club setup', function () {
     $this->actingAs($user)
         ->get(route('home'))
         ->assertRedirect(route('club.onboarding'));
+});
+
+test('home page shows when the selected team has no assigned trainer', function () {
+    $user = User::factory()->create();
+    $team = Team::factory()->create();
+    $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
+    $user->switchTeam($team);
+
+    $this->actingAs($user)
+        ->get(route('home'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Startseite')
+            ->where('hasClub', true)
+            ->where('trainerName', null),
+        );
+});
+
+test('home page shows the trainer assigned to the selected team', function () {
+    $owner = User::factory()->create();
+    $trainer = User::factory()->create(['roles' => ['trainer'], 'active_role' => 'trainer']);
+    $team = Team::factory()->create();
+
+    $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
+    $team->members()->attach($trainer, [
+        'role' => TeamRole::Admin->value,
+        'status' => 'active',
+    ]);
+    $owner->switchTeam($team);
+
+    $this->actingAs($owner)
+        ->get(route('home'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Startseite')
+            ->where('hasClub', true)
+            ->where('trainerName', $trainer->name),
+        );
 });
 
 test('home page includes pending invitations for the authenticated user', function () {
@@ -52,7 +113,8 @@ test('home page includes pending invitations for the authenticated user', functi
 
     $response->assertOk();
     $response->assertInertia(fn (Assert $page) => $page
-        ->component('NoClub')
+        ->component('Startseite')
+        ->where('hasClub', false)
         ->has('pendingInvitations', 1)
         ->where('pendingInvitations.0.code', $invitation->code)
         ->where('pendingInvitations.0.inviterName', 'Taylor Otwell')
@@ -81,7 +143,8 @@ test('home page does not include accepted invitations', function () {
 
     $response->assertOk();
     $response->assertInertia(fn (Assert $page) => $page
-        ->component('NoClub')
+        ->component('Startseite')
+        ->where('hasClub', false)
         ->has('pendingInvitations', 0),
     );
 });
@@ -105,7 +168,8 @@ test('home page excludes expired invitations without deleting them', function ()
 
     $response->assertOk();
     $response->assertInertia(fn (Assert $page) => $page
-        ->component('NoClub')
+        ->component('Startseite')
+        ->where('hasClub', false)
         ->has('pendingInvitations', 0),
     );
 
@@ -133,7 +197,8 @@ test('home page does not include or delete other users invitations', function ()
 
     $response->assertOk();
     $response->assertInertia(fn (Assert $page) => $page
-        ->component('NoClub')
+        ->component('Startseite')
+        ->where('hasClub', false)
         ->has('pendingInvitations', 0),
     );
 
