@@ -18,6 +18,7 @@ class GymFactory extends Factory
     public function definition(): array
     {
         return [
+            'tenant_id' => null,
             'name' => fake()->unique()->company().' Gym',
         ];
     }

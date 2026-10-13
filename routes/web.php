@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\StartseiteController;
 use App\Http\Controllers\Teams\ClubOnboardingController;
 use App\Http\Controllers\Teams\TeamController;
@@ -19,6 +20,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('notifications/read', [NotificationController::class, 'markAllAsRead'])->name('notifications.read');
     Route::post('notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read.single');
     Route::post('notifications/test', [NotificationController::class, 'createTest'])->name('notifications.test');
+    Route::get('suche', SearchController::class)
+        ->middleware('throttle:search')
+        ->name('search.suggestions');
+
     Route::post('invitations/{invitation}/accept', [TeamInvitationController::class, 'accept'])->name('invitations.accept');
     Route::delete('invitations/{invitation}', [TeamInvitationController::class, 'decline'])->name('invitations.decline');
 
