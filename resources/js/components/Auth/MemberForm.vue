@@ -27,16 +27,16 @@
         :error="errors?.email"
     />
 
-    <RegisterFormText
-        v-model="admin.birth_date"
-        field="Geburtsdatum"
-        name="birth_date"
-        type="date"
-        placeholder=""
-        autocomplete="bday"
-        :required="false"
-        :error="errors?.birth_date"
-    />
+    <div class="grid gap-2">
+        <Label for="birth_date">Geburtsdatum</Label>
+        <DateInput
+            id="birth_date"
+            v-model="admin.birth_date"
+            name="birth_date"
+            autocomplete="bday"
+        />
+        <InputError :message="errors?.birth_date" />
+    </div>
 
     <RegisterFormText
         v-model="admin.birth_place"
@@ -93,6 +93,9 @@
 </template>
 
 <script setup lang="ts">
+import DateInput from '@/components/DateInput.vue';
+import InputError from '@/components/InputError.vue';
+import { Label } from '@/components/ui/label';
 import RegisterFormText from '@/components/Auth/RegisterFormText.vue';
 
 defineProps<{ errors?: Record<string, string> }>();
