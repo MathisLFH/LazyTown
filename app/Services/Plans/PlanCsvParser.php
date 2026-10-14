@@ -35,10 +35,10 @@ class PlanCsvParser
             return [];
         }
 
-        $delimiter = $this->detectDelimiter($lines[0] ?? '');
+        $delimiter = $this->detectDelimiter($lines[0]);
         $headers = array_map(
             fn (?string $header): string => $this->normalizeHeader($header ?? ''),
-            str_getcsv((string) $lines[0], $delimiter),
+            str_getcsv($lines[0], $delimiter),
         );
 
         $rows = [];

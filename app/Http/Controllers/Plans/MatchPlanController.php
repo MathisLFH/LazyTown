@@ -116,12 +116,14 @@ class MatchPlanController extends Controller
 
         foreach ($rows as $row) {
             $line = (int) ($row['_line'] ?? 0);
-            $date = $this->csvParser->parseDate($row['datum'] ?? null);
+            $dateValue = $row['datum'] ?? null;
+            $date = $this->csvParser->parseDate(is_string($dateValue) ? $dateValue : null);
             $season = trim((string) ($row['saison'] ?? ''));
             $home = trim((string) ($row['mannschaft_1'] ?? ''));
             $away = trim((string) ($row['mannschaft_2'] ?? ''));
             $city = trim((string) ($row['ort'] ?? ''));
-            $kickoff = $this->csvParser->parseKickoffTime($row['uhrzeit'] ?? null);
+            $kickoffValue = $row['uhrzeit'] ?? null;
+            $kickoff = $this->csvParser->parseKickoffTime(is_string($kickoffValue) ? $kickoffValue : null);
 
             if ($date === null || $season === '' || $home === '' || $away === '') {
                 $errors[] = [

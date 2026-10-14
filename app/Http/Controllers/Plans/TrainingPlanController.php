@@ -102,9 +102,12 @@ class TrainingPlanController extends Controller
 
         foreach ($rows as $row) {
             $line = (int) ($row['_line'] ?? 0);
-            $weekday = $this->csvParser->parseWeekday($row['wochentag'] ?? null);
-            $startsAt = $this->csvParser->parseTime($row['beginn'] ?? null);
-            $endsAt = $this->csvParser->parseTime($row['ende'] ?? null);
+            $weekdayValue = $row['wochentag'] ?? null;
+            $weekday = $this->csvParser->parseWeekday(is_string($weekdayValue) ? $weekdayValue : null);
+            $startsAtValue = $row['beginn'] ?? null;
+            $startsAt = $this->csvParser->parseTime(is_string($startsAtValue) ? $startsAtValue : null);
+            $endsAtValue = $row['ende'] ?? null;
+            $endsAt = $this->csvParser->parseTime(is_string($endsAtValue) ? $endsAtValue : null);
             $gymName = trim((string) ($row['halle'] ?? ''));
             $teamName = trim((string) ($row['mannschaft'] ?? ''));
 
@@ -141,7 +144,7 @@ class TrainingPlanController extends Controller
                 }
             } elseif ($manageableTeams->count() === 1) {
                 $team = $manageableTeams->first();
-                $teamName = $team?->name ?? '';
+                $teamName = $team->name ?? '';
             } else {
                 $errors[] = [
                     'line' => $line,
