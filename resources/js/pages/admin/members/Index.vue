@@ -215,10 +215,7 @@ defineOptions({
             Noch keine Mitglieder angelegt.
         </p>
 
-        <Dialog
-            :open="deleteDialogOpen"
-            @update:open="handleDeleteDialogOpen"
-        >
+        <Dialog :open="deleteDialogOpen" @update:open="handleDeleteDialogOpen">
             <DialogContent>
                 <Form
                     v-if="memberToDelete"
@@ -231,8 +228,8 @@ defineOptions({
                     <DialogHeader>
                         <DialogTitle>Mitglied wirklich löschen?</DialogTitle>
                         <DialogDescription>
-                            Dieser Vorgang kann nicht rückgängig gemacht
-                            werden. Das Konto von
+                            Dieser Vorgang kann nicht rückgängig gemacht werden.
+                            Das Konto von
                             <strong>{{ memberToDelete.name }}</strong>
                             wird dauerhaft gelöscht.
                         </DialogDescription>

@@ -1,19 +1,17 @@
-<script setup lang="ts">
-</script>
+<script setup lang="ts"></script>
 
 <template>
-    <main
-        class="flex min-h-screen items-center justify-center bg-muted/30 p-6"
-    >
+    <main class="flex min-h-screen items-center justify-center bg-muted/30 p-6">
         <section
-            class="w-full max-w-20xl rounded-2xl border border-sidebar-border/70 bg-background p-8 text-center shadow-sm sm:p-12"
+            class="max-w-20xl w-full rounded-2xl border border-sidebar-border/70 bg-background p-8 text-center shadow-sm sm:p-12"
         >
-            
             <div class="mt-6">
                 <div class="mb-4 text-2xl font-bold">LT</div>
                 <h1 class="text-3xl font-bold">Impressum</h1>
 
-                <h2 class="mt-8 text-xl font-semibold">Angaben zum Betreiber</h2>
+                <h2 class="mt-8 text-xl font-semibold">
+                    Angaben zum Betreiber
+                </h2>
                 <p class="mt-4">
                     Musterverein e. V.<br />
                     Musterstraße 1<br />
@@ -27,7 +25,9 @@
                     Telefon: +49 123 456789
                 </p>
 
-                <h2 class="mt-8 text-xl font-semibold">Vertretungsberechtigt</h2>
+                <h2 class="mt-8 text-xl font-semibold">
+                    Vertretungsberechtigt
+                </h2>
                 <p class="mt-4">Max Mustermann, Vorsitzender</p>
 
                 <h2 class="mt-8 text-xl font-semibold">Registereintrag</h2>

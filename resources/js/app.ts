@@ -11,7 +11,7 @@ const appName = import.meta.env.VITE_APP_NAME || 'LazyTown';
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
     layout: (name) => {
-        console.log('name', name)
+        console.log('name', name);
 
         switch (true) {
             case name.startsWith('auth/'):
@@ -19,8 +19,11 @@ createInertiaApp({
             case name.startsWith('settings/'):
             case name.startsWith('teams/'):
                 return [AppLayout, SettingsLayout]; //Später ändern, wenn es Contact gibt
-            case name.startsWith('AboutUs') || name.startsWith('Kontakt') || name.startsWith('Impressum') || name.startsWith('Datenschutzerklaerung'):
-                    return ContactLayout;
+            case name.startsWith('AboutUs') ||
+                name.startsWith('Kontakt') ||
+                name.startsWith('Impressum') ||
+                name.startsWith('Datenschutzerklaerung'):
+                return ContactLayout;
             default:
                 return AppLayout;
         }

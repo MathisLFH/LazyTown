@@ -2,7 +2,13 @@
 import { Head } from '@inertiajs/vue3';
 import MyTeamPageContent from '@/components/Teams/MyTeamPageContent.vue';
 import { meinTeam } from '@/routes';
-import type { RoleOption, Team, TeamInvitation, TeamMember, TeamPermissions } from '@/types';
+import type {
+    RoleOption,
+    Team,
+    TeamInvitation,
+    TeamMember,
+    TeamPermissions,
+} from '@/types';
 
 type Props = {
     team: Team;

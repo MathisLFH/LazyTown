@@ -58,23 +58,20 @@ class TrainingPlanController extends Controller
                     'trainings.starts_at',
                     'trainings.ends_at',
                     'trainings.tenant_id',
-                    'teams.name as team_name',
-                    'gyms.name as gym_name',
                 ])
-                ->join('teams', 'teams.id', '=', 'trainings.team_id')
-                ->leftJoin('gyms', 'gyms.id', '=', 'trainings.gym_id')
+                ->with(['team:id,name', 'gym:id,name'])
                 ->where('trainings.tenant_id', $tenantId)
                 ->whereIn('trainings.team_id', $visibleTeams->pluck('id'))
                 ->orderByRaw($this->weekdayOrderSql())
                 ->orderBy('trainings.starts_at')
                 ->orderBy('trainings.id')
                 ->get()
-                ->map(fn ($training) => [
+                ->map(fn (Training $training): array => [
                     'id' => $training->id,
                     'team_id' => $training->team_id,
-                    'team_name' => $training->team_name,
+                    'team_name' => $training->team->name ?? '',
                     'gym_id' => $training->gym_id,
-                    'gym_name' => $training->gym_name,
+                    'gym_name' => $training->gym->name ?? null,
                     'weekday' => $training->weekday,
                     'starts_at' => substr((string) $training->starts_at, 0, 5),
                     'ends_at' => substr((string) $training->ends_at, 0, 5),
@@ -306,6 +303,7 @@ class TrainingPlanController extends Controller
         ]);
     }
 
+    /** @return literal-string */
     private function weekdayOrderSql(): string
     {
         return "CASE trainings.weekday

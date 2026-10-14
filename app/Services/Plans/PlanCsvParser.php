@@ -6,6 +6,9 @@ use Illuminate\Http\UploadedFile;
 
 class PlanCsvParser
 {
+    /**
+     * @return list<array<string, int|string>>
+     */
     public function readRows(UploadedFile $file): array
     {
         if ($file->getSize() !== false && $file->getSize() > 2 * 1024 * 1024) {
@@ -34,7 +37,7 @@ class PlanCsvParser
 
         $delimiter = $this->detectDelimiter($lines[0] ?? '');
         $headers = array_map(
-            fn (string $header) => $this->normalizeHeader($header),
+            fn (?string $header): string => $this->normalizeHeader($header ?? ''),
             str_getcsv((string) $lines[0], $delimiter),
         );
 

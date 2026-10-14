@@ -4,6 +4,6 @@ import KontaktContent from '@/components/Landing/KontaktContent.vue';
 </script>
 
 <template>
-    <Head title="Kontakt"/>
+    <Head title="Kontakt" />
     <KontaktContent />
 </template>

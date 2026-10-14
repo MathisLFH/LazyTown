@@ -71,20 +71,31 @@ export function nextMatch(rows: MatchRow[]): MatchRow | null {
     return (
         rows
             .filter((row) => {
-                const kickoff = row.kickoff_time ? `${row.date}T${row.kickoff_time}:00` : `${row.date}T23:59:59`;
+                const kickoff = row.kickoff_time
+                    ? `${row.date}T${row.kickoff_time}:00`
+                    : `${row.date}T23:59:59`;
 
                 return new Date(kickoff).getTime() >= now.getTime();
             })
             .sort((left, right) => {
-                const leftValue = new Date(`${left.date}T${left.kickoff_time ?? '23:59'}:00`).getTime();
-                const rightValue = new Date(`${right.date}T${right.kickoff_time ?? '23:59'}:00`).getTime();
+                const leftValue = new Date(
+                    `${left.date}T${left.kickoff_time ?? '23:59'}:00`,
+                ).getTime();
+                const rightValue = new Date(
+                    `${right.date}T${right.kickoff_time ?? '23:59'}:00`,
+                ).getTime();
 
                 return leftValue - rightValue;
             })[0] ?? null
     );
 }
 
-export function mapCsvToMatches(rows: CsvMatchRow[], ownName: string, teamId: number, season: string): MatchRow[] {
+export function mapCsvToMatches(
+    rows: CsvMatchRow[],
+    ownName: string,
+    teamId: number,
+    season: string,
+): MatchRow[] {
     return rows
         .flatMap((row) => {
             if (row.home === ownName) {

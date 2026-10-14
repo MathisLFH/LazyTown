@@ -331,7 +331,6 @@ function setupUnsavedGuard(): void {
             event.preventDefault();
         }
     });
-
 }
 
 onBeforeUnmount(() => {

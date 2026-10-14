@@ -6,7 +6,8 @@ import type { TeamInvitationContext } from '@/types';
 defineOptions({
     layout: {
         title: 'Log dich in deinen Account an',
-        description: 'Gib deine E-Mail-Adresse und dein Passwort ein, um dich anzumelden',
+        description:
+            'Gib deine E-Mail-Adresse und dein Passwort ein, um dich anzumelden',
     },
 });
 

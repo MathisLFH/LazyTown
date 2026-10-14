@@ -97,7 +97,7 @@ class StartseiteController extends Controller
                     'id' => 'training-'.$training->id,
                     'title' => 'Training '.$currentTeam->name,
                     'date' => $training->weekday.', '.substr((string) $training->starts_at, 0, 5).'-'.substr((string) $training->ends_at, 0, 5).' Uhr',
-                    'place' => $training->gym?->name ?? 'Halle nicht angegeben',
+                    'place' => $training->gym->name ?? 'Halle nicht angegeben',
                     'sortAt' => $this->nextTrainingAt($training, $now)->getTimestamp(),
                 ]);
 

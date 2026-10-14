@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
@@ -52,7 +59,11 @@ const selectedTeamId = ref<number | null>(props.defaultTeamId);
 
 const isMatchImport = computed(() => props.type === 'match');
 const previewRows = computed(() => parseRows.value.slice(0, 8));
-const selectedTeam = computed(() => props.teamOptions.find((team) => team.id === selectedTeamId.value) ?? null);
+const selectedTeam = computed(
+    () =>
+        props.teamOptions.find((team) => team.id === selectedTeamId.value) ??
+        null,
+);
 
 watch(
     () => props.open,
@@ -79,7 +90,11 @@ watch(
 );
 
 watch(selectedTeamId, (teamId) => {
-    if (!isMatchImport.value || teamId === null || availableNames.value.length === 0) {
+    if (
+        !isMatchImport.value ||
+        teamId === null ||
+        availableNames.value.length === 0
+    ) {
         return;
     }
 
@@ -115,7 +130,9 @@ async function parseCsv(): Promise<void> {
         });
 
         if (!response.ok) {
-            parseErrors.value = [{ line: 0, message: 'CSV konnte nicht verarbeitet werden.' }];
+            parseErrors.value = [
+                { line: 0, message: 'CSV konnte nicht verarbeitet werden.' },
+            ];
 
             return;
         }
@@ -127,7 +144,10 @@ async function parseCsv(): Promise<void> {
             parseRows.value = payload.rows ?? [];
             availableNames.value = payload.names ?? [];
 
-            if (selectedTeamId.value !== null && props.suggested?.[selectedTeamId.value]) {
+            if (
+                selectedTeamId.value !== null &&
+                props.suggested?.[selectedTeamId.value]
+            ) {
                 ownName.value = props.suggested[selectedTeamId.value] ?? '';
             } else if (availableNames.value.length === 1) {
                 ownName.value = availableNames.value[0];
@@ -146,7 +166,12 @@ function importDraft(): void {
             return;
         }
 
-        const rows = mapCsvToMatches(parseRows.value as CsvMatchRow[], ownName.value, selectedTeam.value.id, '');
+        const rows = mapCsvToMatches(
+            parseRows.value as CsvMatchRow[],
+            ownName.value,
+            selectedTeam.value.id,
+            '',
+        );
         emit('importMatches', rows, mode.value);
         emit('update:open', false);
 
@@ -164,19 +189,33 @@ function importDraft(): void {
             <DialogHeader>
                 <DialogTitle>CSV importieren</DialogTitle>
                 <DialogDescription>
-                    Lade eine CSV hoch, prüfe die Vorschau und übernimm die Daten in deinen Entwurf.
+                    Lade eine CSV hoch, prüfe die Vorschau und übernimm die
+                    Daten in deinen Entwurf.
                 </DialogDescription>
             </DialogHeader>
 
             <div class="grid gap-4">
                 <div class="grid gap-2">
                     <Label for="csv-file">Datei</Label>
-                    <Input id="csv-file" type="file" accept=".csv,.txt" @change="file = (($event.target as HTMLInputElement).files?.[0] ?? null)" />
+                    <Input
+                        id="csv-file"
+                        type="file"
+                        accept=".csv,.txt"
+                        @change="
+                            file =
+                                ($event.target as HTMLInputElement)
+                                    .files?.[0] ?? null
+                        "
+                    />
                 </div>
 
                 <div class="grid gap-2">
                     <Label for="import-mode">Modus</Label>
-                    <select id="import-mode" v-model="mode" class="h-10 rounded-md border border-input bg-background px-3 text-sm">
+                    <select
+                        id="import-mode"
+                        v-model="mode"
+                        class="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                    >
                         <option value="replace">Ersetzen</option>
                         <option value="append">Hinzufügen</option>
                     </select>
@@ -185,49 +224,116 @@ function importDraft(): void {
                 <template v-if="isMatchImport">
                     <div class="grid gap-2">
                         <Label for="target-team">Ziel-Team</Label>
-                        <select id="target-team" v-model.number="selectedTeamId" class="h-10 rounded-md border border-input bg-background px-3 text-sm">
-                            <option v-for="team in props.teamOptions" :key="team.id" :value="team.id">{{ team.name }}</option>
+                        <select
+                            id="target-team"
+                            v-model.number="selectedTeamId"
+                            class="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                        >
+                            <option
+                                v-for="team in props.teamOptions"
+                                :key="team.id"
+                                :value="team.id"
+                            >
+                                {{ team.name }}
+                            </option>
                         </select>
                     </div>
 
                     <div class="grid gap-2" v-if="availableNames.length > 0">
-                        <Label for="team-name">Welche Mannschaft in der CSV ist deine?</Label>
-                        <select id="team-name" v-model="ownName" class="h-10 rounded-md border border-input bg-background px-3 text-sm">
+                        <Label for="team-name"
+                            >Welche Mannschaft in der CSV ist deine?</Label
+                        >
+                        <select
+                            id="team-name"
+                            v-model="ownName"
+                            class="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                        >
                             <option value="">Bitte auswählen</option>
-                            <option v-for="name in availableNames" :key="name" :value="name">{{ name }}</option>
+                            <option
+                                v-for="name in availableNames"
+                                :key="name"
+                                :value="name"
+                            >
+                                {{ name }}
+                            </option>
                         </select>
                     </div>
                 </template>
 
-                <Button type="button" variant="outline" :disabled="!file || loading" @click="parseCsv">
+                <Button
+                    type="button"
+                    variant="outline"
+                    :disabled="!file || loading"
+                    @click="parseCsv"
+                >
                     <Spinner v-if="loading" class="mr-2 size-4" />
                     {{ loading ? 'Wird geprüft...' : 'CSV prüfen' }}
                 </Button>
 
-                <div v-if="parseErrors.length > 0" class="rounded-md border border-yellow-500/40 bg-yellow-500/10 p-3 text-sm">
+                <div
+                    v-if="parseErrors.length > 0"
+                    class="rounded-md border border-yellow-500/40 bg-yellow-500/10 p-3 text-sm"
+                >
                     <p class="font-medium">Hinweise</p>
                     <ul class="mt-2 list-disc space-y-1 pl-5">
-                        <li v-for="error in parseErrors" :key="`${error.line}-${error.message}`">
+                        <li
+                            v-for="error in parseErrors"
+                            :key="`${error.line}-${error.message}`"
+                        >
                             Zeile {{ error.line }}: {{ error.message }}
                         </li>
                     </ul>
                 </div>
 
                 <div v-if="previewRows.length > 0" class="rounded-md border">
-                    <div class="border-b px-3 py-2 text-sm font-medium">Vorschau ({{ previewRows.length }} von {{ parseRows.length }})</div>
+                    <div class="border-b px-3 py-2 text-sm font-medium">
+                        Vorschau ({{ previewRows.length }} von
+                        {{ parseRows.length }})
+                    </div>
                     <div class="overflow-x-auto">
                         <table class="min-w-full text-sm">
                             <tbody>
-                                <tr v-for="(row, index) in previewRows" :key="index" class="border-b">
+                                <tr
+                                    v-for="(row, index) in previewRows"
+                                    :key="index"
+                                    class="border-b"
+                                >
                                     <template v-if="isMatchImport">
-                                        <td class="px-3 py-2">{{ (row as CsvMatchRow).date }}</td>
-                                        <td class="px-3 py-2">{{ (row as CsvMatchRow).home }} - {{ (row as CsvMatchRow).away }}</td>
-                                        <td class="px-3 py-2">{{ (row as CsvMatchRow).city ?? '—' }}</td>
+                                        <td class="px-3 py-2">
+                                            {{ (row as CsvMatchRow).date }}
+                                        </td>
+                                        <td class="px-3 py-2">
+                                            {{ (row as CsvMatchRow).home }} -
+                                            {{ (row as CsvMatchRow).away }}
+                                        </td>
+                                        <td class="px-3 py-2">
+                                            {{
+                                                (row as CsvMatchRow).city ?? '—'
+                                            }}
+                                        </td>
                                     </template>
                                     <template v-else>
-                                        <td class="px-3 py-2">{{ (row as TrainingImportRow).weekday }}</td>
-                                        <td class="px-3 py-2">{{ (row as TrainingImportRow).starts_at }}-{{ (row as TrainingImportRow).ends_at }}</td>
-                                        <td class="px-3 py-2">{{ (row as TrainingImportRow).gym_name }}</td>
+                                        <td class="px-3 py-2">
+                                            {{
+                                                (row as TrainingImportRow)
+                                                    .weekday
+                                            }}
+                                        </td>
+                                        <td class="px-3 py-2">
+                                            {{
+                                                (row as TrainingImportRow)
+                                                    .starts_at
+                                            }}-{{
+                                                (row as TrainingImportRow)
+                                                    .ends_at
+                                            }}
+                                        </td>
+                                        <td class="px-3 py-2">
+                                            {{
+                                                (row as TrainingImportRow)
+                                                    .gym_name
+                                            }}
+                                        </td>
                                     </template>
                                 </tr>
                             </tbody>
@@ -237,10 +343,19 @@ function importDraft(): void {
             </div>
 
             <DialogFooter class="gap-2">
-                <Button variant="outline" type="button" @click="emit('update:open', false)">Abbrechen</Button>
+                <Button
+                    variant="outline"
+                    type="button"
+                    @click="emit('update:open', false)"
+                    >Abbrechen</Button
+                >
                 <Button
                     type="button"
-                    :disabled="parseRows.length === 0 || (isMatchImport && ownName === '') || selectedTeamId === null"
+                    :disabled="
+                        parseRows.length === 0 ||
+                        (isMatchImport && ownName === '') ||
+                        selectedTeamId === null
+                    "
                     @click="importDraft"
                 >
                     In Entwurf übernehmen

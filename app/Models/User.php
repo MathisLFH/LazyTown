@@ -25,7 +25,7 @@ use Laravel\Scout\Searchable;
  * @property int|null $role_id
  * @property string $public_id
  * @property string $name
- * @property string|null $birth_date
+ * @property Carbon|null $birth_date
  * @property string|null $city
  * @property string|null $phone
  * @property string $email

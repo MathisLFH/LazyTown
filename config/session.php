@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Str;
 
+$applicationHost = parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST) ?: 'localhost';
+
 return [
 
     /*
@@ -156,7 +158,7 @@ return [
     |
     */
 
-    'domain' => env('SESSION_DOMAIN') ?: '.'.(parse_url(env('APP_URL', 'http://localhost'), PHP_URL_HOST) ?: 'localhost'),
+    'domain' => env('SESSION_DOMAIN') ?: '.'.$applicationHost,
 
     /*
     |--------------------------------------------------------------------------

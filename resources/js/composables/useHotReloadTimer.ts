@@ -13,7 +13,9 @@ export function useHotReloadTimer() {
     let intervalId: ReturnType<typeof setInterval> | undefined;
 
     const updateElapsedTime = () => {
-        elapsedSeconds.value = Math.floor((Date.now() - lastReloadAt.value) / 1000);
+        elapsedSeconds.value = Math.floor(
+            (Date.now() - lastReloadAt.value) / 1000,
+        );
     };
 
     onMounted(() => {

@@ -31,22 +31,26 @@ class MemberAdministrationController extends Controller
                         ->where('teams.is_personal', false),
                 ])
                 ->get()
-                ->map(fn (User $member): array => [
-                    'id' => $member->id,
-                    'name' => $member->name,
-                    'email' => $member->email,
-                    'roles' => $member->roles,
-                    'must_change_password' => $member->must_change_password,
-                    'canManageRoles' => ! $member->is($currentUser),
-                    'canDelete' => ! $member->is($currentUser)
-                        && $tenant->admin_id !== $member->id
-                        && ! $member->has_non_personal_owned_teams,
-                    'deleteBlockedReason' => $member->has_non_personal_owned_teams
-                        ? 'Teamverantwortliche müssen vor dem Löschen erst die Verantwortung übertragen.'
-                        : ($tenant->admin_id === $member->id
-                            ? 'Der Vereinsadministrator kann nicht gelöscht werden.'
-                            : null),
-                ]),
+                ->map(function (User $member) use ($currentUser, $tenant): array {
+                    $hasNonPersonalOwnedTeams = (bool) $member->getAttribute('has_non_personal_owned_teams');
+
+                    return [
+                        'id' => $member->id,
+                        'name' => $member->name,
+                        'email' => $member->email,
+                        'roles' => $member->roles,
+                        'must_change_password' => $member->must_change_password,
+                        'canManageRoles' => ! $member->is($currentUser),
+                        'canDelete' => ! $member->is($currentUser)
+                            && $tenant->admin_id !== $member->id
+                            && ! $hasNonPersonalOwnedTeams,
+                        'deleteBlockedReason' => $hasNonPersonalOwnedTeams
+                            ? 'Teamverantwortliche müssen vor dem Löschen erst die Verantwortung übertragen.'
+                            : ($tenant->admin_id === $member->id
+                                ? 'Der Vereinsadministrator kann nicht gelöscht werden.'
+                                : null),
+                    ];
+                }),
         ]);
     }
 

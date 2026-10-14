@@ -14,7 +14,6 @@ defineProps<{
     email: string;
     passwordRules: string;
 }>();
-
 </script>
 
 <template>

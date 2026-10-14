@@ -16,16 +16,31 @@ export type TrainingConflict = {
     weekday: string;
 };
 
-export const weekDays = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'] as const;
+export const weekDays = [
+    'Montag',
+    'Dienstag',
+    'Mittwoch',
+    'Donnerstag',
+    'Freitag',
+    'Samstag',
+    'Sonntag',
+] as const;
 
-export function groupByWeekday(rows: TrainingRow[]): Record<string, TrainingRow[]> {
-    return weekDays.reduce<Record<string, TrainingRow[]>>((grouped, weekday) => {
-        grouped[weekday] = rows
-            .filter((row) => row.weekday === weekday)
-            .sort((left, right) => left.starts_at.localeCompare(right.starts_at));
+export function groupByWeekday(
+    rows: TrainingRow[],
+): Record<string, TrainingRow[]> {
+    return weekDays.reduce<Record<string, TrainingRow[]>>(
+        (grouped, weekday) => {
+            grouped[weekday] = rows
+                .filter((row) => row.weekday === weekday)
+                .sort((left, right) =>
+                    left.starts_at.localeCompare(right.starts_at),
+                );
 
-        return grouped;
-    }, {});
+            return grouped;
+        },
+        {},
+    );
 }
 
 export function findConflicts(rows: TrainingRow[]): TrainingConflict[] {
@@ -40,7 +55,9 @@ export function findConflicts(rows: TrainingRow[]): TrainingConflict[] {
     });
 
     groupedByDayAndGym.forEach((groupRows) => {
-        const sorted = [...groupRows].sort((left, right) => left.starts_at.localeCompare(right.starts_at));
+        const sorted = [...groupRows].sort((left, right) =>
+            left.starts_at.localeCompare(right.starts_at),
+        );
 
         for (let index = 0; index < sorted.length - 1; index++) {
             const current = sorted[index];
