@@ -22,6 +22,7 @@ Route::get('startseite', StartseiteController::class)->name('startseite');
 Route::middleware(['auth'])->group(function () {
     Route::post('notifications/read', [NotificationController::class, 'markAllAsRead'])->name('notifications.read');
     Route::post('notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read.single');
+    Route::delete('notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
     Route::post('notifications/test', [NotificationController::class, 'createTest'])->name('notifications.test');
     Route::get('suche', SearchController::class)
         ->middleware('throttle:search')

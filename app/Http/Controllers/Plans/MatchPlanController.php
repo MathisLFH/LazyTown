@@ -7,6 +7,7 @@ use App\Http\Requests\Plans\ParseCsvRequest;
 use App\Http\Requests\Plans\SaveMatchPlanRequest;
 use App\Models\ClubMatch;
 use App\Models\Team;
+use App\Services\Notifications\ScheduleUpdateNotifier;
 use App\Services\Plans\PlanCsvParser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -19,7 +20,10 @@ use Inertia\Response;
 
 class MatchPlanController extends Controller
 {
-    public function __construct(private readonly PlanCsvParser $csvParser) {}
+    public function __construct(
+        private readonly PlanCsvParser $csvParser,
+        private readonly ScheduleUpdateNotifier $scheduleUpdateNotifier,
+    ) {}
 
     public function show(Request $request): Response
     {
@@ -203,6 +207,7 @@ class MatchPlanController extends Controller
                 ->filter(fn ($id) => $id !== null)
                 ->map(fn ($id) => (int) $id)
                 ->all();
+            $hasChanges = $existingMatches->keys()->diff($incomingIds)->isNotEmpty();
 
             ClubMatch::query()
                 ->where('team_id', $manageableTeam->id)
@@ -236,7 +241,12 @@ class MatchPlanController extends Controller
                         ]);
                     }
 
-                    $match->update($payload);
+                    $match->fill($payload);
+
+                    if ($match->isDirty()) {
+                        $match->save();
+                        $hasChanges = true;
+                    }
 
                     continue;
                 }
@@ -247,6 +257,15 @@ class MatchPlanController extends Controller
                     'team_id' => $manageableTeam->id,
                     'season' => $season,
                 ]);
+                $hasChanges = true;
+            }
+
+            if ($hasChanges) {
+                $this->scheduleUpdateNotifier->notifyTeamPlayers(
+                    $manageableTeam,
+                    'Spielplan',
+                    route('spielplan', ['season' => $season]),
+                );
             }
         });
 

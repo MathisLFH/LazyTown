@@ -6,6 +6,7 @@ use App\Models\Team;
 use App\Models\Tenant;
 use App\Models\Training;
 use App\Models\User;
+use App\Notifications\Plans\ScheduleUpdate;
 use Illuminate\Http\UploadedFile;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -129,6 +130,79 @@ test('trainer sync creates gyms and keeps non manageable trainings untouched', f
         'weekday' => 'Montag',
     ]);
     $this->assertDatabaseHas('trainings', ['id' => $otherTraining->id]);
+});
+
+test('trainer sync notifies active players when a training changes', function () {
+    [$trainer, $tenant, $team] = createTrainingTrainer();
+    $player = User::factory()->create([
+        'tenant_id' => $tenant->id,
+        'roles' => ['spieler'],
+        'active_role' => 'spieler',
+    ]);
+    $team->members()->attach($player, ['role' => TeamRole::Member->value, 'status' => 'active']);
+    $training = Training::factory()->create([
+        'tenant_id' => $tenant->id,
+        'team_id' => $team->id,
+        'weekday' => 'Montag',
+        'starts_at' => '18:00:00',
+        'ends_at' => '19:30:00',
+    ]);
+
+    $this->actingAs($trainer)
+        ->put(route('hallenplan.sync'), [
+            'rows' => [[
+                'id' => $training->id,
+                'team_id' => $team->id,
+                'gym_name' => $training->gym->name,
+                'weekday' => 'Montag',
+                'starts_at' => '18:30',
+                'ends_at' => '19:30',
+            ]],
+        ])
+        ->assertRedirect(route('hallenplan'));
+
+    $notification = $player->fresh()->notifications()->first();
+
+    expect($notification)->not->toBeNull();
+    expect($notification->type)->toBe(ScheduleUpdate::class);
+    expect($notification->data)->toMatchArray([
+        'title' => 'Trainingsplan geändert',
+        'text' => 'Der Trainingsplan für Herren 1 wurde geändert.',
+        'url' => route('hallenplan'),
+        'category' => 'schedule_updates',
+    ]);
+});
+
+test('trainer sync does not notify players when the training plan is unchanged', function () {
+    [$trainer, $tenant, $team] = createTrainingTrainer();
+    $player = User::factory()->create([
+        'tenant_id' => $tenant->id,
+        'roles' => ['spieler'],
+        'active_role' => 'spieler',
+    ]);
+    $team->members()->attach($player, ['role' => TeamRole::Member->value, 'status' => 'active']);
+    $training = Training::factory()->create([
+        'tenant_id' => $tenant->id,
+        'team_id' => $team->id,
+        'weekday' => 'Montag',
+        'starts_at' => '18:00:00',
+        'ends_at' => '19:30:00',
+    ]);
+
+    $this->actingAs($trainer)
+        ->put(route('hallenplan.sync'), [
+            'rows' => [[
+                'id' => $training->id,
+                'team_id' => $team->id,
+                'gym_name' => $training->gym->name,
+                'weekday' => 'Montag',
+                'starts_at' => '18:00',
+                'ends_at' => '19:30',
+            ]],
+        ])
+        ->assertRedirect(route('hallenplan'));
+
+    expect($player->fresh()->notifications)->toHaveCount(0);
 });
 
 test('training validation rejects invalid times and non manageable teams', function () {

@@ -5,6 +5,7 @@ use App\Models\ClubMatch;
 use App\Models\Team;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Notifications\Plans\ScheduleUpdate;
 use Illuminate\Http\UploadedFile;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -101,6 +102,33 @@ test('players can not write to match plan endpoints', function () {
 
 test('trainer sync creates updates and deletes matches in one request', function () {
     [$trainer, $tenant, $team] = createTrainerWithTeamForPlans();
+    $disabledPlayer = User::factory()->create([
+        'tenant_id' => $tenant->id,
+        'roles' => ['spieler'],
+        'active_role' => 'spieler',
+        'notification_settings' => ['schedule_updates' => false],
+    ]);
+    $player = User::factory()->create([
+        'tenant_id' => $tenant->id,
+        'roles' => ['spieler'],
+        'active_role' => 'spieler',
+    ]);
+    $pendingPlayer = User::factory()->create([
+        'tenant_id' => $tenant->id,
+        'roles' => ['spieler'],
+        'active_role' => 'spieler',
+    ]);
+    $otherTeam = Team::factory()->create(['tenant_id' => $tenant->id]);
+    $otherTeamPlayer = User::factory()->create([
+        'tenant_id' => $tenant->id,
+        'roles' => ['spieler'],
+        'active_role' => 'spieler',
+    ]);
+    $team->members()->attach($disabledPlayer, ['role' => TeamRole::Member->value, 'status' => 'active']);
+    $team->members()->attach($player, ['role' => TeamRole::Member->value, 'status' => 'active']);
+    $team->members()->attach($pendingPlayer, ['role' => TeamRole::Member->value, 'status' => 'pending']);
+    $otherTeam->members()->attach($otherTeamPlayer, ['role' => TeamRole::Member->value, 'status' => 'active']);
+
     $toUpdate = ClubMatch::factory()->create([
         'tenant_id' => $tenant->id,
         'team_id' => $team->id,
@@ -149,6 +177,20 @@ test('trainer sync creates updates and deletes matches in one request', function
         'versus' => 'TSV Süd',
     ]);
 
+    $notification = $player->fresh()->notifications()->first();
+
+    expect($notification)->not->toBeNull();
+    expect($notification->type)->toBe(ScheduleUpdate::class);
+    expect($notification->data)->toMatchArray([
+        'title' => 'Spielplan geändert',
+        'text' => 'Der Spielplan für Herren 1 wurde geändert.',
+        'url' => route('spielplan', ['season' => '2026/27']),
+        'category' => 'schedule_updates',
+    ]);
+    expect($pendingPlayer->fresh()->notifications)->toHaveCount(0);
+    expect($disabledPlayer->fresh()->notifications)->toHaveCount(0);
+    expect($otherTeamPlayer->fresh()->notifications)->toHaveCount(0);
+
     $this->actingAs($trainer)
         ->get(route('spielplan', ['season' => '2026/27']))
         ->assertInertia(fn (Assert $page) => $page
@@ -157,6 +199,41 @@ test('trainer sync creates updates and deletes matches in one request', function
             ->where('matches.0.versus', 'Neu')
             ->where('matches.1.versus', 'TSV Süd'),
         );
+});
+
+test('trainer sync does not notify players when the match plan is unchanged', function () {
+    [$trainer, $tenant, $team] = createTrainerWithTeamForPlans();
+    $player = User::factory()->create([
+        'tenant_id' => $tenant->id,
+        'roles' => ['spieler'],
+        'active_role' => 'spieler',
+    ]);
+    $team->members()->attach($player, ['role' => TeamRole::Member->value, 'status' => 'active']);
+    $match = ClubMatch::factory()->create([
+        'tenant_id' => $tenant->id,
+        'team_id' => $team->id,
+        'season' => '2026/27',
+        'date' => '2026-09-15',
+        'versus' => 'Gegner',
+        'at_home' => false,
+        'city' => null,
+    ]);
+
+    $this->actingAs($trainer)
+        ->put(route('spielplan.sync'), [
+            'team_id' => $team->id,
+            'season' => '2026/27',
+            'rows' => [[
+                'id' => $match->id,
+                'date' => '2026-09-15',
+                'versus' => 'Gegner',
+                'at_home' => false,
+                'city' => null,
+            ]],
+        ])
+        ->assertRedirect(route('spielplan', ['season' => '2026/27']));
+
+    expect($player->fresh()->notifications)->toHaveCount(0);
 });
 
 test('administration can edit match plans like trainers', function () {

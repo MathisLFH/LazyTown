@@ -8,6 +8,7 @@ use App\Http\Requests\Plans\SaveTrainingPlanRequest;
 use App\Models\Gym;
 use App\Models\Team;
 use App\Models\Training;
+use App\Services\Notifications\ScheduleUpdateNotifier;
 use App\Services\Plans\PlanCsvParser;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -20,7 +21,10 @@ use Inertia\Response;
 
 class TrainingPlanController extends Controller
 {
-    public function __construct(private readonly PlanCsvParser $csvParser) {}
+    public function __construct(
+        private readonly PlanCsvParser $csvParser,
+        private readonly ScheduleUpdateNotifier $scheduleUpdateNotifier,
+    ) {}
 
     public function show(Request $request): Response
     {
@@ -196,6 +200,13 @@ class TrainingPlanController extends Controller
                 ->filter(fn ($id) => $id !== null)
                 ->map(fn ($id) => (int) $id)
                 ->all();
+            $affectedTeamIds = [];
+
+            foreach ($existingTrainings as $training) {
+                if (! in_array((int) $training->id, $incomingIds, true)) {
+                    $affectedTeamIds[(int) $training->team_id] = true;
+                }
+            }
 
             Training::query()
                 ->where('tenant_id', $tenantId)
@@ -231,7 +242,19 @@ class TrainingPlanController extends Controller
                         ]);
                     }
 
-                    $training->update($payload);
+                    $currentValues = [
+                        'team_id' => (int) $training->team_id,
+                        'gym_id' => $training->gym_id === null ? null : (int) $training->gym_id,
+                        'weekday' => $training->weekday,
+                        'starts_at' => substr((string) $training->starts_at, 0, 5),
+                        'ends_at' => substr((string) $training->ends_at, 0, 5),
+                    ];
+
+                    if ($currentValues !== $payload) {
+                        $affectedTeamIds[(int) $training->team_id] = true;
+                        $affectedTeamIds[$payload['team_id']] = true;
+                        $training->update($payload);
+                    }
 
                     continue;
                 }
@@ -240,6 +263,19 @@ class TrainingPlanController extends Controller
                     ...$payload,
                     'tenant_id' => $tenantId,
                 ]);
+                $affectedTeamIds[$payload['team_id']] = true;
+            }
+
+            foreach (array_keys($affectedTeamIds) as $affectedTeamId) {
+                $team = $manageableTeams->firstWhere('id', $affectedTeamId);
+
+                if ($team !== null) {
+                    $this->scheduleUpdateNotifier->notifyTeamPlayers(
+                        $team,
+                        'Trainingsplan',
+                        route('hallenplan'),
+                    );
+                }
             }
         });
 
