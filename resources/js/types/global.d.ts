@@ -19,6 +19,8 @@ declare module '@inertiajs/core' {
         sharedPageProps: {
             name: string;
             auth: Auth;
+            notifications: NotificationItem[];
+            unreadNotificationsCount: number;
             sidebarOpen: boolean;
             currentTeam: Team | null;
             teams: Team[];

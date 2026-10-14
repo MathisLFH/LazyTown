@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\Settings\DataExportController;
+use App\Http\Controllers\Settings\NotificationSettingsController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
+use App\Http\Controllers\Teams\MemberAdministrationController;
 use App\Http\Controllers\Teams\TeamAdministrationController;
 use App\Http\Controllers\Teams\TeamController;
 use App\Http\Controllers\Teams\TeamInvitationController;
@@ -18,6 +20,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::get('settings/profile/export', DataExportController::class)->name('profile.export');
+    Route::get('settings/notifications', [NotificationSettingsController::class, 'edit'])->name('notifications.edit');
+    Route::patch('settings/notifications', [NotificationSettingsController::class, 'update'])->name('notifications.update');
 
     Route::get('settings/teams/{team}/payment', [TeamPaymentController::class, 'edit'])->name('teams.payment.edit');
     Route::post('settings/teams/{team}/payment', [TeamPaymentController::class, 'update'])->name('teams.payment.update');
@@ -37,9 +41,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::inertia('settings/appearance', 'settings/Appearance')->middleware('club.access')->name('appearance.edit');
 
-    Route::patch('verwaltung/benutzer/{user}/rollen', [TeamAdministrationController::class, 'updateUserRoles'])
+    Route::prefix('verwaltung/mitglieder')
+        ->name('admin.members.')
         ->middleware('role:verwaltung')
-        ->name('admin.users.roles.update');
+        ->controller(MemberAdministrationController::class)
+        ->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::post('/', 'store')->name('store');
+            Route::patch('/{user}/rollen', 'updateRoles')->name('roles.update');
+            Route::delete('/{user}', 'destroy')->name('destroy');
+        });
 
     Route::prefix('verwaltung/teams')
         ->name('admin.teams.')

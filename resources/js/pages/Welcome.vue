@@ -8,4 +8,3 @@ import WelcomeContent from '@/components/Landing/WelcomeContent.vue';
 
     <WelcomeContent />
 </template>
-

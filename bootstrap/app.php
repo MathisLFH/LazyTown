@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureClubAccess;
+use App\Http\Middleware\EnsureInitialPasswordChanged;
 use App\Http\Middleware\EnsureUserRole;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -34,6 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
             SetTeamUrlDefaults::class,
             SetPermissionTeam::class,
+            EnsureInitialPasswordChanged::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

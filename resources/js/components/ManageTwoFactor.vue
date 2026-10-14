@@ -42,7 +42,8 @@ onUnmounted(() => clearTwoFactorAuthData());
             <p class="text-sm text-muted-foreground">
                 Wenn du die Zwei-Faktor-Authentifizierung aktivierst, wirst du
                 beim Anmelden nach einer sicheren PIN gefragt. Diese PIN kann
-                aus einer TOTP-kompatiblen Anwendung auf deinem Telefon abgerufen werden.
+                aus einer TOTP-kompatiblen Anwendung auf deinem Telefon
+                abgerufen werden.
             </p>
 
             <div>
@@ -64,8 +65,9 @@ onUnmounted(() => clearTwoFactorAuthData());
 
         <div v-else class="flex flex-col items-start justify-start space-y-4">
             <p class="text-sm text-muted-foreground">
-                Du wirst beim Anmelden nach einer sicheren, zufälligen PIN gefragt,
-                die du aus der TOTP-kompatiblen Anwendung auf deinem Telefon abrufen kannst.
+                Du wirst beim Anmelden nach einer sicheren, zufälligen PIN
+                gefragt, die du aus der TOTP-kompatiblen Anwendung auf deinem
+                Telefon abrufen kannst.
             </p>
 
             <div class="relative inline">

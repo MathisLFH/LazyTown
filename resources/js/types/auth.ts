@@ -20,6 +20,17 @@ export type Auth = {
     user: User;
 };
 
+export type NotificationItem = {
+    id: string;
+    type: string;
+    category: string | null;
+    title: string;
+    text: string;
+    url: string;
+    created_at: string | null;
+    read_at: string | null;
+};
+
 export type Passkey = {
     id: number;
     name: string;

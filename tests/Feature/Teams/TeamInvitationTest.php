@@ -50,6 +50,28 @@ test('invitation email for existing users uses login route', function () {
     $this->assertStringContainsString('dashboard', implode(' ', $mail->introLines));
 });
 
+test('disabled team invitation notifications are not sent to existing users', function () {
+    Notification::fake();
+
+    $owner = User::factory()->create(['roles' => ['trainer'], 'active_role' => 'trainer']);
+    $invitedUser = User::factory()->create([
+        'email' => 'invited@example.com',
+        'notification_settings' => ['team_invitations' => false],
+    ]);
+    $team = Team::factory()->create();
+
+    $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
+
+    $this->actingAs($owner)
+        ->post(route('teams.invitations.store', $team), [
+            'email' => $invitedUser->email,
+            'role' => 'spieler',
+        ])
+        ->assertRedirect(route('mein-team'));
+
+    Notification::assertNothingSent();
+});
+
 test('invitation email for unknown users uses login route', function () {
     $owner = User::factory()->create(['roles' => ['trainer'], 'active_role' => 'trainer']);
     $team = Team::factory()->create();

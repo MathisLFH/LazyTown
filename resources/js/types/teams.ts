@@ -4,11 +4,13 @@ export type Team = {
     id: number;
     name: string;
     slug: string;
+    logoUrl?: string | null;
     isPersonal: boolean;
     role?: TeamRole;
     roleLabel?: string;
     isCurrent?: boolean;
     paymentStatus?: 'pending' | 'paid' | 'skipped' | 'not_required';
+    trainerName?: string | null;
 };
 
 export type TeamMember = {

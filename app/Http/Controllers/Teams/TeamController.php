@@ -14,10 +14,13 @@ use App\Models\Team;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use RuntimeException;
 
 class TeamController extends Controller
 {
@@ -28,9 +31,18 @@ class TeamController extends Controller
 
     public function meinTeam(Request $request): Response
     {
+        $user = $request->user();
+        $activeClubTeams = $user->teams()
+            ->where('teams.is_personal', false)
+            ->wherePivot('status', 'active');
+        $team = (clone $activeClubTeams)
+            ->whereKey($user->current_team_id)
+            ->first()
+            ?? $activeClubTeams->firstOrFail();
+
         return Inertia::render('MeinTeam', $this->memberManagementProps(
-            $request->user(),
-            $request->user()->currentTeam()->firstOrFail(),
+            $user,
+            $team,
         ));
     }
 
@@ -68,6 +80,7 @@ class TeamController extends Controller
     public function edit(Request $request, Team $team): Response
     {
         $user = $request->user();
+        $trainer = $team->assignedTrainer()->first(['users.id', 'users.name']);
 
         return Inertia::render('teams/Edit', [
             'team' => [
@@ -76,6 +89,7 @@ class TeamController extends Controller
                 'slug' => $team->slug,
                 'isPersonal' => $team->is_personal,
                 'paymentStatus' => $team->payment_status,
+                'trainerName' => $trainer?->name,
             ],
             'permissions' => $user->toTeamPermissions($team),
         ]);
@@ -86,11 +100,16 @@ class TeamController extends Controller
      */
     private function memberManagementProps(User $user, Team $team): array
     {
+        $permissions = $user->toTeamPermissions($team);
+
         return [
             'team' => [
                 'id' => $team->id,
                 'name' => $team->name,
                 'slug' => $team->slug,
+                'logoUrl' => $permissions->canUpdateTeam && $team->logo_path
+                    ? Storage::disk('public')->url($team->logo_path)
+                    : null,
                 'isPersonal' => $team->is_personal,
                 'paymentStatus' => $team->payment_status,
             ],
@@ -121,10 +140,52 @@ class TeamController extends Controller
                         : InvitationRole::Player->label(),
                     'created_at' => $invitation->created_at->toISOString(),
                 ]),
-            'permissions' => $user->toTeamPermissions($team),
+            'permissions' => $permissions,
             'availableRoles' => TeamRole::assignable(),
             'availableInvitationRoles' => InvitationRole::options(),
         ];
+    }
+
+    public function updateLogo(Request $request, Team $team): RedirectResponse
+    {
+        abort_unless(
+            ! $team->is_personal && $request->user()->belongsToTeam($team),
+            404,
+        );
+
+        Gate::authorize('update', $team);
+
+        $request->validate([
+            'logo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        ], [
+            'logo.required' => 'Bitte wähle ein Vereinslogo aus.',
+            'logo.image' => 'Das Vereinslogo muss eine Bilddatei sein.',
+            'logo.mimes' => 'Das Vereinslogo muss ein JPG-, PNG- oder WebP-Bild sein.',
+            'logo.max' => 'Das Vereinslogo darf höchstens 2 MB groß sein.',
+        ]);
+
+        $logo = $request->file('logo');
+
+        if (! $logo instanceof UploadedFile) {
+            throw new RuntimeException('Validated team logo upload was not available.');
+        }
+
+        $logoPath = $logo->storePublicly('team-logos/'.$team->id, 'public');
+
+        if ($logoPath === false) {
+            throw new RuntimeException('The team logo could not be stored.');
+        }
+
+        $previousLogoPath = $team->logo_path;
+        $team->update(['logo_path' => $logoPath]);
+
+        if ($previousLogoPath !== null && ! Storage::disk('public')->delete($previousLogoPath)) {
+            logger()->warning('Unable to delete the previous team logo.', ['team_id' => $team->id]);
+        }
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Vereinslogo wurde aktualisiert.']);
+
+        return to_route('mein-team');
     }
 
     /**

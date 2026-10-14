@@ -19,10 +19,11 @@ class TenantFactory extends Factory
     public function definition(): array
     {
         $name = fake()->unique()->company();
+        $subdomainWords = fake()->unique()->words(2, true);
 
         return [
             'admin_id' => null,
-            'subdomain' => Str::slug(fake()->unique()->words(2, true)),
+            'subdomain' => Str::slug(is_string($subdomainWords) ? $subdomainWords : implode(' ', $subdomainWords)),
             'name' => $name,
         ];
     }

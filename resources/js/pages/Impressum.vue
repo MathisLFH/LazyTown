@@ -4,6 +4,6 @@ import ImpressumContent from '@/components/Landing/ImpressumContent.vue';
 </script>
 
 <template>
-    <Head title="Impressum"/>
+    <Head title="Impressum" />
     <ImpressumContent />
 </template>

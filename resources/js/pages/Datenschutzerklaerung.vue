@@ -4,6 +4,6 @@ import DatenschutzerklaerungContent from '@/components/Landing/Datenschutzerklae
 </script>
 
 <template>
-    <Head title="Impressum"/>
+    <Head title="Impressum" />
     <DatenschutzerklaerungContent />
 </template>

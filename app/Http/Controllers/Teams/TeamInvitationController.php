@@ -8,7 +8,9 @@ use App\Http\Requests\Teams\CreateTeamInvitationRequest;
 use App\Http\Requests\Teams\RespondToTeamInvitationRequest;
 use App\Models\Team;
 use App\Models\TeamInvitation;
+use App\Models\User;
 use App\Notifications\Teams\TeamInvitation as TeamInvitationNotification;
+use App\Services\Notifications\NotificationDispatcher;
 use App\Services\Teams\TeamPermissionSynchronizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +20,10 @@ use Inertia\Inertia;
 
 class TeamInvitationController extends Controller
 {
-    public function __construct(private TeamPermissionSynchronizer $permissionSynchronizer) {}
+    public function __construct(
+        private TeamPermissionSynchronizer $permissionSynchronizer,
+        private NotificationDispatcher $notificationDispatcher,
+    ) {}
 
     /**
      * Store a newly created invitation.
@@ -34,8 +39,17 @@ class TeamInvitationController extends Controller
             'expires_at' => now()->addDays(3),
         ]);
 
-        Notification::route('mail', $invitation->email)
-            ->notify(new TeamInvitationNotification($invitation));
+        $invitedUser = User::query()->where('email', $invitation->email)->first();
+
+        if ($invitedUser) {
+            $this->notificationDispatcher->sendToUser(
+                $invitedUser,
+                new TeamInvitationNotification($invitation),
+                TeamInvitationNotification::CATEGORY,
+            );
+        } else {
+            Notification::route('mail', $invitation->email)->notify(new TeamInvitationNotification($invitation));
+        }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Invitation sent.')]);
 

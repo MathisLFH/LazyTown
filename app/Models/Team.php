@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Concerns\GeneratesUniqueTeamSlugs;
 use App\Enums\TeamRole;
+use App\Enums\UserRole;
 use Database\Factories\TeamFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Collection;
@@ -14,11 +15,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Laravel\Scout\Searchable;
 
 /**
  * @property int $id
  * @property int|null $tenant_id
  * @property string $name
+ * @property string|null $logo_path
  * @property int|null $created_by
  * @property string $slug
  * @property bool $is_personal
@@ -35,11 +38,11 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, Membership> $memberships
  * @property-read Collection<int, User> $members
  */
-#[Fillable(['tenant_id', 'name', 'slug', 'is_personal', 'created_by', 'payment_status', 'payment_reference', 'payment_paid_at'])]
+#[Fillable(['tenant_id', 'name', 'logo_path', 'slug', 'is_personal', 'created_by', 'payment_status', 'payment_reference', 'payment_paid_at'])]
 class Team extends Model
 {
     /** @use HasFactory<TeamFactory> */
-    use GeneratesUniqueTeamSlugs, HasFactory, SoftDeletes;
+    use GeneratesUniqueTeamSlugs, HasFactory, Searchable, SoftDeletes;
 
     /**
      * Bootstrap the model and its traits.
@@ -82,6 +85,19 @@ class Team extends Model
             ->using(Membership::class)
             ->withPivot(['role', 'status', 'tenant_id', 'role_id'])
             ->withTimestamps();
+    }
+
+    /**
+     * Get the active trainer assigned to this team.
+     *
+     * @return BelongsToMany<User, $this, Membership, 'pivot'>
+     */
+    public function assignedTrainer(): BelongsToMany
+    {
+        return $this->members()
+            ->wherePivot('role', TeamRole::Admin->value)
+            ->wherePivot('status', 'active')
+            ->whereJsonContains('roles', UserRole::Coach->value);
     }
 
     /**
@@ -140,6 +156,18 @@ class Team extends Model
         return [
             'is_personal' => 'boolean',
             'payment_paid_at' => 'datetime',
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toSearchableArray(): array
+    {
+        return [
+            'name' => $this->name,
+            'slug' => $this->slug,
+            'tenant_id' => $this->tenant_id,
         ];
     }
 

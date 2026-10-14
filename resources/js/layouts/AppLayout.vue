@@ -9,14 +9,11 @@ import { Toaster } from '@/components/ui/sonner';
 
 const page = usePage();
 const isAuthenticated = computed(() => Boolean(page.props.auth.user));
-const hasClubMembership = computed(() =>
-    page.props.teams.some((team) => !team.isPersonal),
-);
 </script>
 
 <template>
     <div class="flex min-h-screen flex-col">
-        <Navbar v-if="isAuthenticated && hasClubMembership" />
+        <Navbar v-if="isAuthenticated" />
         <AppShell variant="header" class="flex-1">
             <AppContent variant="header" class="min-h-0">
                 <slot />

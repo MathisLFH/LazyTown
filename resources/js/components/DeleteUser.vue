@@ -34,7 +34,8 @@ const passwordInput = useTemplateRef('passwordInput');
             <div class="relative space-y-0.5 text-red-600 dark:text-red-100">
                 <p class="font-medium">Warnung</p>
                 <p class="text-sm">
-                    Bitte sei vorsichtig, dies kann nicht rückgängig gemacht werden.
+                    Bitte sei vorsichtig, dies kann nicht rückgängig gemacht
+                    werden.
                 </p>
             </div>
             <Dialog>
@@ -56,8 +57,8 @@ const passwordInput = useTemplateRef('passwordInput');
                     >
                         <DialogHeader class="space-y-3">
                             <DialogTitle
-                                >Bist du sicher, dass du dein
-                                Konto löschen möchtest?</DialogTitle
+                                >Bist du sicher, dass du dein Konto löschen
+                                möchtest?</DialogTitle
                             >
                             <DialogDescription>
                                 Sobald dein Konto gelöscht ist, werden alle

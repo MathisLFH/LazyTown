@@ -17,6 +17,7 @@ use Illuminate\Support\Carbon;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Laravel\Scout\Searchable;
 
 /**
  * @property int $id
@@ -24,12 +25,14 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property int|null $role_id
  * @property string $public_id
  * @property string $name
- * @property string|null $birth_date
+ * @property Carbon|null $birth_date
  * @property string|null $city
  * @property string|null $phone
  * @property string $email
  * @property array<int, string> $roles
+ * @property array<string, bool>|null $notification_settings
  * @property string|null $active_role
+ * @property bool $must_change_password
  * @property Carbon|null $email_verified_at
  * @property string $password
  * @property string|null $two_factor_secret
@@ -47,12 +50,12 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property-read ClubRole|null $role
  * @property-read Collection<int, Message> $messages
  */
-#[Fillable(['tenant_id', 'role_id', 'name', 'first_name', 'last_name', 'birth_date', 'birth_place', 'nationality', 'sex', 'address', 'city', 'postcode', 'phone', 'email', 'password', 'current_team_id', 'roles', 'active_role'])]
+#[Fillable(['tenant_id', 'role_id', 'name', 'first_name', 'last_name', 'birth_date', 'birth_place', 'nationality', 'sex', 'address', 'city', 'postcode', 'phone', 'email', 'password', 'current_team_id', 'roles', 'active_role', 'notification_settings'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasTeams, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+    use HasFactory, HasTeams, Notifiable, PasskeyAuthenticatable, Searchable, TwoFactorAuthenticatable;
 
     protected static function booted(): void
     {
@@ -78,6 +81,22 @@ class User extends Authenticatable implements PasskeyUser
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
             'roles' => 'array',
+            'notification_settings' => 'array',
+            'must_change_password' => 'boolean',
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toSearchableArray(): array
+    {
+        return [
+            'name' => $this->name,
+            'first_name' => $this->first_name,
+            'last_name' => $this->last_name,
+            'public_id' => $this->public_id,
+            'tenant_id' => $this->tenant_id,
         ];
     }
 

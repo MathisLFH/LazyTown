@@ -3,6 +3,7 @@ import { Form, Link, usePage } from '@inertiajs/vue3';
 import { Pencil } from '@lucide/vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
+import DateInput from '@/components/DateInput.vue';
 import DeleteUser from '@/components/DeleteUser.vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
@@ -140,12 +141,10 @@ function handleAvatarChange(event: Event): void {
             </div>
             <div class="grid gap-2">
                 <Label for="birth_date">Geburtsdatum</Label
-                ><Input
+                ><DateInput
                     id="birth_date"
-                    type="date"
-                    class="mt-1 block w-full"
                     name="birth_date"
-                    :default-value="birthDateValue"
+                    :model-value="birthDateValue"
                     autocomplete="bday"
                     :disabled="!isEditing"
                 /><InputError class="mt-2" :message="errors.birth_date" />
