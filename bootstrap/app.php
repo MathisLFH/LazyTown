@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureClubAccess;
 use App\Http\Middleware\EnsureInitialPasswordChanged;
+use App\Http\Middleware\EnsurePrivacyConsent;
 use App\Http\Middleware\EnsureUserRole;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -25,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => EnsureUserRole::class,
             'club.access' => EnsureClubAccess::class,
             'permission.team' => SetPermissionTeam::class,
+            'privacy.consent' => EnsurePrivacyConsent::class,
         ]);
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 

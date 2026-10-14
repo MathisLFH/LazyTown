@@ -1,8 +1,9 @@
 <?php
 
-use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Auth\MemberProfileCompletionController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PrivacyConsentController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\StartseiteController;
 use App\Http\Controllers\Teams\ClubOnboardingController;
 use App\Http\Controllers\Teams\TeamController;
@@ -10,7 +11,9 @@ use App\Http\Controllers\Teams\TeamInvitationController;
 use App\Http\Controllers\Teams\TeamMemberController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', StartseiteController::class)->name('home');
+Route::get('/', StartseiteController::class)
+    ->middleware('privacy.consent')
+    ->name('home');
 Route::inertia('contact/about-us', 'AboutUs')->name('aboutus');
 Route::inertia('contact/kontakt', 'Kontakt')->name('kontakt');
 Route::inertia('contact/impressum', 'Impressum')->name('impressum');
@@ -18,6 +21,11 @@ Route::inertia('contact/datenschutzerklaerung', 'Datenschutzerklaerung')->name('
 Route::inertia('startseite', 'Startseite')->name('startseite');
 
 Route::middleware(['auth'])->group(function () {
+    Route::get('datenschutz/bestaetigen', [PrivacyConsentController::class, 'edit'])->name('privacy.consent.edit');
+    Route::post('datenschutz/bestaetigen', [PrivacyConsentController::class, 'update'])->name('privacy.consent.update');
+});
+
+Route::middleware(['auth', 'privacy.consent'])->group(function () {
     Route::post('notifications/read', [NotificationController::class, 'markAllAsRead'])->name('notifications.read');
     Route::post('notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read.single');
     Route::post('notifications/test', [NotificationController::class, 'createTest'])->name('notifications.test');

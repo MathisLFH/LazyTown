@@ -41,6 +41,7 @@ class CreateNewUser implements CreatesNewUsers
         Validator::make($input, [
             ...$this->profileRules(),
             'password' => $this->passwordRules(),
+            'privacy_consent' => ['accepted'],
         ])->validate();
 
         return DB::transaction(function () use ($input) {
@@ -50,6 +51,8 @@ class CreateNewUser implements CreatesNewUsers
                 'password' => $input['password'],
                 'roles' => $input['roles'],
                 'active_role' => $input['active_role'],
+                'privacy_policy_version' => config('privacy.policy_version'),
+                'privacy_policy_accepted_at' => now(),
             ]);
 
             $this->createTeam->handle($user, $user->name."'s Team", isPersonal: true);
@@ -83,6 +86,7 @@ class CreateNewUser implements CreatesNewUsers
             'city' => ['nullable', 'string', 'max:255'],
             'subscription' => ['required', 'string', Rule::in(['free', 'premium'])],
             'password' => $this->passwordRules(),
+            'privacy_consent' => ['accepted'],
         ])->validate();
 
         $subscriptionPrice = $data['subscription'] === 'premium' ? 29.99 : 0;
@@ -102,6 +106,8 @@ class CreateNewUser implements CreatesNewUsers
                 'password' => $data['password'],
                 'roles' => [UserRole::Administration->value],
                 'active_role' => UserRole::Administration->value,
+                'privacy_policy_version' => config('privacy.policy_version'),
+                'privacy_policy_accepted_at' => now(),
             ]);
 
             $tenant = Tenant::create([

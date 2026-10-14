@@ -13,6 +13,8 @@ export type User = {
     two_factor_enabled?: boolean;
     created_at: string;
     updated_at: string;
+    privacy_policy_version?: string | null;
+    privacy_policy_accepted_at?: string | null;
     [key: string]: unknown;
 };
 

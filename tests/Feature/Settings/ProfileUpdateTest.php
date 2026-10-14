@@ -3,7 +3,10 @@
 use App\Models\User;
 
 test('profile page is displayed', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create([
+        'privacy_policy_version' => config('privacy.policy_version'),
+        'privacy_policy_accepted_at' => now(),
+    ]);
 
     $response = $this
         ->actingAs($user)
@@ -14,6 +17,22 @@ test('profile page is displayed', function () {
         ->assertInertia(fn ($page) => $page
             ->component('settings/Profile')
             ->missing('roleOptions'),
+        );
+});
+
+test('profile page exposes the current privacy consent status', function () {
+    $acceptedAt = now()->subMinute();
+    $user = User::factory()->create([
+        'privacy_policy_version' => config('privacy.policy_version'),
+        'privacy_policy_accepted_at' => $acceptedAt,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('profile.edit'))
+        ->assertInertia(fn ($page) => $page
+            ->where('privacyPolicyVersion', config('privacy.policy_version'))
+            ->where('auth.user.privacy_policy_version', config('privacy.policy_version'))
+            ->where('auth.user.privacy_policy_accepted_at', fn (string $value): bool => str_starts_with($value, $acceptedAt->toDateString())),
         );
 });
 

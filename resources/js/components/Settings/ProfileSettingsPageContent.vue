@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Form, Link, usePage } from '@inertiajs/vue3';
 import { Pencil } from '@lucide/vue';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DateInput from '@/components/DateInput.vue';
 import DeleteUser from '@/components/DeleteUser.vue';
@@ -11,42 +11,25 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useProfileAvatar } from '@/composables/useProfileAvatar';
-import { home, logout } from '@/routes';
+import { datenschutzerklaerung, home, logout } from '@/routes';
 import { exportMethod as exportProfile } from '@/routes/profile';
 import { send } from '@/routes/verification';
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 const { avatarDataUrl, setAvatar } = useProfileAvatar(user.value?.id ?? null);
+const privacyPolicyVersion = computed(() =>
+    String(page.props.privacyPolicyVersion ?? ''),
+);
+const hasCurrentPrivacyConsent = computed(
+    () =>
+        user.value.privacy_policy_accepted_at !== null &&
+        user.value.privacy_policy_version === privacyPolicyVersion.value,
+);
 const birthDateValue = computed(
     () => user.value.birth_date?.slice(0, 10) ?? '',
 );
 const isEditing = ref(false);
-const privacyConsent = ref(true);
-const privacyMessage = ref('');
-const privacyStorageKey = 'lazytown.privacy-consent';
-
-onMounted(() => {
-    const storedConsent = window.localStorage.getItem(privacyStorageKey);
-
-    if (storedConsent !== null) {
-        privacyConsent.value = storedConsent === 'true';
-    }
-
-    watch(privacyConsent, (consent) => {
-        window.localStorage.setItem(privacyStorageKey, String(consent));
-    });
-});
-
-function savePrivacyConsent(): void {
-    window.localStorage.setItem(
-        privacyStorageKey,
-        String(privacyConsent.value),
-    );
-    privacyMessage.value = privacyConsent.value
-        ? 'Datenschutzeinstellungen gespeichert.'
-        : 'Datenschutzeinstellungen aktualisiert.';
-}
 
 function handleAvatarChange(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -216,25 +199,31 @@ function handleAvatarChange(event: Event): void {
             <Heading
                 variant="small"
                 title="Datenschutz (DSGVO)"
-                description="Verwalte deine Einwilligung und deine persönlichen Daten."
+                description="Sieh die Datenschutzerklärung und den serverseitig gespeicherten Zustimmungsstatus ein."
             />
-            <label class="flex max-w-xl items-start gap-3 text-sm"
-                ><input
-                    v-model="privacyConsent"
-                    type="checkbox"
-                    class="mt-1"
-                /><span
-                    >Ich stimme der Verarbeitung meiner Daten zur Nutzung der
-                    Vereinsverwaltung zu.</span
-                ></label
+            <p class="text-sm">
+                Status:
+                <span class="font-medium">
+                    {{
+                        hasCurrentPrivacyConsent
+                            ? 'Zugestimmt'
+                            : 'Für die aktuelle Version nicht bestätigt'
+                    }}
+                </span>
+            </p>
+            <p
+                v-if="user.privacy_policy_accepted_at"
+                class="text-sm text-muted-foreground"
             >
+                Zugestimmte Version: {{ user.privacy_policy_version }} ·
+                Zeitpunkt:
+                {{ user.privacy_policy_accepted_at }}
+            </p>
             <div class="flex flex-wrap gap-2">
-                <button
-                    type="button"
+                <Link
+                    :href="datenschutzerklaerung()"
                     class="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
-                    @click="savePrivacyConsent"
-                >
-                    Datenschutzeinstellung speichern</button
+                    >Datenschutzerklärung öffnen</Link
                 ><a
                     :href="exportProfile().url"
                     download
@@ -242,9 +231,6 @@ function handleAvatarChange(event: Event): void {
                     >Meine Daten exportieren</a
                 >
             </div>
-            <p v-if="privacyMessage" class="text-sm text-muted-foreground">
-                {{ privacyMessage }}
-            </p>
         </section>
         <section class="border-t pt-6">
             <Link

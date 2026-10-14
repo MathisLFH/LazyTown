@@ -43,6 +43,7 @@ test('new users can register', function () {
         'email' => 'test@example.com',
         'password' => 'password',
         'password_confirmation' => 'password',
+        'privacy_consent' => '1',
     ]);
 
     $this->assertAuthenticated();
@@ -55,6 +56,20 @@ test('new users can register', function () {
             ->component('Startseite')
             ->where('hasClub', false),
         );
+});
+
+test('registration requires privacy consent', function () {
+    $response = $this->from(route('register'))->post(route('register.store'), [
+        'name' => 'Test User',
+        'email' => 'no-consent@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ]);
+
+    $response->assertRedirect(route('register'));
+    $response->assertSessionHasErrors('privacy_consent');
+    $this->assertGuest();
+    expect(User::where('email', 'no-consent@example.com')->exists())->toBeFalse();
 });
 
 test('clubs can register an administrator and subscription without storing a payment method', function () {
@@ -76,6 +91,7 @@ test('clubs can register an administrator and subscription without storing a pay
         'payment_method' => 'card',
         'password' => 'password',
         'password_confirmation' => 'password',
+        'privacy_consent' => '1',
     ]);
 
     $response->assertRedirect('https://lazytown.test');
@@ -112,6 +128,7 @@ test('inertia club registration redirects to the main domain', function () {
             'subscription' => 'free',
             'password' => 'password',
             'password_confirmation' => 'password',
+            'privacy_consent' => '1',
         ])
         ->assertStatus(409)
         ->assertHeader('X-Inertia-Location', 'https://lazytown.test');
@@ -129,6 +146,7 @@ test('free club registrations do not wait for payment', function () {
         'subscription' => 'free',
         'password' => 'password',
         'password_confirmation' => 'password',
+        'privacy_consent' => '1',
     ]);
 
     $response->assertRedirect('https://lazytown.test');
@@ -172,8 +190,13 @@ test('registration starts a player without assigning a club', function () {
         'active_role' => 'verwaltung',
         'password' => 'password',
         'password_confirmation' => 'password',
+        'privacy_consent' => '1',
     ]);
 
     $response->assertRedirect(route('home'));
-    expect(User::where('email', 'trainer@example.com')->first()->roles)->toBe(['spieler']);
+    $user = User::where('email', 'trainer@example.com')->firstOrFail();
+
+    expect($user->roles)->toBe(['spieler'])
+        ->and($user->privacy_policy_version)->toBe(config('privacy.policy_version'))
+        ->and($user->privacy_policy_accepted_at)->not->toBeNull();
 });

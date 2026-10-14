@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form } from '@inertiajs/vue3';
+import { Form, Link } from '@inertiajs/vue3';
 import InputError from '@/components/InputError.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import TeamInvitationAlert from '@/components/TeamInvitationAlert.vue';
@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { login } from '@/routes';
+import { datenschutzerklaerung as showPrivacyPolicy } from '@/routes';
 import { store } from '@/routes/register';
 import type { TeamInvitationContext } from '@/types';
 
@@ -101,6 +102,27 @@ defineProps<{
                 />
                 <InputError :message="errors.password_confirmation" />
             </div>
+
+            <label class="flex items-start gap-3 text-sm">
+                <input
+                    type="checkbox"
+                    name="privacy_consent"
+                    value="1"
+                    required
+                    class="mt-1"
+                />
+                <span>
+                    Ich habe die
+                    <Link
+                        :href="showPrivacyPolicy()"
+                        class="underline underline-offset-4"
+                        target="_blank"
+                        >Datenschutzerklärung</Link
+                    >
+                    gelesen und stimme ihr zu.
+                </span>
+            </label>
+            <InputError :message="errors.privacy_consent" />
 
             <!-- <fieldset class="grid gap-3">
                 <legend class="text-sm font-medium">Wie möchtest du starten?</legend>

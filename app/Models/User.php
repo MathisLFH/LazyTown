@@ -33,6 +33,8 @@ use Laravel\Scout\Searchable;
  * @property array<string, bool>|null $notification_settings
  * @property string|null $active_role
  * @property bool $must_change_password
+ * @property string|null $privacy_policy_version
+ * @property Carbon|null $privacy_policy_accepted_at
  * @property Carbon|null $email_verified_at
  * @property string $password
  * @property string|null $two_factor_secret
@@ -50,7 +52,7 @@ use Laravel\Scout\Searchable;
  * @property-read ClubRole|null $role
  * @property-read Collection<int, Message> $messages
  */
-#[Fillable(['tenant_id', 'role_id', 'name', 'first_name', 'last_name', 'birth_date', 'birth_place', 'nationality', 'sex', 'address', 'city', 'postcode', 'phone', 'email', 'password', 'current_team_id', 'roles', 'active_role', 'notification_settings'])]
+#[Fillable(['tenant_id', 'role_id', 'name', 'first_name', 'last_name', 'birth_date', 'birth_place', 'nationality', 'sex', 'address', 'city', 'postcode', 'phone', 'email', 'password', 'current_team_id', 'roles', 'active_role', 'notification_settings', 'privacy_policy_version', 'privacy_policy_accepted_at'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {
@@ -83,6 +85,7 @@ class User extends Authenticatable implements PasskeyUser
             'roles' => 'array',
             'notification_settings' => 'array',
             'must_change_password' => 'boolean',
+            'privacy_policy_accepted_at' => 'datetime',
         ];
     }
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form } from '@inertiajs/vue3';
+import { Form, Link } from '@inertiajs/vue3';
 import { computed, reactive, ref } from 'vue';
 import RegisterAdminSection from '@/components/Auth/RegisterSection/Admin.vue';
 import RegisterClubSection from '@/components/Auth/RegisterSection/Club.vue';
@@ -11,6 +11,7 @@ import TeamInvitationAlert from '@/components/TeamInvitationAlert.vue';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { datenschutzerklaerung as showPrivacyPolicy } from '@/routes';
 import { store } from '@/routes/register';
 import type { TeamInvitationContext } from '@/types';
 
@@ -212,6 +213,29 @@ function handleRegistrationErrors(errors: Record<string, string>): void {
                 <RegisterPaymentSection
                     v-model="createClubData.paymentMethod"
                 />
+            </div>
+
+            <div v-if="registerSection === steps.length - 1" class="grid gap-2">
+                <label class="flex items-start gap-3 text-sm">
+                    <input
+                        type="checkbox"
+                        name="privacy_consent"
+                        value="1"
+                        required
+                        class="mt-1"
+                    />
+                    <span>
+                        Ich habe die
+                        <Link
+                            :href="showPrivacyPolicy()"
+                            class="underline underline-offset-4"
+                            target="_blank"
+                            >Datenschutzerklärung</Link
+                        >
+                        gelesen und stimme ihr zu.
+                    </span>
+                </label>
+                <InputError :message="errors.privacy_consent" />
             </div>
 
             <section id="button-section">
