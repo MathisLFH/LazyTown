@@ -16,36 +16,59 @@ type Props = {
     changeCount: number;
     teamOptions?: Option[];
     seasonOptions?: Option[];
+    gymFilterOptions?: Option[];
+    teamFilterOptions?: Option[];
     selectedTeamId?: number | null;
     selectedSeason?: string | null;
+    selectedGymFilter?: number | 'all';
+    selectedTeamFilter?: number | 'all';
 };
 
 const props = withDefaults(defineProps<Props>(), {
     teamOptions: () => [],
     seasonOptions: () => [],
+    gymFilterOptions: () => [],
+    teamFilterOptions: () => [],
     isSaving: false,
     selectedTeamId: null,
     selectedSeason: null,
+    selectedGymFilter: 'all',
+    selectedTeamFilter: 'all',
 });
 
 const emit = defineEmits<{
     'update:teamId': [value: number];
     'update:season': [value: string];
+    'update:gymFilter': [value: number | 'all'];
+    'update:teamFilter': [value: number | 'all'];
     edit: [];
     discard: [];
     save: [];
     csv: [];
     export: [];
 }>();
+
+function filterValue(value: string): number | 'all' {
+    return value === 'all' ? 'all' : Number(value);
+}
 </script>
 
 <template>
     <div class="flex flex-col gap-4 rounded-lg border bg-card p-4">
-        <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div
+            class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
+        >
             <h1 class="text-2xl font-semibold">{{ props.title }}</h1>
 
-            <div v-if="props.isEditing" class="flex flex-wrap items-center gap-2">
-                <Button variant="outline" type="button" @click="emit('discard')">
+            <div
+                v-if="props.isEditing"
+                class="flex flex-wrap items-center gap-2"
+            >
+                <Button
+                    variant="outline"
+                    type="button"
+                    @click="emit('discard')"
+                >
                     <X class="size-4" />
                     Verwerfen
                 </Button>
@@ -62,7 +85,10 @@ const emit = defineEmits<{
                     }}
                 </Button>
             </div>
-            <div v-else-if="props.canEdit" class="flex flex-wrap items-center gap-2">
+            <div
+                v-else-if="props.canEdit"
+                class="flex flex-wrap items-center gap-2"
+            >
                 <Button type="button" @click="emit('edit')">
                     <Pencil class="size-4" />
                     Plan bearbeiten
@@ -78,26 +104,118 @@ const emit = defineEmits<{
             </div>
         </div>
 
-        <div class="grid gap-3 md:grid-cols-2" v-if="props.teamOptions.length > 0 || props.seasonOptions.length > 0">
-            <label v-if="props.teamOptions.length > 0" class="grid gap-2 text-sm font-medium">
+        <div
+            v-if="
+                props.teamOptions.length > 0 ||
+                props.seasonOptions.length > 0 ||
+                props.gymFilterOptions.length > 0 ||
+                props.teamFilterOptions.length > 0
+            "
+            class="grid gap-3 md:grid-cols-2"
+        >
+            <label
+                v-if="props.teamOptions.length > 0"
+                class="grid gap-2 text-sm font-medium"
+            >
                 Mannschaft
                 <select
                     class="h-10 rounded-md border border-input bg-background px-3 text-sm"
                     :value="props.selectedTeamId ?? ''"
-                    @change="emit('update:teamId', Number(($event.target as HTMLSelectElement).value))"
+                    @change="
+                        emit(
+                            'update:teamId',
+                            Number(($event.target as HTMLSelectElement).value),
+                        )
+                    "
                 >
-                    <option v-for="option in props.teamOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+                    <option
+                        v-for="option in props.teamOptions"
+                        :key="option.value"
+                        :value="option.value"
+                    >
+                        {{ option.label }}
+                    </option>
                 </select>
             </label>
 
-            <label v-if="props.seasonOptions.length > 0" class="grid gap-2 text-sm font-medium">
+            <label
+                v-if="props.seasonOptions.length > 0"
+                class="grid gap-2 text-sm font-medium"
+            >
                 Saison
                 <select
                     class="h-10 rounded-md border border-input bg-background px-3 text-sm"
                     :value="props.selectedSeason ?? ''"
-                    @change="emit('update:season', ($event.target as HTMLSelectElement).value)"
+                    @change="
+                        emit(
+                            'update:season',
+                            ($event.target as HTMLSelectElement).value,
+                        )
+                    "
                 >
-                    <option v-for="option in props.seasonOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+                    <option
+                        v-for="option in props.seasonOptions"
+                        :key="option.value"
+                        :value="option.value"
+                    >
+                        {{ option.label }}
+                    </option>
+                </select>
+            </label>
+
+            <label
+                v-if="props.gymFilterOptions.length > 0"
+                class="grid gap-2 text-sm font-medium"
+            >
+                Halle
+                <select
+                    class="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                    :value="props.selectedGymFilter"
+                    @change="
+                        emit(
+                            'update:gymFilter',
+                            filterValue(
+                                ($event.target as HTMLSelectElement).value,
+                            ),
+                        )
+                    "
+                >
+                    <option value="all">Alle Hallen</option>
+                    <option
+                        v-for="option in props.gymFilterOptions"
+                        :key="option.value"
+                        :value="option.value"
+                    >
+                        {{ option.label }}
+                    </option>
+                </select>
+            </label>
+
+            <label
+                v-if="props.teamFilterOptions.length > 0"
+                class="grid gap-2 text-sm font-medium"
+            >
+                Team
+                <select
+                    class="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                    :value="props.selectedTeamFilter"
+                    @change="
+                        emit(
+                            'update:teamFilter',
+                            filterValue(
+                                ($event.target as HTMLSelectElement).value,
+                            ),
+                        )
+                    "
+                >
+                    <option value="all">Alle Teams</option>
+                    <option
+                        v-for="option in props.teamFilterOptions"
+                        :key="option.value"
+                        :value="option.value"
+                    >
+                        {{ option.label }}
+                    </option>
                 </select>
             </label>
         </div>

@@ -300,7 +300,6 @@ function setupUnsavedGuard(): void {
             event.preventDefault();
         }
     });
-
 }
 
 onBeforeUnmount(() => {
@@ -324,6 +323,26 @@ onMounted(() => {
                 :is-saving="isSaving"
                 :has-changes="hasChanges"
                 :change-count="changeCount"
+                :gym-filter-options="
+                    isEditing
+                        ? []
+                        : props.gyms.map((gym) => ({
+                              value: gym.id,
+                              label: gym.name,
+                          }))
+                "
+                :team-filter-options="
+                    isEditing
+                        ? []
+                        : props.teams.map((team) => ({
+                              value: team.id,
+                              label: team.name,
+                          }))
+                "
+                :selected-gym-filter="selectedGym"
+                :selected-team-filter="selectedTeam"
+                @update:gym-filter="selectedGym = $event"
+                @update:team-filter="selectedTeam = $event"
                 @edit="openEditMode"
                 @discard="discardDraft"
                 @save="saveDraft"
@@ -441,42 +460,6 @@ onMounted(() => {
             </section>
 
             <section v-else class="space-y-4">
-                <div class="grid gap-3 md:grid-cols-2">
-                    <label class="grid gap-2 text-sm font-medium">
-                        Halle
-                        <select
-                            v-model="selectedGym"
-                            class="h-10 rounded-md border border-input bg-background px-3 text-sm"
-                        >
-                            <option value="all">Alle Hallen</option>
-                            <option
-                                v-for="gym in props.gyms"
-                                :key="gym.id"
-                                :value="gym.id"
-                            >
-                                {{ gym.name }}
-                            </option>
-                        </select>
-                    </label>
-
-                    <label class="grid gap-2 text-sm font-medium">
-                        Team
-                        <select
-                            v-model="selectedTeam"
-                            class="h-10 rounded-md border border-input bg-background px-3 text-sm"
-                        >
-                            <option value="all">Alle Teams</option>
-                            <option
-                                v-for="team in props.teams"
-                                :key="team.id"
-                                :value="team.id"
-                            >
-                                {{ team.name }}
-                            </option>
-                        </select>
-                    </label>
-                </div>
-
                 <div class="grid gap-3 lg:grid-cols-3">
                     <div
                         v-for="weekday in weekDays"
