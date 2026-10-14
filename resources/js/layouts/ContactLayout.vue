@@ -1,20 +1,6 @@
 <script setup lang="ts">
-import { usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
-import AppContent from '@/components/AppContent.vue';
-import AppShell from '@/components/AppShell.vue';
-import HotReloadTimer from '@/components/HotReloadTimer.vue';
-import Navbar from '@/components/Navbar.vue';
-import { Toaster } from '@/components/ui/sonner';
-import { home, logout } from '@/routes';
-import { Link } from '@inertiajs/vue3';
-
-
-const page = usePage();
-const isAuthenticated = computed(() => Boolean(page.props.auth.user));
-const hasClubMembership = computed(() =>
-    page.props.teams.some((team) => !team.isPersonal),
-);
+import { Link, usePage } from '@inertiajs/vue3';
+import { home } from '@/routes';
 
 const title = usePage()
                 .url.split('/')

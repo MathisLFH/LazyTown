@@ -173,6 +173,11 @@ Run tests:
 composer test
 ```
 
+GitHub Actions runs the CI workflow on pull requests and pushes to `main`. It
+starts a temporary PostgreSQL 16 service, builds the frontend, and runs
+`composer ci:check` (ESLint, Prettier, TypeScript checks, Pint, PHPStan, and the
+Laravel test suite). CI does not deploy the application.
+
 ## Database
 
 ### Migrations

@@ -93,10 +93,10 @@
 </template>
 
 <script setup lang="ts">
+import RegisterFormText from '@/components/Auth/RegisterFormText.vue';
 import DateInput from '@/components/DateInput.vue';
 import InputError from '@/components/InputError.vue';
 import { Label } from '@/components/ui/label';
-import RegisterFormText from '@/components/Auth/RegisterFormText.vue';
 
 defineProps<{ errors?: Record<string, string> }>();
 

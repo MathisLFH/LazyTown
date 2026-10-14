@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
 import RegisterClubPageContent from '@/components/Auth/RegisterClubPageContent.vue';
 import type { TeamInvitationContext } from '@/types';
 
