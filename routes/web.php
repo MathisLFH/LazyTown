@@ -17,7 +17,7 @@ Route::inertia('contact/about-us', 'AboutUs')->name('aboutus');
 Route::inertia('contact/kontakt', 'Kontakt')->name('kontakt');
 Route::inertia('contact/impressum', 'Impressum')->name('impressum');
 Route::inertia('contact/datenschutzerklaerung', 'Datenschutzerklaerung')->name('datenschutzerklaerung');
-Route::inertia('startseite', 'Startseite')->name('startseite');
+Route::get('startseite', StartseiteController::class)->name('startseite');
 
 Route::middleware(['auth'])->group(function () {
     Route::post('notifications/read', [NotificationController::class, 'markAllAsRead'])->name('notifications.read');
