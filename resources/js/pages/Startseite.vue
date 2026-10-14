@@ -4,6 +4,7 @@ import StartseiteContent from '@/components/StartseiteContent.vue';
 
 defineProps<{
     hasClub: boolean;
+    clubLogoUrl: string | null;
     pendingMembers: { team: { name: string; slug: string } }[];
     trainerName: string | null;
     upcomingEvents: {
@@ -21,6 +22,7 @@ defineProps<{
 
     <StartseiteContent
         :has-club="hasClub"
+        :club-logo-url="clubLogoUrl"
         :pending-members="pendingMembers"
         :trainer-name="trainerName"
         :upcoming-events="upcomingEvents"

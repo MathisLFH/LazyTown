@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3';
+import { router, useForm } from '@inertiajs/vue3';
 import { ChevronDown, Mail, Phone, UserPlus, X } from '@lucide/vue';
-import { ref, computed } from 'vue';
+import { onBeforeUnmount, ref, computed } from 'vue';
 import CancelInvitationModal from '@/components/CancelInvitationModal.vue';
 import Heading from '@/components/Heading.vue';
+import InputError from '@/components/InputError.vue';
 import InviteMemberModal from '@/components/InviteMemberModal.vue';
 import RemoveMemberModal from '@/components/RemoveMemberModal.vue';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -22,6 +23,7 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useInitials } from '@/composables/useInitials';
+import { update as updateTeamLogo } from '@/routes/teams/logo';
 import { update as updateMember } from '@/routes/teams/members';
 import type { RoleOption, Team, TeamInvitation, TeamMember, TeamPermissions } from '@/types';
 
@@ -36,12 +38,61 @@ type Props = {
 
 const props = defineProps<Props>();
 const { getInitials } = useInitials();
+const logoFileInput = ref<HTMLInputElement | null>(null);
+const logoPreviewUrl = ref<string | null>(null);
+const logoForm = useForm<{ logo: File | null }>({ logo: null });
 
 const inviteDialogOpen = ref(false);
 const removeMemberDialogOpen = ref(false);
 const memberToRemove = ref<TeamMember | null>(null);
 const cancelInvitationDialogOpen = ref(false);
 const invitationToCancel = ref<TeamInvitation | null>(null);
+
+const openLogoFilePicker = () => logoFileInput.value?.click();
+
+const revokeLogoPreview = () => {
+    if (logoPreviewUrl.value) {
+        URL.revokeObjectURL(logoPreviewUrl.value);
+        logoPreviewUrl.value = null;
+    }
+};
+
+const clearLogoSelection = () => {
+    revokeLogoPreview();
+    logoForm.reset('logo');
+    logoForm.clearErrors('logo');
+
+    if (logoFileInput.value) {
+        logoFileInput.value.value = '';
+    }
+};
+
+const selectLogo = (event: Event) => {
+    const input = event.target;
+
+    if (input instanceof HTMLInputElement) {
+        revokeLogoPreview();
+        logoForm.logo = input.files?.[0] ?? null;
+        logoPreviewUrl.value = logoForm.logo ? URL.createObjectURL(logoForm.logo) : null;
+        logoForm.clearErrors('logo');
+    }
+};
+
+onBeforeUnmount(revokeLogoPreview);
+
+const uploadLogo = () => {
+    if (!logoForm.logo) {
+        return;
+    }
+
+    logoForm.post(updateTeamLogo.url(props.team.slug), {
+        forceFormData: true,
+        preserveScroll: true,
+        onSuccess: () => {
+            clearLogoSelection();
+        },
+    });
+};
 
 const trainers = computed(() => props.members.filter((member) => member.role !== 'member'));
 const players = computed(() => props.members.filter((member) => member.role === 'member'));
@@ -76,6 +127,43 @@ const confirmCancelInvitation = (invitation: TeamInvitation) => {
                 <UserPlus /> Spieler hinzufügen
             </Button>
         </div>
+
+        <section v-if="permissions.canUpdateTeam" class="flex flex-col gap-5 rounded-lg border p-4 sm:flex-row sm:items-center">
+            <div class="flex aspect-square h-28 shrink-0 items-center justify-center rounded-md bg-muted p-3">
+                <img
+                    :src="logoPreviewUrl ?? team.logoUrl ?? '/images/verein-logo.svg'"
+                    :alt="logoForm.logo ? 'Vorschau des neuen Vereinslogos' : 'Vereinslogo'"
+                    class="max-h-full max-w-full object-contain"
+                />
+            </div>
+            <div class="space-y-3">
+                <Heading variant="small" title="Vereinslogo" description="Das Logo wird auf der Startseite für euren Verein angezeigt." />
+                <div class="space-y-2">
+                    <input
+                        ref="logoFileInput"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        class="sr-only"
+                        @change="selectLogo"
+                    />
+                    <div class="flex flex-wrap items-center gap-2">
+                        <Button type="button" variant="outline" :disabled="logoForm.processing" @click="openLogoFilePicker">
+                            Bild auswählen
+                        </Button>
+                        <span v-if="logoForm.logo" class="text-sm text-muted-foreground">{{ logoForm.logo.name }}</span>
+                        <Button v-if="logoForm.logo" type="button" :disabled="logoForm.processing" @click="uploadLogo">
+                            {{ logoForm.processing ? 'Wird hochgeladen…' : 'Vorschau übernehmen' }}
+                        </Button>
+                        <Button v-if="logoForm.logo" type="button" variant="ghost" :disabled="logoForm.processing" @click="clearLogoSelection">
+                            Abbrechen
+                        </Button>
+                    </div>
+                    <p v-if="logoForm.logo" class="text-xs text-muted-foreground">Vorschau – noch nicht gespeichert.</p>
+                    <p class="text-xs text-muted-foreground">JPG, PNG oder WebP; maximal 2 MB.</p>
+                    <InputError :message="logoForm.errors.logo" />
+                </div>
+            </div>
+        </section>
 
         <section v-for="group in memberGroups" :key="group.title" class="space-y-5">
             <div class="flex items-center justify-between gap-4"><Heading variant="small" :title="group.title" /></div>

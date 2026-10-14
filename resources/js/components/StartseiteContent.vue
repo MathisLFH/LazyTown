@@ -5,6 +5,7 @@ import { confirm } from '@/routes/teams/members';
 
 defineProps<{
     hasClub: boolean;
+    clubLogoUrl: string | null;
     pendingMembers: { team: { name: string; slug: string } }[];
     trainerName: string | null;
     upcomingEvents: {
@@ -77,7 +78,7 @@ defineProps<{
                         class="flex aspect-square items-center justify-center rounded-md bg-muted p-4"
                     >
                         <img
-                            src="/images/verein-logo.svg"
+                            :src="clubLogoUrl ?? '/images/verein-logo.svg'"
                             alt="Vereinslogo"
                             class="max-h-full max-w-full object-contain"
                         />

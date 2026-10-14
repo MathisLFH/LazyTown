@@ -10,6 +10,7 @@ use App\Models\Training;
 use Carbon\CarbonInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 use UnexpectedValueException;
@@ -35,6 +36,7 @@ class StartseiteController extends Controller
         $currentTeam = (clone $activeClubTeams)
             ->where('teams.id', $user->current_team_id)
             ->first();
+        $logoTeam = $currentTeam ?? (clone $activeClubTeams)->first();
         $email = strtolower($user->email);
         $now = now();
 
@@ -130,6 +132,9 @@ class StartseiteController extends Controller
             'pendingInvitations' => $pendingInvitations,
             'pendingMembers' => $pendingMembers,
             'trainerName' => $currentTeam?->assignedTrainer()->first(['users.id', 'users.name'])?->name,
+            'clubLogoUrl' => $logoTeam?->logo_path
+                ? Storage::disk('public')->url($logoTeam->logo_path)
+                : null,
         ]);
     }
 

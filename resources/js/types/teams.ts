@@ -4,6 +4,7 @@ export type Team = {
     id: number;
     name: string;
     slug: string;
+    logoUrl?: string | null;
     isPersonal: boolean;
     role?: TeamRole;
     roleLabel?: string;

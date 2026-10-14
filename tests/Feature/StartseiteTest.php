@@ -9,6 +9,8 @@ use App\Models\TeamInvitation;
 use App\Models\Tenant;
 use App\Models\Training;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('guests can visit the home page', function () {
@@ -195,6 +197,28 @@ test('home page shows when the selected team has no assigned trainer', function 
             ->component('Startseite')
             ->where('hasClub', true)
             ->where('trainerName', null),
+        );
+});
+
+test('home page shows the active club logo when no team is selected', function () {
+    Storage::fake('public');
+
+    $player = User::factory()->create(['roles' => ['spieler'], 'active_role' => 'spieler']);
+    $team = Team::factory()->create();
+    $team->members()->attach($player, [
+        'role' => TeamRole::Member->value,
+        'status' => 'active',
+    ]);
+    $logoPath = UploadedFile::fake()->image('verein.png')->storePublicly('team-logos/'.$team->id, 'public');
+    $team->update(['logo_path' => $logoPath]);
+
+    $this->actingAs($player)
+        ->get(route('home'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Startseite')
+            ->where('hasClub', true)
+            ->where('clubLogoUrl', Storage::disk('public')->url($logoPath)),
         );
 });
 

@@ -39,6 +39,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('hallenplan/csv', [TrainingPlanController::class, 'parseCsv'])->name('hallenplan.csv');
         Route::put('hallenplan', [TrainingPlanController::class, 'sync'])->name('hallenplan.sync');
         Route::get('mein-team', [TeamController::class, 'meinTeam'])->name('mein-team');
+        Route::post('teams/{team}/logo', [TeamController::class, 'updateLogo'])->name('teams.logo.update');
     });
 
     Route::middleware('auth')->group(function () {
