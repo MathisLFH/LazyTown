@@ -187,6 +187,81 @@ trait HasTeams
     }
 
     /**
+     * @return Collection<int, Team>
+     */
+    public function clubTeamsForPlans(): Collection
+    {
+        $tenantId = $this->planTenantId();
+
+        if ($tenantId === null) {
+            return collect();
+        }
+
+        return Team::query()
+            ->where('tenant_id', $tenantId)
+            ->where('is_personal', false)
+            ->orderByRaw('LOWER(name)')
+            ->get();
+    }
+
+    /**
+     * @return Collection<int, Team>
+     */
+    public function manageableTeamsForPlans(): Collection
+    {
+        if (! $this->hasRole('trainer')) {
+            return collect();
+        }
+
+        return $this->manageableTeamsForPlanRoles(['trainer']);
+    }
+
+    /**
+     * @return Collection<int, Team>
+     */
+    public function manageableTeamsForMatchPlans(): Collection
+    {
+        return $this->manageableTeamsForPlanRoles(['trainer', 'verwaltung']);
+    }
+
+    /**
+     * @param  array<int, string>  $roles
+     * @return Collection<int, Team>
+     */
+    private function manageableTeamsForPlanRoles(array $roles): Collection
+    {
+        if (! collect($roles)->contains(fn (string $role) => $this->hasRole($role))) {
+            return collect();
+        }
+
+        $manageableTeamIds = $this->teamMemberships()
+            ->where('status', 'active')
+            ->whereIn('role', [TeamRole::Owner->value, TeamRole::Admin->value])
+            ->pluck('team_id');
+
+        return $this->clubTeamsForPlans()
+            ->whereIn('id', $manageableTeamIds)
+            ->values();
+    }
+
+    private function planTenantId(): ?int
+    {
+        $activeClubTeams = $this->teams()
+            ->where('teams.is_personal', false)
+            ->wherePivot('status', 'active');
+
+        $currentTeam = (clone $activeClubTeams)
+            ->whereKey($this->current_team_id)
+            ->first();
+
+        if ($currentTeam !== null) {
+            return $currentTeam->tenant_id;
+        }
+
+        return $activeClubTeams->value('teams.tenant_id');
+    }
+
+    /**
      * Determine if the user has the given permission on the team.
      */
     public function hasTeamPermission(Team $team, TeamPermission $permission): bool

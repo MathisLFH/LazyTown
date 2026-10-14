@@ -1,8 +1,10 @@
 <?php
 
-use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Auth\MemberProfileCompletionController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\Plans\MatchPlanController;
+use App\Http\Controllers\Plans\TrainingPlanController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\StartseiteController;
 use App\Http\Controllers\Teams\ClubOnboardingController;
 use App\Http\Controllers\Teams\TeamController;
@@ -29,8 +31,12 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('invitations/{invitation}', [TeamInvitationController::class, 'decline'])->name('invitations.decline');
 
     Route::middleware('club.access')->group(function () {
-        Route::inertia('spielplan', 'Spielplan')->name('spielplan');
-        Route::inertia('hallenplan', 'Hallenplan')->name('hallenplan');
+        Route::get('spielplan', [MatchPlanController::class, 'show'])->name('spielplan');
+        Route::get('hallenplan', [TrainingPlanController::class, 'show'])->name('hallenplan');
+        Route::post('spielplan/csv', [MatchPlanController::class, 'parseCsv'])->name('spielplan.csv');
+        Route::put('spielplan', [MatchPlanController::class, 'sync'])->name('spielplan.sync');
+        Route::post('hallenplan/csv', [TrainingPlanController::class, 'parseCsv'])->name('hallenplan.csv');
+        Route::put('hallenplan', [TrainingPlanController::class, 'sync'])->name('hallenplan.sync');
         Route::get('mein-team', [TeamController::class, 'meinTeam'])->name('mein-team');
     });
 
