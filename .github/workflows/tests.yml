@@ -329,9 +329,9 @@ jobs:
           fi
           ln -sfn "$shared/storage/app/public" "$release/public/storage"
 
-          chgrp -R www-data "$shared/storage" "$release/bootstrap/cache"
-          chmod -R g+rwX "$shared/storage" "$release/bootstrap/cache"
-          find "$shared/storage" "$release/bootstrap/cache" -type d -exec chmod g+s {} +
+          chgrp -R www-data "$release/bootstrap/cache"
+          chmod -R g+rwX "$release/bootstrap/cache"
+          find "$release/bootstrap/cache" -type d -exec chmod g+s {} +
 
           cd "$release"
           php artisan package:discover --ansi
