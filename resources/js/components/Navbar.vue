@@ -2,7 +2,7 @@
 import { HttpCancelledError } from '@inertiajs/core';
 import { Form, Link, router, useHttp, usePage } from '@inertiajs/vue3';
 import { Bell, ChevronDown, CircleUserRound, Search, X } from '@lucide/vue';
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -49,6 +49,10 @@ type SearchForm = {
 };
 
 const searchQuery = ref('');
+const searchOpen = ref(false);
+const searchInput = ref<HTMLInputElement | null>(null);
+const searchContainer = ref<HTMLDivElement | null>(null);
+const searchTrigger = ref<HTMLButtonElement | null>(null);
 const searchResponse = ref<SearchResponse>({ query: '', groups: [] });
 const showSearchSuggestions = ref(false);
 const searchError = ref<string | null>(null);
@@ -62,6 +66,7 @@ const searchHttp = useHttp<SearchForm, SearchResponse>({
 const { isCurrentUrl } = useCurrentUrl();
 const page = usePage();
 const currentUser = computed(() => page.props.auth.user);
+const clubName = computed(() => page.props.tenant?.name ?? null);
 const { avatarDataUrl } = useProfileAvatar(currentUser.value?.id ?? null);
 const isAuthenticated = computed(() => Boolean(page.props.auth.user));
 const userRoles = computed(() => (currentUser.value?.roles ?? []) as string[]);
@@ -133,19 +138,36 @@ const scheduleSearch = (query: string) => {
     }, 250);
 };
 
+function closeSearch(restoreFocus = false): void {
+    searchOpen.value = false;
+
+    if (restoreFocus) {
+        void nextTick(() => searchTrigger.value?.focus());
+    }
+}
+
+function handleSearchBlur(event: FocusEvent): void {
+    const nextTarget = event.relatedTarget;
+
+    if (
+        nextTarget instanceof Node &&
+        searchContainer.value?.contains(nextTarget)
+    ) {
+        return;
+    }
+
+    closeSearch();
+}
+
 const selectSuggestion = (suggestion: SearchSuggestion) => {
     cancelSearch();
-    searchQuery.value = '';
     showSearchSuggestions.value = false;
+    closeSearch();
     router.visit(suggestion.url);
 };
 
 const handleSearchKeydown = (event: KeyboardEvent) => {
     if (!showSearchSuggestions.value || !hasSearchSuggestions.value) {
-        if (event.key === 'Escape') {
-            showSearchSuggestions.value = false;
-        }
-
         return;
     }
 
@@ -169,13 +191,21 @@ const handleSearchKeydown = (event: KeyboardEvent) => {
         if (suggestion) {
             selectSuggestion(suggestion);
         }
-    } else if (event.key === 'Escape') {
-        event.preventDefault();
-        showSearchSuggestions.value = false;
     }
 };
 
 watch(searchQuery, scheduleSearch);
+watch(searchOpen, (isOpen) => {
+    if (isOpen) {
+        void nextTick(() => searchInput.value?.focus());
+
+        return;
+    }
+
+    cancelSearch();
+    searchQuery.value = '';
+    showSearchSuggestions.value = false;
+});
 
 onBeforeUnmount(cancelSearch);
 
@@ -248,106 +278,142 @@ function removeNotification(notification: NotificationItem): void {
         <div
             class="mx-auto flex min-h-16 max-w-7xl items-center gap-4 px-4 sm:px-6"
         >
-            <div class="flex min-w-0 flex-1 items-center">
-                <div class="relative w-full max-w-xs">
-                    <label class="relative block">
-                        <span class="sr-only">Suche</span>
-                        <Search
-                            class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-                            aria-hidden="true"
-                        />
-                        <input
-                            v-model="searchQuery"
-                            type="search"
-                            placeholder="Suche..."
-                            role="combobox"
-                            :aria-expanded="showSearchSuggestions"
-                            aria-controls="search-suggestions"
-                            aria-autocomplete="list"
-                            @focus="
-                                showSearchSuggestions = searchQuery.length >= 2
-                            "
-                            @keydown="handleSearchKeydown"
-                            class="h-10 w-full rounded-md border border-input bg-background pr-3 pl-9 text-sm transition outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
-                        />
-                    </label>
-
-                    <div
-                        v-if="showSearchSuggestions"
-                        id="search-suggestions"
-                        class="absolute top-full z-50 mt-2 w-full min-w-72 overflow-hidden rounded-md border border-border bg-popover text-popover-foreground shadow-md"
+            <div class="flex min-w-0 flex-1 items-center gap-3">
+                <span
+                    v-if="isAuthenticated && clubName"
+                    :title="clubName"
+                    class="max-w-100 truncate text-[25px] font-semibold text-foreground"
+                >
+                    {{ clubName }}
+                </span>
+                <div
+                    ref="searchContainer"
+                    class="relative max-w-full min-w-0 transition-[width] duration-200 ease-in-out"
+                    :class="searchOpen ? 'w-56 sm:w-64' : 'w-10'"
+                    @keydown.esc.prevent="closeSearch(true)"
+                >
+                    <button
+                        v-if="!searchOpen"
+                        ref="searchTrigger"
+                        type="button"
+                        aria-label="Suche öffnen"
+                        class="inline-flex size-10 items-center justify-center rounded-md text-muted-foreground transition hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
+                        @click="searchOpen = true"
                     >
-                        <p
-                            v-if="searchHttp.processing"
-                            class="px-3 py-3 text-sm text-muted-foreground"
-                            role="status"
-                        >
-                            Suche läuft...
-                        </p>
-                        <p
-                            v-else-if="searchError"
-                            class="px-3 py-3 text-sm text-destructive"
-                            role="alert"
-                        >
-                            {{ searchError }}
-                        </p>
-                        <p
-                            v-else-if="!hasSearchSuggestions"
-                            class="px-3 py-3 text-sm text-muted-foreground"
-                        >
-                            Keine passenden Ergebnisse.
-                        </p>
-                        <ul
-                            v-else
-                            role="listbox"
-                            class="max-h-96 overflow-y-auto py-1"
-                        >
-                            <template
-                                v-for="group in searchResponse.groups"
-                                :key="group.type"
+                        <Search class="size-5" aria-hidden="true" />
+                    </button>
+                    <template v-else>
+                        <label class="relative block">
+                            <span class="sr-only">Suche</span>
+                            <Search
+                                class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                                aria-hidden="true"
+                            />
+                            <input
+                                ref="searchInput"
+                                v-model="searchQuery"
+                                type="search"
+                                placeholder="Suche..."
+                                role="combobox"
+                                :aria-expanded="showSearchSuggestions"
+                                aria-controls="search-suggestions"
+                                aria-autocomplete="list"
+                                @focus="
+                                    showSearchSuggestions =
+                                        searchQuery.length >= 2
+                                "
+                                @keydown="handleSearchKeydown"
+                                @blur="handleSearchBlur"
+                                class="h-10 w-full min-w-0 rounded-md border border-input bg-background pr-9 pl-9 text-sm transition outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+                            />
+                            <button
+                                type="button"
+                                aria-label="Suche schließen"
+                                class="absolute top-1/2 right-1.5 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground transition hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
+                                @mousedown.prevent
+                                @click="closeSearch(true)"
                             >
-                                <li
-                                    class="px-3 pt-2 pb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
-                                    role="presentation"
+                                <X class="size-4" aria-hidden="true" />
+                            </button>
+                        </label>
+
+                        <div
+                            v-if="showSearchSuggestions"
+                            id="search-suggestions"
+                            class="absolute top-full z-50 mt-2 w-full overflow-hidden rounded-md border border-border bg-popover text-popover-foreground shadow-md"
+                        >
+                            <p
+                                v-if="searchHttp.processing"
+                                class="px-3 py-3 text-sm text-muted-foreground"
+                                role="status"
+                            >
+                                Suche läuft...
+                            </p>
+                            <p
+                                v-else-if="searchError"
+                                class="px-3 py-3 text-sm text-destructive"
+                                role="alert"
+                            >
+                                {{ searchError }}
+                            </p>
+                            <p
+                                v-else-if="!hasSearchSuggestions"
+                                class="px-3 py-3 text-sm text-muted-foreground"
+                            >
+                                Keine passenden Ergebnisse.
+                            </p>
+                            <ul
+                                v-else
+                                role="listbox"
+                                class="max-h-96 overflow-y-auto py-1"
+                            >
+                                <template
+                                    v-for="group in searchResponse.groups"
+                                    :key="group.type"
                                 >
-                                    {{ group.label }}
-                                </li>
-                                <li
-                                    v-for="item in group.items"
-                                    :key="`${group.type}-${item.url}-${item.title}`"
-                                    role="option"
-                                    :aria-selected="
-                                        flattenedSuggestions[
-                                            highlightedSuggestionIndex
-                                        ] === item
-                                    "
-                                >
-                                    <button
-                                        type="button"
-                                        class="flex w-full flex-col px-3 py-2 text-left text-sm transition hover:bg-accent"
-                                        :class="{
-                                            'bg-accent':
-                                                flattenedSuggestions[
-                                                    highlightedSuggestionIndex
-                                                ] === item,
-                                        }"
-                                        @mousedown.prevent
-                                        @click="selectSuggestion(item)"
+                                    <li
+                                        class="px-3 pt-2 pb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                                        role="presentation"
                                     >
-                                        <span class="font-medium">{{
-                                            item.title
-                                        }}</span>
-                                        <span
-                                            v-if="item.subtitle"
-                                            class="text-xs text-muted-foreground"
+                                        {{ group.label }}
+                                    </li>
+                                    <li
+                                        v-for="item in group.items"
+                                        :key="`${group.type}-${item.url}-${item.title}`"
+                                        role="option"
+                                        :aria-selected="
+                                            flattenedSuggestions[
+                                                highlightedSuggestionIndex
+                                            ] === item
+                                        "
+                                    >
+                                        <button
+                                            type="button"
+                                            class="flex w-full flex-col px-3 py-2 text-left text-sm transition hover:bg-accent"
+                                            :class="{
+                                                'bg-accent':
+                                                    flattenedSuggestions[
+                                                        highlightedSuggestionIndex
+                                                    ] === item,
+                                            }"
+                                            @mousedown.prevent
+                                            @click="selectSuggestion(item)"
                                         >
-                                            {{ item.subtitle }}
-                                        </span>
-                                    </button>
-                                </li>
-                            </template>
-                        </ul>
-                    </div>
+                                            <span class="font-medium">{{
+                                                item.title
+                                            }}</span>
+                                            <span
+                                                v-if="item.subtitle"
+                                                class="text-xs text-muted-foreground"
+                                            >
+                                                {{ item.subtitle }}
+                                            </span>
+                                        </button>
+                                    </li>
+                                </template>
+                            </ul>
+                        </div>
+                    </template>
                 </div>
             </div>
 

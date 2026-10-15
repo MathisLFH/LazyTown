@@ -3,6 +3,7 @@
 use App\Enums\TeamRole;
 use App\Models\Team;
 use App\Models\TeamInvitation;
+use App\Models\Tenant;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -23,6 +24,20 @@ test('authenticated users can visit the home page', function () {
         ->get(route('home'));
 
     $response->assertOk();
+});
+
+test('authenticated users receive their club name in shared page props', function () {
+    $tenant = Tenant::factory()->create(['name' => 'Demo Premium Verein']);
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+
+    $response = $this
+        ->actingAs($user)
+        ->get(route('home'));
+
+    $response->assertInertia(fn (Assert $page) => $page
+        ->component('Startseite')
+        ->where('tenant.name', 'Demo Premium Verein'),
+    );
 });
 
 test('home page includes pending invitations for the authenticated user', function () {
