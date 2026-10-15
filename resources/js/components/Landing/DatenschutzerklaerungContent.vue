@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
-import { usePage } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 
 const page = usePage();
-const policyVersion = String(page.props.privacyPolicyVersion ?? '1.0');
+const policyVersion = String(page.props.privacyPolicyVersion ?? '1.1');
 </script>
 
 <template>
@@ -15,117 +14,196 @@ const policyVersion = String(page.props.privacyPolicyVersion ?? '1.0');
             <header class="space-y-3">
                 <h1 class="text-3xl font-bold">Datenschutzerklärung</h1>
                 <p class="text-sm text-muted-foreground">
-                    Version {{ policyVersion }} · Stand: 14.10.2026
-                </p>
-                <p>
-                    Diese Erklärung ist eine technische und inhaltliche Vorlage
-                    für LazyTown. Sie ersetzt keine rechtliche Prüfung. Angaben
-                    in eckigen Klammern müssen vor dem produktiven Einsatz
-                    ergänzt und geprüft werden.
+                    Version {{ policyVersion }} · Stand: 15.10.2026
                 </p>
             </header>
 
             <section class="space-y-3">
-                <h2 class="text-xl font-semibold">1. Verantwortliche Stelle</h2>
+                <h2 class="text-xl font-semibold">
+                    1. Einleitung und Überblick
+                </h2>
                 <p>
-                    Verantwortlich für die Verarbeitung personenbezogener Daten
-                    ist:
+                    Wir nehmen den Schutz Ihrer persönlichen Daten sehr ernst.
+                    Wir behandeln Ihre personenbezogenen Daten vertraulich und
+                    entsprechend der gesetzlichen Datenschutzvorschriften
+                    (insbesondere der europäischen Datenschutz-Grundverordnung,
+                    DSGVO) sowie dieser Datenschutzerklärung.
+                </p>
+            </section>
+
+            <section class="space-y-3">
+                <h2 class="text-xl font-semibold">
+                    2. Verantwortlicher für die Datenverarbeitung
+                </h2>
+                <p>
+                    Die Datenverarbeitung auf dieser Website erfolgt durch den
+                    Websitebetreiber:
                 </p>
                 <address class="not-italic">
-                    [Name des Betreibers oder Vereins]<br />
-                    [Anschrift]<br />
-                    [E-Mail-Adresse]
+                    Lazytown GMBH<br />
+                    Expoplaza 10<br />
+                    30179 Hannover<br />
+                    E-Mail:
+                    <a
+                        href="mailto:info@leibniz-fh.de"
+                        class="underline underline-offset-4"
+                        >info@leibniz-fh.de</a
+                    >
                 </address>
             </section>
 
             <section class="space-y-3">
                 <h2 class="text-xl font-semibold">
-                    2. Welche Daten verarbeitet LazyTown?
+                    3. Erfassung und Verarbeitung personenbezogener Daten
                 </h2>
                 <p>
-                    Für die Registrierung und den Betrieb der Vereinsverwaltung
-                    können insbesondere folgende Angaben verarbeitet werden:
-                    Name, E-Mail-Adresse, Passwort (ausschließlich geschützt
-                    gespeichert), Vereins- und Teamzugehörigkeiten sowie
-                    freiwillige Profilangaben wie Geburtsdatum, Geburtsort,
-                    Nationalität, Anschrift, Ort und Telefonnummer.
+                    Wir erheben und verarbeiten personenbezogene Daten nur,
+                    soweit dies zur Bereitstellung einer funktionsfähigen
+                    Website sowie unserer Inhalte und Leistungen erforderlich
+                    ist.
+                </p>
+                <ul class="list-disc space-y-2 pl-6">
+                    <li>
+                        <strong>Registrierung und Login:</strong> Wenn Sie sich
+                        auf unserer Website registrieren, erheben wir die von
+                        Ihnen eingegebenen Daten (z. B. Name, E-Mail-Adresse).
+                        Diese Daten werden verarbeitet, um Ihnen das
+                        Nutzerprofil und die damit verbundenen Dienste zur
+                        Verfügung zu stellen. Rechtsgrundlage für diese
+                        Verarbeitung ist die Erfüllung eines Vertrags oder die
+                        Durchführung vorvertraglicher Maßnahmen (Art. 6 Abs. 1
+                        lit. b DSGVO).
+                    </li>
+                    <li>
+                        <strong>Kontakt:</strong> Treten Sie per E-Mail oder
+                        Kontaktformular mit uns in Kontakt, werden Ihre Angaben
+                        zur Bearbeitung der Anfrage und für mögliche
+                        Anschlussfragen gespeichert. Rechtsgrundlage hierfür ist
+                        unser berechtigtes Interesse an der Beantwortung Ihres
+                        Anliegens (Art. 6 Abs. 1 lit. f DSGVO) oder, falls die
+                        Anfrage auf den Abschluss eines Vertrages abzielt, Art.
+                        6 Abs. 1 lit. b DSGVO.
+                    </li>
+                </ul>
+            </section>
+
+            <section class="space-y-3">
+                <h2 class="text-xl font-semibold">
+                    4. E-Mail-Newsfeed / Newsletter
+                </h2>
+                <p>
+                    Wenn Sie den auf der Website angebotenen Newsfeed beziehen
+                    möchten, benötigen wir von Ihnen eine E-Mail-Adresse sowie
+                    Informationen, welche uns die Überprüfung gestatten, dass
+                    Sie der Inhaber der angegebenen E-Mail-Adresse sind und mit
+                    dem Empfang des Newsfeeds einverstanden sind
+                    (Double-Opt-In-Verfahren).
                 </p>
                 <p>
-                    Zusätzlich speichert LazyTown technische Angaben, die für
-                    den sicheren Betrieb und die Zuordnung von Vorgängen
-                    erforderlich sind, sowie Benachrichtigungen, Einladungen und
-                    Einstellungen, die innerhalb der Anwendung genutzt werden.
+                    Die Verarbeitung dieser Daten erfolgt ausschließlich auf
+                    Grundlage Ihrer aktiven Einwilligung (Art. 6 Abs. 1 lit. a
+                    DSGVO). Sie können diese Einwilligung zur Speicherung der
+                    Daten, der E-Mail-Adresse sowie deren Nutzung zum Versand
+                    des Newsfeeds jederzeit widerrufen, etwa über den
+                    „Austragen“-Link in der E-Mail.
                 </p>
             </section>
 
             <section class="space-y-3">
                 <h2 class="text-xl font-semibold">
-                    3. Zwecke und Rechtsgrundlagen
+                    5. Weitergabe von Daten an Dritte und Partner
                 </h2>
                 <p>
-                    Die Daten werden verwendet, um Benutzerkonten anzulegen,
-                    Teams und Vereine zu verwalten, Einladungen und
-                    Benachrichtigungen bereitzustellen, die Anwendung
-                    abzusichern und angeforderte Funktionen auszuführen.
+                    Eine Übermittlung Ihrer persönlichen Daten an Dritte zu
+                    anderen als den im Folgenden aufgeführten Zwecken findet
+                    nicht statt. Wir geben Ihre persönlichen Daten nur an Dritte
+                    weiter, wenn:
                 </p>
+                <ul class="list-disc space-y-2 pl-6">
+                    <li>
+                        Sie Ihre ausdrückliche Einwilligung dazu erteilt haben
+                        (Art. 6 Abs. 1 lit. a DSGVO),
+                    </li>
+                    <li>
+                        dies gesetzlich zulässig und für die Abwicklung von
+                        Vertragsverhältnissen mit Ihnen erforderlich ist (Art. 6
+                        Abs. 1 lit. b DSGVO),
+                    </li>
+                    <li>
+                        für die Weitergabe eine gesetzliche Verpflichtung
+                        besteht (Art. 6 Abs. 1 lit. c DSGVO).
+                    </li>
+                </ul>
                 <p>
-                    Die konkrete Rechtsgrundlage, die Interessenabwägung und
-                    gegebenenfalls die Aufbewahrungsfristen sind durch die
-                    verantwortliche Stelle rechtlich zu prüfen und zu ergänzen.
+                    Soweit wir für die Bereitstellung unserer Dienste externe
+                    Dienstleister (z. B. Hosting-Provider,
+                    E-Mail-Versand-Dienstleister) einsetzen, arbeiten diese als
+                    sogenannte Auftragsverarbeiter für uns. Diese sind
+                    vertraglich streng an unsere Weisungen gebunden und dürfen
+                    die Daten nicht für eigene Zwecke nutzen (Vertrag zur
+                    Auftragsverarbeitung gemäß Art. 28 DSGVO).
+                </p>
+            </section>
+
+            <section class="space-y-3">
+                <h2 class="text-xl font-semibold">6. Speicherdauer</h2>
+                <p>
+                    Soweit innerhalb dieser Datenschutzerklärung keine
+                    speziellere Speicherdauer genannt wurde, verbleiben Ihre
+                    personenbezogenen Daten bei uns, bis der Zweck für die
+                    Datenverarbeitung entfällt. Wenn Sie ein berechtigtes
+                    Löschersuchen geltend machen oder eine Einwilligung zur
+                    Datenverarbeitung widerrufen, werden Ihre Daten gelöscht,
+                    sofern wir keine anderen rechtlich zulässigen Gründe für die
+                    Speicherung Ihrer personenbezogenen Daten haben (z. B.
+                    steuer- oder handelsrechtliche Aufbewahrungsfristen).
                 </p>
             </section>
 
             <section class="space-y-3">
                 <h2 class="text-xl font-semibold">
-                    4. Weitergabe und Dienstleister
+                    7. Ihre Rechte als betroffene Person
                 </h2>
                 <p>
-                    Eine Weitergabe erfolgt nur, soweit sie für den Betrieb, die
-                    Sicherheit, die Abrechnung eines gewählten Abos oder
-                    aufgrund gesetzlicher Pflichten erforderlich ist. Die
-                    konkret eingesetzten Hosting-, E-Mail-, Zahlungs- und
-                    sonstigen Dienstleister sowie deren Standorte und
-                    Vereinbarungen sind vor Veröffentlichung zu ergänzen.
+                    Sie haben im Rahmen der geltenden gesetzlichen Bestimmungen
+                    jederzeit das Recht auf:
                 </p>
-            </section>
-
-            <section class="space-y-3">
-                <h2 class="text-xl font-semibold">5. Speicherdauer</h2>
+                <ul class="list-disc space-y-2 pl-6">
+                    <li>
+                        Unentgeltliche <strong>Auskunft</strong> über Ihre
+                        gespeicherten personenbezogenen Daten, deren Herkunft
+                        und Empfänger und den Zweck der Datenverarbeitung (Art.
+                        15 DSGVO).
+                    </li>
+                    <li>
+                        <strong>Berichtigung</strong> unrichtiger oder
+                        unvollständiger Daten (Art. 16 DSGVO).
+                    </li>
+                    <li>
+                        <strong>Löschung</strong> Ihrer bei uns gespeicherten
+                        Daten (Art. 17 DSGVO).
+                    </li>
+                    <li>
+                        <strong>Einschränkung der Datenverarbeitung</strong>
+                        (Art. 18 DSGVO).
+                    </li>
+                    <li>
+                        <strong>Datenübertragbarkeit</strong> (Art. 20 DSGVO).
+                    </li>
+                    <li>
+                        <strong>Widerruf</strong> erteilter Einwilligungen für
+                        die Zukunft (Art. 7 Abs. 3 DSGVO).
+                    </li>
+                </ul>
                 <p>
-                    Personenbezogene Daten werden nur so lange gespeichert, wie
-                    dies für die genannten Zwecke, gesetzliche Pflichten oder
-                    die nachvollziehbare Dokumentation einer Einwilligung
-                    erforderlich ist. Die konkreten Fristen müssen von der
-                    verantwortlichen Stelle festgelegt werden.
-                </p>
-            </section>
-
-            <section class="space-y-3">
-                <h2 class="text-xl font-semibold">
-                    6. Rechte betroffener Personen
-                </h2>
-                <p>
-                    Betroffene Personen können im Rahmen der gesetzlichen
-                    Voraussetzungen Auskunft, Berichtigung, Löschung,
-                    Einschränkung der Verarbeitung, Datenübertragbarkeit und
-                    Widerspruch verlangen sowie eine erteilte Einwilligung für
-                    die Zukunft widerrufen. Außerdem besteht ein Beschwerderecht
-                    bei einer zuständigen Aufsichtsbehörde. Zuständige
-                    Kontaktwege sind noch zu ergänzen.
-                </p>
-            </section>
-
-            <section class="space-y-3">
-                <h2 class="text-xl font-semibold">
-                    7. Änderungen dieser Erklärung
-                </h2>
-                <p>
-                    Änderungen werden mit einer neuen Versionsnummer
-                    veröffentlicht. Bei der Registrierung wird die akzeptierte
-                    Version zusammen mit dem Zeitpunkt serverseitig am
-                    Benutzerkonto gespeichert. Ob und wann bei einer Änderung
-                    eine erneute Zustimmung erforderlich ist, wird für jede neue
-                    Version geprüft.
+                    Des Weiteren steht Ihnen ein
+                    <strong
+                        >Beschwerderecht bei einer zuständigen
+                        Datenschutzaufsichtsbehörde</strong
+                    >
+                    zu (Art. 77 DSGVO). In der Regel können Sie sich hierfür an
+                    die Aufsichtsbehörde Ihres üblichen Aufenthaltsortes oder
+                    Arbeitsplatzes oder unseres Unternehmenssitzes wenden.
                 </p>
             </section>
         </article>

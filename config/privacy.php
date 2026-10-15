@@ -1,5 +1,5 @@
 <?php
 
 return [
-    'policy_version' => '1.0',
+    'policy_version' => '1.1',
 ];
