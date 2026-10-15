@@ -95,6 +95,50 @@ class StripeCheckoutService
         return $this->client()->checkout->sessions->retrieve($sessionId);
     }
 
+    public function expireOpenSession(Team $team, User $payer): bool
+    {
+        $sessionId = $team->payment_reference;
+
+        if (! is_string($sessionId) || $sessionId === '') {
+            return true;
+        }
+
+        if (! str_starts_with($sessionId, 'cs_test_')) {
+            throw new LogicException('Only Stripe test checkout sessions are supported.');
+        }
+
+        $client = $this->client();
+        $session = $client->checkout->sessions->retrieve($sessionId);
+
+        if (! $this->belongsToTeamAndPayer($session, $team, $payer)) {
+            throw new LogicException('The saved Stripe checkout session does not match this payment.');
+        }
+
+        if ($session->status === 'complete') {
+            return false;
+        }
+
+        if ($session->status === 'expired') {
+            return true;
+        }
+
+        if ($session->status !== 'open') {
+            throw new LogicException('The Stripe checkout session has an unexpected status.');
+        }
+
+        $expiredSession = $client->checkout->sessions->expire($sessionId);
+
+        if ($expiredSession->status === 'complete') {
+            return false;
+        }
+
+        if ($expiredSession->status !== 'expired') {
+            throw new LogicException('Stripe did not expire the checkout session.');
+        }
+
+        return true;
+    }
+
     public function constructWebhookEvent(string $payload, string $signature): Event
     {
         $secret = config('services.stripe.webhook_secret');

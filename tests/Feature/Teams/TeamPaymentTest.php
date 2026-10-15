@@ -54,6 +54,50 @@ test('resuming without a pending registration returns home', function () {
         ->assertRedirect(route('home'));
 });
 
+test('a pending registration can be cancelled and its account deleted', function () {
+    [$user, $tenant, $team] = pendingClubRegistration();
+
+    $this->actingAs($user)
+        ->delete(route('register.payment.destroy'))
+        ->assertRedirect('/');
+
+    $this->assertDatabaseMissing('users', ['id' => $user->id]);
+    $this->assertDatabaseMissing('tenants', ['id' => $tenant->id]);
+    $this->assertDatabaseMissing('teams', ['id' => $team->id]);
+    $this->assertGuest();
+});
+
+test('cancelling without a pending registration does not delete the account', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->delete(route('register.payment.destroy'))
+        ->assertRedirect(route('home'));
+
+    $this->assertDatabaseHas('users', ['id' => $user->id]);
+    $this->assertAuthenticatedAs($user);
+});
+
+test('a completed checkout cannot be cancelled as a pending registration', function () {
+    [$user, $tenant, $team] = pendingClubRegistration();
+
+    $stripeCheckout = Mockery::mock(StripeCheckoutService::class);
+    $stripeCheckout->shouldReceive('expireOpenSession')
+        ->once()
+        ->withArgs(fn (Team $checkoutTeam, User $payer): bool => $checkoutTeam->is($team) && $payer->is($user))
+        ->andReturnFalse();
+    $this->instance(StripeCheckoutService::class, $stripeCheckout);
+
+    $this->actingAs($user)
+        ->delete(route('register.payment.destroy'))
+        ->assertRedirect(route('register.payment', ['checkout' => 'pending']));
+
+    $this->assertDatabaseHas('users', ['id' => $user->id]);
+    $this->assertDatabaseHas('tenants', ['id' => $tenant->id]);
+    $this->assertDatabaseHas('teams', ['id' => $team->id]);
+    $this->assertAuthenticatedAs($user);
+});
+
 test('a new checkout reuses the pending registration without creating records', function () {
     [$user, , $team] = pendingClubRegistration();
     $checkoutUrl = 'https://checkout.stripe.com/c/pay/test';

@@ -34,6 +34,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('invitations/{invitation}/accept', [TeamInvitationController::class, 'accept'])->name('invitations.accept');
     Route::get('register/payment', [RegistrationPaymentController::class, 'show'])->name('register.payment');
     Route::post('register/payment', [RegistrationPaymentController::class, 'store'])->name('register.payment.store');
+    Route::delete('register/payment', [RegistrationPaymentController::class, 'destroy'])->name('register.payment.destroy');
     Route::delete('invitations/{invitation}', [TeamInvitationController::class, 'decline'])->name('invitations.decline');
 
     Route::middleware('club.access')->group(function () {

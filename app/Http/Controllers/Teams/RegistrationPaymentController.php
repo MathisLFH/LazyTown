@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Teams;
 
 use App\Http\Controllers\Controller;
 use App\Models\Team;
+use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Teams\StripeCheckoutService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -62,6 +65,34 @@ class RegistrationPaymentController extends Controller
         }
 
         return Inertia::location($session['url']);
+    }
+
+    public function destroy(Request $request, StripeCheckoutService $stripeCheckout): RedirectResponse
+    {
+        $user = $request->user();
+        $team = $this->pendingTeam($request);
+        $tenant = $user?->tenant;
+
+        if (! $user instanceof User || ! $team instanceof Team || ! $tenant instanceof Tenant) {
+            return to_route('home');
+        }
+
+        if (! $stripeCheckout->expireOpenSession($team, $user)) {
+            return to_route('register.payment', ['checkout' => 'pending']);
+        }
+
+        Auth::logout();
+
+        DB::transaction(function () use ($team, $tenant, $user): void {
+            $team->forceDelete();
+            $tenant->delete();
+            $user->delete();
+        });
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect('/');
     }
 
     private function pendingTeam(Request $request): ?Team

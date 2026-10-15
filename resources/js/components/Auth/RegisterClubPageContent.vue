@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form } from '@inertiajs/vue3';
+import { Form, router } from '@inertiajs/vue3';
 import { computed, reactive, ref } from 'vue';
 import RegisterAdminSection from '@/components/Auth/RegisterSection/Admin.vue';
 import RegisterClubSection from '@/components/Auth/RegisterSection/Club.vue';
@@ -12,7 +12,10 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { store } from '@/routes/register';
-import { store as resumePayment } from '@/routes/register/payment';
+import {
+    destroy as cancelRegistrationAction,
+    store as resumePayment,
+} from '@/routes/register/payment';
 import type { TeamInvitationContext } from '@/types';
 
 interface PendingRegistration {
@@ -49,6 +52,7 @@ const props = defineProps<{
 
 const pending = props.pendingRegistration;
 const registerSection = ref<number>(pending ? 3 : 0);
+const cancellationInProgress = ref(false);
 const createClubData = reactive<CreateClubData>({
     club: {
         name: pending?.club.name ?? '',
@@ -92,6 +96,24 @@ function goToNextStep(event: MouseEvent): void {
         registerSection.value + 1,
         steps.value.length - 1,
     );
+}
+
+function cancelPendingRegistration(): void {
+    if (
+        cancellationInProgress.value ||
+        !window.confirm(
+            'Wenn du abbrichst, werden dein Benutzerkonto, dein Verein und die ausstehende Zahlung gelöscht. Möchtest du fortfahren?',
+        )
+    ) {
+        return;
+    }
+
+    cancellationInProgress.value = true;
+    router.delete(cancelRegistrationAction.url(), {
+        onFinish: () => {
+            cancellationInProgress.value = false;
+        },
+    });
 }
 
 function handleRegistrationErrors(errors: Record<string, string>): void {
@@ -163,15 +185,27 @@ function handleRegistrationErrors(errors: Record<string, string>): void {
                 {{ createClubData.admin.email }}
             </p>
             <RegisterPaymentSection :price="annualAccessPrice" />
-            <Button
-                type="submit"
-                class="w-full"
-                :disabled="processing"
-                data-test="resume-payment-button"
-            >
-                <Spinner v-if="processing" />
-                Jetzt bezahlen
-            </Button>
+            <div class="flex gap-3">
+                <Button
+                    type="button"
+                    variant="outline"
+                    class="flex-1"
+                    :disabled="processing || cancellationInProgress"
+                    data-test="cancel-registration-button"
+                    @click="cancelPendingRegistration"
+                >
+                    Registrierung abbrechen
+                </Button>
+                <Button
+                    type="submit"
+                    class="flex-1"
+                    :disabled="processing || cancellationInProgress"
+                    data-test="resume-payment-button"
+                >
+                    <Spinner v-if="processing" />
+                    Jetzt bezahlen
+                </Button>
+            </div>
         </Form>
 
         <Form
