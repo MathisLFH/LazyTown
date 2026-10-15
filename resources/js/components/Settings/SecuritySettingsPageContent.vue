@@ -13,7 +13,8 @@ import { Label } from '@/components/ui/label';
 
 type Props = {
     passwordRules: string;
-} & ManagePasskeysProps & ManageTwoFactorProps;
+} & ManagePasskeysProps &
+    ManageTwoFactorProps;
 
 const props = defineProps<Props>();
 </script>
@@ -32,27 +33,55 @@ const props = defineProps<Props>();
             v-bind="SecurityController.update.form()"
             :options="{ preserveScroll: true }"
             reset-on-success
-            :reset-on-error="['password', 'password_confirmation', 'current_password']"
+            :reset-on-error="[
+                'password',
+                'password_confirmation',
+                'current_password',
+            ]"
             class="space-y-6"
             v-slot="{ errors, processing }"
         >
             <div class="grid gap-2">
                 <Label for="current_password">Aktuelles Passwort</Label>
-                <PasswordInput id="current_password" name="current_password" class="mt-1 block w-full" autocomplete="current-password" placeholder="Aktuelles Passwort" />
+                <PasswordInput
+                    id="current_password"
+                    name="current_password"
+                    class="mt-1 block w-full"
+                    autocomplete="current-password"
+                    placeholder="Aktuelles Passwort"
+                />
                 <InputError :message="errors.current_password" />
             </div>
             <div class="grid gap-2">
                 <Label for="password">Neues Passwort</Label>
-                <PasswordInput id="password" name="password" class="mt-1 block w-full" autocomplete="new-password" placeholder="Neues Passwort" :passwordrules="props.passwordRules" />
+                <PasswordInput
+                    id="password"
+                    name="password"
+                    class="mt-1 block w-full"
+                    autocomplete="new-password"
+                    placeholder="Neues Passwort"
+                    :passwordrules="props.passwordRules"
+                />
                 <InputError :message="errors.password" />
             </div>
             <div class="grid gap-2">
                 <Label for="password_confirmation">Passwort bestätigen</Label>
-                <PasswordInput id="password_confirmation" name="password_confirmation" class="mt-1 block w-full" autocomplete="new-password" placeholder="Passwort bestätigen" :passwordrules="props.passwordRules" />
+                <PasswordInput
+                    id="password_confirmation"
+                    name="password_confirmation"
+                    class="mt-1 block w-full"
+                    autocomplete="new-password"
+                    placeholder="Passwort bestätigen"
+                    :passwordrules="props.passwordRules"
+                />
                 <InputError :message="errors.password_confirmation" />
             </div>
             <div class="flex items-center gap-4">
-                <Button :disabled="processing" data-test="update-password-button">Speichern</Button>
+                <Button
+                    :disabled="processing"
+                    data-test="update-password-button"
+                    >Speichern</Button
+                >
             </div>
         </Form>
     </div>
@@ -62,5 +91,8 @@ const props = defineProps<Props>();
         :requiresConfirmation="requiresConfirmation"
         :twoFactorEnabled="twoFactorEnabled"
     />
-    <ManagePasskeys :canManagePasskeys="canManagePasskeys" :passkeys="passkeys" />
+    <ManagePasskeys
+        :canManagePasskeys="canManagePasskeys"
+        :passkeys="passkeys"
+    />
 </template>

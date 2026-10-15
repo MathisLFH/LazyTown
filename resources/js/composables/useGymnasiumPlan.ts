@@ -1,35 +1,78 @@
-import { ref } from 'vue';
-import { useAuth } from './useAuth';
-
-export type ScheduleEntry = {
-    id: number;
-    title: string;
-    type: 'Spiel' | 'Training';
-    date: string;
-    time: string;
-    place: string;
-    status: 'geplant' | 'verschoben' | 'abgesagt';
+export type TrainingRow = {
+    id: number | null;
+    team_id: number;
+    team_name: string;
+    weekday: string;
+    starts_at: string;
+    ends_at: string;
+    gym_id: number | null;
+    gym_name: string | null;
 };
 
-const bookings: Record<string, string> = {
-    'Montag-17:30': 'Training Jugend',
-    'Dienstag-19:00': 'Training Herren 1',
-    'Donnerstag-17:30': 'Training Damen 1',
-    'Freitag-19:00': 'Freies Spiel',
+export type TrainingConflict = {
+    leftId: number | null;
+    rightId: number | null;
+    gym_name: string | null;
+    weekday: string;
 };
 
-function bookingFor(day: string, time: string): string | undefined {
-    return bookings[`${day}-${time}`];
+export const weekDays = [
+    'Montag',
+    'Dienstag',
+    'Mittwoch',
+    'Donnerstag',
+    'Freitag',
+    'Samstag',
+    'Sonntag',
+] as const;
+
+export function groupByWeekday(
+    rows: TrainingRow[],
+): Record<string, TrainingRow[]> {
+    return weekDays.reduce<Record<string, TrainingRow[]>>(
+        (grouped, weekday) => {
+            grouped[weekday] = rows
+                .filter((row) => row.weekday === weekday)
+                .sort((left, right) =>
+                    left.starts_at.localeCompare(right.starts_at),
+                );
+
+            return grouped;
+        },
+        {},
+    );
 }
 
-export function useGymnasiumPlan() {
-    const { activeRole } = useAuth();
-    const entries = ref<ScheduleEntry[]>([]);
-    const loading = ref(false);
-    const error = ref<string | null>(null);
-    const selectedSlot = ref<string | null>(null);
-    const weekDays = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
-    const timeSlots = ['16:00', '17:30', '19:00'];
+export function findConflicts(rows: TrainingRow[]): TrainingConflict[] {
+    const conflicts: TrainingConflict[] = [];
+    const groupedByDayAndGym = new Map<string, TrainingRow[]>();
 
-    return { activeRole, entries, loading, error, selectedSlot, weekDays, timeSlots, bookingFor };
+    rows.forEach((row) => {
+        const key = `${row.weekday}::${(row.gym_name ?? '').toLowerCase()}`;
+        const group = groupedByDayAndGym.get(key) ?? [];
+        group.push(row);
+        groupedByDayAndGym.set(key, group);
+    });
+
+    groupedByDayAndGym.forEach((groupRows) => {
+        const sorted = [...groupRows].sort((left, right) =>
+            left.starts_at.localeCompare(right.starts_at),
+        );
+
+        for (let index = 0; index < sorted.length - 1; index++) {
+            const current = sorted[index];
+            const next = sorted[index + 1];
+
+            if (current.ends_at > next.starts_at) {
+                conflicts.push({
+                    leftId: current.id,
+                    rightId: next.id,
+                    gym_name: current.gym_name,
+                    weekday: current.weekday,
+                });
+            }
+        }
+    });
+
+    return conflicts;
 }

@@ -3,7 +3,13 @@ import { Head } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import TeamEditPageContent from '@/components/Teams/TeamEditPageContent.vue';
 import { edit, index } from '@/routes/teams';
-import type { RoleOption, Team, TeamInvitation, TeamMember, TeamPermissions } from '@/types';
+import type {
+    RoleOption,
+    Team,
+    TeamInvitation,
+    TeamMember,
+    TeamPermissions,
+} from '@/types';
 
 type Props = {
     team: Team;
@@ -15,7 +21,11 @@ type Props = {
 };
 
 const props = defineProps<Props>();
-const pageTitle = computed(() => props.permissions.canUpdateTeam ? `Edit ${props.team.name}` : `View ${props.team.name}`);
+const pageTitle = computed(() =>
+    props.permissions.canUpdateTeam
+        ? `Edit ${props.team.name}`
+        : `View ${props.team.name}`,
+);
 
 defineOptions({
     layout: (layoutProps: { team: Team }) => ({

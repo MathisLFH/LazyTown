@@ -173,6 +173,11 @@ Run tests:
 composer test
 ```
 
+GitHub Actions runs the CI workflow on pull requests and pushes to `main`. It
+starts a temporary PostgreSQL 16 service, builds the frontend, and runs
+`composer ci:check` (ESLint, Prettier, TypeScript checks, Pint, PHPStan, and the
+Laravel test suite). CI does not deploy the application.
+
 ## Database
 
 ### Migrations
@@ -190,6 +195,20 @@ Run seeders:
 ```bash
 php artisan db:seed
 ```
+
+Create or update the demo test accounts (only allowed in the `local` and
+`testing` environments):
+
+```bash
+php artisan db:seed --class=DemoAccountsSeeder
+```
+
+The accounts `premium@example.com`, `free@example.com`, `trainer@example.com`,
+and `player@example.com` all use the password `12345678`. The seeder can be run
+again safely to recreate or update these demo accounts.
+The home page uses the selected team's saved matches and training sessions, as
+well as news assigned to the signed-in user. If a section has no matching
+records, it displays "Keine Daten verfügbar."
 
 ## Authentication
 

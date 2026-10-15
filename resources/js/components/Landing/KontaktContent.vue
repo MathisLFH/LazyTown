@@ -1,16 +1,10 @@
-<script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
-import { home } from '@/routes';
-</script>
+<script setup lang="ts"></script>
 
 <template>
-    <main
-        class="flex min-h-screen items-center justify-center bg-muted/30 p-6"
-    >
+    <main class="flex min-h-screen items-center justify-center bg-muted/30 p-6">
         <section
-            class="w-full max-w-20xl rounded-2xl border border-sidebar-border/70 bg-background p-8 text-center shadow-sm sm:p-12"
+            class="max-w-20xl w-full rounded-2xl border border-sidebar-border/70 bg-background p-8 text-center shadow-sm sm:p-12"
         >
-            
             <div class="mt-6">
                 <div class="mb-4 text-2xl font-bold">LT</div>
                 <h2 class="text-xl font-semibold tracking-tight">

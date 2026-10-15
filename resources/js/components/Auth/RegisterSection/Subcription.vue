@@ -49,10 +49,16 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
+
+const props = defineProps<{ price: string }>();
 const subscription = defineModel<'free' | 'premium'>({ required: true });
 
-const features = [
-    { name: 'free', label: 'Free', price: 'Kostenlos' },
-    { name: 'premium', label: 'Premium', price: '€29,99' },
-] as const;
+const features = computed(
+    () =>
+        [
+            { name: 'free', label: 'Free', price: 'Kostenlos' },
+            { name: 'premium', label: 'Premium', price: props.price },
+        ] as const,
+);
 </script>

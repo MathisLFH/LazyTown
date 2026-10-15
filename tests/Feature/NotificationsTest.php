@@ -99,6 +99,72 @@ test('users cannot mark another users notification as read', function () {
     expect($otherUser->fresh()->notifications()->find($notificationId)->read_at)->toBeNull();
 });
 
+test('users can delete one of their notifications', function () {
+    $user = User::factory()->create();
+    $notificationId = (string) Str::uuid();
+
+    DB::table('notifications')->insert([
+        'id' => $notificationId,
+        'type' => 'test',
+        'notifiable_type' => User::class,
+        'notifiable_id' => $user->id,
+        'data' => json_encode(['title' => 'Test']),
+        'read_at' => null,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $this->actingAs($user)
+        ->delete(route('notifications.destroy', $notificationId))
+        ->assertRedirect();
+
+    $this->assertDatabaseMissing('notifications', ['id' => $notificationId]);
+});
+
+test('users cannot delete another users notification', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $notificationId = (string) Str::uuid();
+
+    DB::table('notifications')->insert([
+        'id' => $notificationId,
+        'type' => 'test',
+        'notifiable_type' => User::class,
+        'notifiable_id' => $otherUser->id,
+        'data' => json_encode(['title' => 'Test']),
+        'read_at' => null,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $this->actingAs($user)
+        ->delete(route('notifications.destroy', $notificationId))
+        ->assertNotFound();
+
+    $this->assertDatabaseHas('notifications', ['id' => $notificationId]);
+});
+
+test('guests cannot delete a notification', function () {
+    $user = User::factory()->create();
+    $notificationId = (string) Str::uuid();
+
+    DB::table('notifications')->insert([
+        'id' => $notificationId,
+        'type' => 'test',
+        'notifiable_type' => User::class,
+        'notifiable_id' => $user->id,
+        'data' => json_encode(['title' => 'Test']),
+        'read_at' => null,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $this->delete(route('notifications.destroy', $notificationId))
+        ->assertRedirect(route('login'));
+
+    $this->assertDatabaseHas('notifications', ['id' => $notificationId]);
+});
+
 test('users can create a local test notification', function () {
     $user = User::factory()->create();
 

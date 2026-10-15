@@ -13,7 +13,7 @@ class CompleteMemberProfileRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->must_change_password ?? false;
+        return $this->user()->must_change_password ?? false;
     }
 
     /**

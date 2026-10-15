@@ -21,6 +21,7 @@ use Laravel\Scout\Searchable;
  * @property int $id
  * @property int|null $tenant_id
  * @property string $name
+ * @property string|null $logo_path
  * @property int|null $created_by
  * @property string $slug
  * @property bool $is_personal
@@ -37,7 +38,7 @@ use Laravel\Scout\Searchable;
  * @property-read Collection<int, Membership> $memberships
  * @property-read Collection<int, User> $members
  */
-#[Fillable(['tenant_id', 'name', 'slug', 'is_personal', 'created_by', 'payment_status', 'payment_reference', 'payment_paid_at'])]
+#[Fillable(['tenant_id', 'name', 'logo_path', 'slug', 'is_personal', 'created_by', 'payment_status', 'payment_reference', 'payment_paid_at'])]
 class Team extends Model
 {
     /** @use HasFactory<TeamFactory> */

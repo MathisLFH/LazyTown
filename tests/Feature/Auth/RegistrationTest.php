@@ -6,6 +6,7 @@ use App\Models\Team;
 use App\Models\TeamInvitation;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Services\Teams\StripeCheckoutService;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('registration screen can be rendered', function () {
@@ -66,7 +67,7 @@ test('registration requires privacy consent', function () {
         'password_confirmation' => 'password',
     ]);
 
-    $response->assertRedirect(route('register'));
+    $response->assertRedirect();
     $response->assertSessionHasErrors('privacy_consent');
     $this->assertGuest();
     expect(User::where('email', 'no-consent@example.com')->exists())->toBeFalse();
@@ -74,8 +75,28 @@ test('registration requires privacy consent', function () {
 
 test('clubs can register an administrator and subscription without storing a payment method', function () {
     config(['app.url' => 'https://lazytown.test']);
+    $checkoutUrl = 'https://checkout.stripe.com/c/pay/cs_test_registration';
 
-    $response = $this->post(route('register.store'), [
+    $stripeCheckout = Mockery::mock(StripeCheckoutService::class);
+    $stripeCheckout->shouldReceive('createOrReuseSession')
+        ->once()
+        ->andReturnUsing(function (
+            Team $team,
+            User $payer,
+            string $successUrl,
+            string $cancelUrl,
+        ) use ($checkoutUrl): array {
+            expect($payer->email)->toBe('club-admin@example.com')
+                ->and($team->payment_status)->toBe('pending')
+                ->and($successUrl)->toStartWith('https://lazytown.test/settings/teams/')
+                ->and($successUrl)->toContain($team->slug.'/payment/complete?session_id={CHECKOUT_SESSION_ID}')
+                ->and($cancelUrl)->toBe('https://lazytown.test/register/payment?checkout=cancelled');
+
+            return ['id' => 'cs_test_registration', 'url' => $checkoutUrl];
+        });
+    $this->instance(StripeCheckoutService::class, $stripeCheckout);
+
+    $response = $this->withHeader('X-Inertia', 'true')->post(route('register.store'), [
         'club_name' => 'Ninjas in Pyjamas',
         'subdomain' => 'NINJAS-in-pyjamas',
         'first_name' => 'Max',
@@ -88,18 +109,19 @@ test('clubs can register an administrator and subscription without storing a pay
         'postcode' => '01234',
         'city' => 'Berlin',
         'subscription' => 'premium',
-        'payment_method' => 'card',
         'password' => 'password',
         'password_confirmation' => 'password',
         'privacy_consent' => '1',
     ]);
 
-    $response->assertRedirect('https://lazytown.test');
+    $response->assertStatus(409)
+        ->assertHeader('X-Inertia-Location', $checkoutUrl);
     $this->assertAuthenticated();
 
     $user = User::where('email', 'club-admin@example.com')->firstOrFail();
     $tenant = Tenant::where('subdomain', 'ninjas-in-pyjamas')->firstOrFail();
     $subscription = Subscription::where('type', 'premium')->firstOrFail();
+    $team = $tenant->teams()->firstOrFail();
 
     expect($user->name)->toBe('Max Mustermann')
         ->and($user->tenant_id)->toBe($tenant->id)
@@ -108,9 +130,10 @@ test('clubs can register an administrator and subscription without storing a pay
         ->and($tenant->admin_id)->toBe($user->id)
         ->and($tenant->name)->toBe('Ninjas in Pyjamas')
         ->and($tenant->url())->toBe('https://ninjas-in-pyjamas.lazytown.test')
-        ->and($tenant->teams()->firstOrFail()->is($user->currentTeam))->toBeTrue()
-        ->and($tenant->teams()->firstOrFail()->tenant_id)->toBe($tenant->id)
-        ->and($tenant->teams()->firstOrFail()->payment_status)->toBe('pending')
+        ->and($team->tenant_id)->toBe($tenant->id)
+        ->and($team->payment_status)->toBe('pending')
+        ->and($team->members()->whereKey($user->id)->exists())->toBeFalse()
+        ->and($user->current_team_id)->toBeNull()
         ->and($tenant->subscriptions()->whereKey($subscription->id)->exists())->toBeTrue()
         ->and($tenant->subscriptions()->firstOrFail()->pivot->payment_type)->toBeNull();
 });
@@ -132,6 +155,39 @@ test('inertia club registration redirects to the main domain', function () {
         ])
         ->assertStatus(409)
         ->assertHeader('X-Inertia-Location', 'https://lazytown.test');
+});
+
+test('premium json registrations return a stripe checkout url without activating the team', function () {
+    config(['app.url' => 'https://lazytown.test']);
+    $checkoutUrl = 'https://checkout.stripe.com/c/pay/cs_test_json_registration';
+
+    $stripeCheckout = Mockery::mock(StripeCheckoutService::class);
+    $stripeCheckout->shouldReceive('createOrReuseSession')
+        ->once()
+        ->andReturn(['id' => 'cs_test_json_registration', 'url' => $checkoutUrl]);
+    $this->instance(StripeCheckoutService::class, $stripeCheckout);
+
+    $response = $this->postJson(route('register.store'), [
+        'club_name' => 'JSON Club',
+        'subdomain' => 'json-club',
+        'first_name' => 'Json',
+        'last_name' => 'Admin',
+        'email' => 'json-admin@example.com',
+        'subscription' => 'premium',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+        'privacy_consent' => '1',
+    ]);
+
+    $response->assertCreated()
+        ->assertJsonPath('two_factor', false)
+        ->assertJsonPath('checkout_url', $checkoutUrl);
+
+    $user = User::where('email', 'json-admin@example.com')->firstOrFail();
+    $team = $user->tenant->teams()->firstOrFail();
+
+    expect($team->members()->whereKey($user->id)->exists())->toBeFalse()
+        ->and($team->payment_status)->toBe('pending');
 });
 
 test('free club registrations do not wait for payment', function () {

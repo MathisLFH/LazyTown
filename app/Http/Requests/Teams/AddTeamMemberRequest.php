@@ -4,11 +4,15 @@ namespace App\Http\Requests\Teams;
 
 use App\Enums\InvitationRole;
 use App\Models\Team;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class AddTeamMemberRequest extends FormRequest
 {
+    /**
+     * @return array<string, ValidationRule|array<mixed>|string>
+     */
     public function rules(): array
     {
         abort_if(! $this->route('team') instanceof Team, 404);

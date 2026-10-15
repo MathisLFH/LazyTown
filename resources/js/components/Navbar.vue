@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { HttpCancelledError } from '@inertiajs/core';
 import { Form, Link, router, useHttp, usePage } from '@inertiajs/vue3';
-import { Bell, ChevronDown, CircleUserRound, Search } from '@lucide/vue';
+import { Bell, ChevronDown, CircleUserRound, Search, X } from '@lucide/vue';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import {
     DropdownMenu,
@@ -14,11 +14,10 @@ import { useProfileAvatar } from '@/composables/useProfileAvatar';
 import { hallenplan, home, meinTeam, spielplan } from '@/routes';
 import { index as manageMembers } from '@/routes/admin/members';
 import { index as manageTeams } from '@/routes/admin/teams';
+import { destroy as deleteNotification, read } from '@/routes/notifications';
+import { single as markAsRead } from '@/routes/notifications/read';
 import { edit as profile } from '@/routes/profile';
 import { suggestions as searchSuggestions } from '@/routes/search';
-import { edit as payment } from '@/routes/teams/payment';
-import { read } from '@/routes/notifications';
-import { single as markAsRead } from '@/routes/notifications/read';
 import type { NotificationItem } from '@/types/auth';
 
 type NavigationItem = {
@@ -63,7 +62,6 @@ const searchHttp = useHttp<SearchForm, SearchResponse>({
 const { isCurrentUrl } = useCurrentUrl();
 const page = usePage();
 const currentUser = computed(() => page.props.auth.user);
-const currentTeam = computed(() => page.props.currentTeam);
 const { avatarDataUrl } = useProfileAvatar(currentUser.value?.id ?? null);
 const isAuthenticated = computed(() => Boolean(page.props.auth.user));
 const userRoles = computed(() => (currentUser.value?.roles ?? []) as string[]);
@@ -195,13 +193,6 @@ const administrationItems = computed(() => {
 
     const items: NavigationItem[] = [];
 
-    if (currentTeam.value) {
-        items.push({
-            label: 'Bezahlung für das Tool',
-            href: payment(currentTeam.value.slug).url,
-        });
-    }
-
     items.push(
         { label: 'Mitglieder', href: manageMembers().url },
         { label: 'Teams verwalten', href: manageTeams().url },
@@ -240,6 +231,12 @@ function openNotification(notification: NotificationItem): void {
             onSuccess: () => router.visit(notification.url),
         },
     );
+}
+
+function removeNotification(notification: NotificationItem): void {
+    router.delete(deleteNotification.url(notification.id), {
+        preserveScroll: true,
+    });
 }
 </script>
 
@@ -410,14 +407,24 @@ function openNotification(notification: NotificationItem): void {
                         <button
                             type="button"
                             class="relative inline-flex size-10 items-center justify-center rounded-md text-muted-foreground transition hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
-                            aria-label="Benachrichtigungen"
+                            :aria-label="
+                                unreadNotificationsCount > 0
+                                    ? `Benachrichtigungen, ${unreadNotificationsCount} ungelesen`
+                                    : 'Benachrichtigungen'
+                            "
                         >
                             <Bell class="size-5" aria-hidden="true" />
                             <span
                                 v-if="unreadNotificationsCount > 0"
-                                class="absolute top-2 right-2 size-2 rounded-full bg-red-500"
-                                aria-label="Ungelesene Benachrichtigungen"
-                            />
+                                class="absolute top-0 right-0 inline-flex min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] leading-4 font-semibold text-white"
+                                aria-hidden="true"
+                            >
+                                {{
+                                    unreadNotificationsCount > 99
+                                        ? '99+'
+                                        : unreadNotificationsCount
+                                }}
+                            </span>
                         </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" class="w-80">
@@ -453,31 +460,41 @@ function openNotification(notification: NotificationItem): void {
                             <div
                                 v-for="notification in notifications"
                                 :key="notification.id"
-                                class="cursor-pointer rounded-sm px-2 py-2 text-sm transition-colors hover:bg-accent"
+                                class="flex items-start gap-1 rounded-sm text-sm transition-colors hover:bg-accent"
                                 :class="{
                                     'bg-accent/60': !notification.read_at,
                                 }"
-                                role="button"
-                                tabindex="0"
-                                @click="openNotification(notification)"
-                                @keydown.enter="openNotification(notification)"
-                                @keydown.space.prevent="
-                                    openNotification(notification)
-                                "
                             >
-                                <p class="font-medium">
-                                    {{ notification.title }}
-                                </p>
-                                <p class="mt-0.5 text-muted-foreground">
-                                    {{ notification.text }}
-                                </p>
-                                <p class="mt-1 text-xs text-muted-foreground">
-                                    {{
-                                        formatNotificationDate(
-                                            notification.created_at,
-                                        )
-                                    }}
-                                </p>
+                                <button
+                                    type="button"
+                                    class="min-w-0 flex-1 rounded-sm px-2 py-2 text-left focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
+                                    @click="openNotification(notification)"
+                                >
+                                    <p class="font-medium">
+                                        {{ notification.title }}
+                                    </p>
+                                    <p class="mt-0.5 text-muted-foreground">
+                                        {{ notification.text }}
+                                    </p>
+                                    <p
+                                        class="mt-1 text-xs text-muted-foreground"
+                                    >
+                                        {{
+                                            formatNotificationDate(
+                                                notification.created_at,
+                                            )
+                                        }}
+                                    </p>
+                                </button>
+                                <button
+                                    type="button"
+                                    class="mt-1 inline-flex size-7 shrink-0 items-center justify-center rounded-sm text-muted-foreground transition hover:bg-background hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
+                                    :aria-label="`Benachrichtigung löschen: ${notification.title}`"
+                                    title="Benachrichtigung löschen"
+                                    @click="removeNotification(notification)"
+                                >
+                                    <X class="size-4" aria-hidden="true" />
+                                </button>
                             </div>
                         </div>
                     </DropdownMenuContent>

@@ -19,17 +19,17 @@ test('authenticated users can open the placeholder pages', function () {
     $team = Team::factory()->create();
     $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
 
-    $this->actingAs($user);
+    $this->actingAs($user)
+        ->withSession(['auth.password_confirmed_at' => time()]);
 
     foreach ([
-        'spielplan',
-        'hallenplan',
-        'mein-team',
-        'profil',
-        'paesse-beantragen',
-        'bezahlung',
+        route('spielplan'),
+        route('hallenplan'),
+        route('mein-team'),
+        route('profil'),
+        route('security.edit'),
     ] as $routeName) {
-        $this->get(route($routeName))
+        $this->get($routeName)
             ->assertOk();
     }
 });
@@ -44,7 +44,7 @@ test('trainers can access trainer pages but not administration pages', function 
 
     $this->actingAs($user);
 
-    $this->get(route('bezahlung'))->assertForbidden();
+    $this->get(route('admin.members.index'))->assertForbidden();
 });
 
 test('authenticated users can log out through fortify', function () {

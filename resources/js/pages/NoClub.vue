@@ -2,7 +2,10 @@
 import { Head } from '@inertiajs/vue3';
 import NoClubPageContent from '@/components/Onboarding/NoClubPageContent.vue';
 
-defineProps<{ user: { name: string; email: string }; pendingMembers?: { team: { name: string; slug: string } }[] }>();
+defineProps<{
+    user: { name: string; email: string };
+    pendingMembers?: { team: { name: string; slug: string } }[];
+}>();
 </script>
 
 <template>

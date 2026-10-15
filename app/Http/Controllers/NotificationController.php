@@ -33,6 +33,16 @@ class NotificationController extends Controller
     }
 
     /**
+     * Delete one notification belonging to the current user.
+     */
+    public function destroy(Request $request, string $notification): RedirectResponse
+    {
+        $request->user()->notifications()->whereKey($notification)->firstOrFail()->delete();
+
+        return back();
+    }
+
+    /**
      * Create a database notification for testing the notification dropdown.
      */
     public function createTest(Request $request): RedirectResponse
