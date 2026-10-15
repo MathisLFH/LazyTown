@@ -29,6 +29,10 @@ class ResolveTenantFromSubdomain
             ->where('subdomain', $subdomain)
             ->firstOrFail();
 
+        if ($tenant->isAwaitingPayment()) {
+            return redirect()->to(rtrim((string) config('app.url'), '/').route('register.payment', absolute: false));
+        }
+
         $request->attributes->set(Tenant::class, $tenant);
 
         return $next($request);

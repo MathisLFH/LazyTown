@@ -85,7 +85,9 @@ class CreateNewUser implements CreatesNewUsers
             'password' => $this->passwordRules(),
         ])->validate();
 
-        $subscriptionPrice = $data['subscription'] === 'premium' ? 29.99 : 0;
+        $subscriptionPrice = $data['subscription'] === 'premium'
+            ? (int) config('services.stripe.annual_access_amount_cents') / 100
+            : 0;
 
         return DB::transaction(function () use ($data, $subscriptionPrice): User {
             $user = User::create([
@@ -112,7 +114,11 @@ class CreateNewUser implements CreatesNewUsers
 
             $user->update(['tenant_id' => $tenant->id]);
 
-            $team = $this->createTeam->handle($user, $data['club_name']);
+            $team = $this->createTeam->handle(
+                $user,
+                $data['club_name'],
+                addOwner: $data['subscription'] !== 'premium',
+            );
             $team->update([
                 'tenant_id' => $tenant->id,
                 'payment_status' => $data['subscription'] === 'premium' ? 'pending' : 'not_required',
