@@ -136,11 +136,99 @@ jobs:
           : "${DEPLOY_URL:?Set the DEPLOY_URL production variable}"
           : "${DEPLOY_SSH_KEY:?Set the DEPLOY_SSH_KEY production secret}"
           : "${DEPLOY_KNOWN_HOSTS:?Set the DEPLOY_KNOWN_HOSTS production secret}"
+          if [[ "$DEPLOY_PATH" != "/var/www/lazytown" ]]; then
+            printf 'Unexpected deployment path: %s\n' "$DEPLOY_PATH" >&2
+            exit 1
+          fi
           install -m 700 -d "$HOME/.ssh"
           printf '%s\n' "$DEPLOY_SSH_KEY" > "$HOME/.ssh/deploy_key"
           printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
           chmod 600 "$HOME/.ssh/deploy_key" "$HOME/.ssh/known_hosts"
-          ssh-keygen -y -P "" -f "$HOME/.ssh/deploy_key" > /dev/null
+          ssh-keygen -y -f "$HOME/.ssh/deploy_key" < /dev/null > /dev/null
+
+      - name: Preflight production server
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+        run: |
+          printf -v remote_command 'bash -s -- %q' "$DEPLOY_PATH"
+          ssh \
+            -i "$HOME/.ssh/deploy_key" \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+            "$DEPLOY_USER@$DEPLOY_HOST" "$remote_command" <<'REMOTE'
+          set -Eeuo pipefail
+
+          base="$1"
+          if [[ "$base" != "/var/www/lazytown" ]]; then
+            printf 'Unexpected deployment path: %s\n' "$base" >&2
+            exit 1
+          fi
+
+          if [[ ! -d "$base/releases" || ! -d "$base/shared" || ! -f "$base/shared/.env" ]]; then
+            printf 'Deployment directories or shared .env are missing under %s\n' "$base" >&2
+            exit 1
+          fi
+
+          if [[ ! -w "$base/releases" || ! -w "$base/shared" || ! -r "$base/shared/.env" ]]; then
+            printf 'The deployment user must be able to write deployment directories and read shared/.env\n' >&2
+            exit 1
+          fi
+
+          env_permissions="$(stat -c '%a:%G' "$base/shared/.env")"
+          if [[ "$env_permissions" != "640:www-data" ]]; then
+            printf 'shared/.env must have mode 640 and group www-data (found %s)\n' "$env_permissions" >&2
+            exit 1
+          fi
+
+          if [[ -e "$base/current" && ! -L "$base/current" ]]; then
+            printf 'The active release path must be a symlink: %s/current\n' "$base" >&2
+            exit 1
+          fi
+
+          if [[ -L "$base/current" ]]; then
+            current_release="$(readlink -f "$base/current")"
+            case "$current_release" in
+              "$base"/releases/*) ;;
+              *)
+                printf 'The active release points outside %s/releases\n' "$base" >&2
+                exit 1
+                ;;
+            esac
+            if [[ ! -d "$current_release" ]]; then
+              printf 'The active release directory is missing: %s\n' "$current_release" >&2
+              exit 1
+            fi
+          fi
+
+          if ! php -r 'exit(version_compare(PHP_VERSION, "8.3.0", ">=") && version_compare(PHP_VERSION, "9.0.0", "<") ? 0 : 1);'; then
+            printf 'Production CLI PHP must satisfy the application requirement >= 8.3 and < 9.0\n' >&2
+            exit 1
+          fi
+
+          for command in bash tar ln mv chgrp chmod find getent id stat; do
+            if ! command -v "$command" > /dev/null; then
+              printf 'Required production command is missing: %s\n' "$command" >&2
+              exit 1
+            fi
+          done
+
+          if ! getent group www-data > /dev/null; then
+            printf 'Required production group is missing: www-data\n' >&2
+            exit 1
+          fi
+
+          if [[ "$(id -u)" != "0" ]]; then
+            user_groups=" $(id -nG) "
+            if [[ "$user_groups" != *" www-data "* ]]; then
+              printf 'The deployment user must be root or a member of www-data\n' >&2
+              exit 1
+            fi
+          fi
+          REMOTE
 
       - name: Upload release archive
         env:
@@ -202,6 +290,27 @@ jobs:
             exit 1
           fi
 
+          if [[ -e "$base/current" && ! -L "$base/current" ]]; then
+            printf 'The active release path must be a symlink: %s/current\n' "$base" >&2
+            exit 1
+          fi
+
+          previous_release=''
+          if [[ -L "$base/current" ]]; then
+            previous_release="$(readlink -f "$base/current")"
+            case "$previous_release" in
+              "$base"/releases/*) ;;
+              *)
+                printf 'The active release points outside %s/releases\n' "$base" >&2
+                exit 1
+                ;;
+            esac
+            if [[ ! -d "$previous_release" ]]; then
+              printf 'The active release directory is missing: %s\n' "$previous_release" >&2
+              exit 1
+            fi
+          fi
+
           mkdir "$release"
           mkdir -p \
             "$release/bootstrap/cache" \
@@ -234,14 +343,24 @@ jobs:
           chmod -R g+rwX "$release/bootstrap/cache"
           find "$release/bootstrap/cache" -type d -exec chmod g+s {} +
 
+          rm -f -- "$archive"
+
+          if [[ -n "$previous_release" ]]; then
+            next_previous="$base/previous-$sha-$run_id-$attempt"
+            ln -s "$previous_release" "$next_previous"
+            mv -Tf "$next_previous" "$base/previous"
+          fi
+
           next="$base/current-$sha-$run_id-$attempt"
           ln -s "$release" "$next"
           mv -Tf "$next" "$base/current"
-          rm -f -- "$archive"
           REMOTE
 
       - name: Verify production response
         env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
           DEPLOY_URL: ${{ vars.DEPLOY_URL }}
         run: |
           for attempt in {1..10}; do
@@ -252,4 +371,48 @@ jobs:
             sleep 3
           done
           printf 'Production health check failed: %s\n' "$DEPLOY_URL" >&2
+
+          printf -v remote_command 'bash -s -- %q %q %q' \
+            "$DEPLOY_PATH" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT"
+          ssh \
+            -i "$HOME/.ssh/deploy_key" \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+            "$DEPLOY_USER@$DEPLOY_HOST" "$remote_command" <<'REMOTE'
+          set -Eeuo pipefail
+
+          base="$1"
+          run_id="$2"
+          attempt="$3"
+          if [[ "$base" != "/var/www/lazytown" ]]; then
+            printf 'Unexpected deployment path: %s\n' "$base" >&2
+            exit 1
+          fi
+
+          if [[ ! -L "$base/previous" ]]; then
+            printf 'No previous release is available for automatic rollback\n' >&2
+            exit 1
+          fi
+
+          previous_release="$(readlink -f "$base/previous")"
+          case "$previous_release" in
+            "$base"/releases/*) ;;
+            *)
+              printf 'The previous release points outside %s/releases\n' "$base" >&2
+              exit 1
+              ;;
+          esac
+          if [[ ! -d "$previous_release" ]]; then
+            printf 'The previous release directory is missing: %s\n' "$previous_release" >&2
+            exit 1
+          fi
+
+          next="$base/current-rollback-$run_id-$attempt"
+          ln -s "$previous_release" "$next"
+          mv -Tf "$next" "$base/current"
+          printf 'Restored previous release: %s\n' "$previous_release"
+          REMOTE
+
           exit 1

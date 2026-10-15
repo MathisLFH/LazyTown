@@ -176,11 +176,42 @@ composer test
 GitHub Actions runs CI on pull requests and pushes to `master`. It starts a
 temporary PostgreSQL 16 service, builds the frontend, and runs `composer
 ci:check` (ESLint, Prettier, TypeScript checks, Pint, PHPStan, and the Laravel
-test suite). A successful push to `master` can deploy to production after CI
-passes, once the `DEPLOY_ENABLED` repository variable is set to `true` and the
-`production` environment is configured with the required deployment variables
-and secrets. Deployments use release directories and the server's shared
-`.env` and storage directories.
+test suite). A push or manual workflow run on `master` can deploy after CI
+passes when the repository variable `DEPLOY_ENABLED` is set to `true`. Pull
+requests and workflow runs on other branches never deploy.
+
+Configure the `production` GitHub Environment with these variables:
+
+- `DEPLOY_HOST`: production SSH host
+- `DEPLOY_USER`: SSH user
+- `DEPLOY_PATH`: exactly `/var/www/lazytown`
+- `DEPLOY_URL`: production URL used by the post-deploy health check
+
+Configure these secrets on the same environment:
+
+- `DEPLOY_SSH_KEY`: private SSH key for the deployment user
+- `DEPLOY_KNOWN_HOSTS`: pinned SSH host key entry for the production host
+
+Keep `DEPLOY_ENABLED` disabled until the production environment is ready. Add
+required reviewers to the `production` Environment to require approval before
+the deploy job starts. Never store deployment credentials in the repository.
+
+The server must provide Bash, PHP CLI 8.3 or newer (but below 9.0), and the
+standard `tar`, `ln`, `mv`, `chgrp`, `chmod`, and `find` commands. Prepare
+`/var/www/lazytown/releases`, `/var/www/lazytown/shared/.env`, and
+`/var/www/lazytown/shared/storage` before the first deployment, and configure
+the web server to serve `/var/www/lazytown/current/public`. Each deployment
+installs a versioned release, runs migrations, and atomically switches the
+`current` symlink. The deployment user needs write access to `releases` and
+`shared`, and must be root or a member of `www-data`. The shared `.env` file
+must be owned by the deployment user, belong to `www-data`, and have mode `640`
+so the PHP web process can read it without making it world-readable. If the
+production health check fails, the workflow switches back to the previous
+release when one exists; the first deployment has no previous release to
+restore. Database migrations must remain compatible with the previous
+application release because rollback does not reverse database changes. Old
+release directories are not automatically removed, so monitor server disk
+usage and decide on a retention policy before frequent deployments.
 
 ## Database
 
