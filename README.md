@@ -173,10 +173,14 @@ Run tests:
 composer test
 ```
 
-GitHub Actions runs the CI workflow on pull requests and pushes to `main`. It
-starts a temporary PostgreSQL 16 service, builds the frontend, and runs
-`composer ci:check` (ESLint, Prettier, TypeScript checks, Pint, PHPStan, and the
-Laravel test suite). CI does not deploy the application.
+GitHub Actions runs CI on pull requests and pushes to `master`. It starts a
+temporary PostgreSQL 16 service, builds the frontend, and runs `composer
+ci:check` (ESLint, Prettier, TypeScript checks, Pint, PHPStan, and the Laravel
+test suite). A successful push to `master` can deploy to production after CI
+passes, once the `DEPLOY_ENABLED` repository variable is set to `true` and the
+`production` environment is configured with the required deployment variables
+and secrets. Deployments use release directories and the server's shared
+`.env` and storage directories.
 
 ## Database
 

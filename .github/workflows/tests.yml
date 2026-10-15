@@ -5,6 +5,7 @@ on:
     branches:
       - master
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -59,3 +60,196 @@ jobs:
 
       - name: Run CI Checks
         run: composer ci:check
+
+  deploy:
+    name: Deploy to production
+    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && vars.DEPLOY_ENABLED == 'true'
+    needs: ci
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.5'
+          tools: composer:v2
+          extensions: pdo_pgsql
+          coverage: none
+
+      - name: Prepare Laravel environment
+        run: cp .env.example .env
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Generate Wayfinder routes
+        run: php artisan wayfinder:generate --with-form --no-interaction
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Build production assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Install production Composer dependencies
+        run: composer install --no-dev --no-interaction --prefer-dist --no-progress --optimize-autoloader
+
+      - name: Package release
+        run: |
+          tar -czf "$RUNNER_TEMP/lazytown-release.tar.gz" \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='storage' \
+            --exclude='bootstrap/cache' \
+            --exclude='public/storage' \
+            --exclude='.env*' \
+            --exclude='tests' \
+            .
+
+      - name: Configure SSH
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          DEPLOY_URL: ${{ vars.DEPLOY_URL }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          : "${DEPLOY_HOST:?Set the DEPLOY_HOST production variable}"
+          : "${DEPLOY_USER:?Set the DEPLOY_USER production variable}"
+          : "${DEPLOY_PATH:?Set the DEPLOY_PATH production variable}"
+          : "${DEPLOY_URL:?Set the DEPLOY_URL production variable}"
+          : "${DEPLOY_SSH_KEY:?Set the DEPLOY_SSH_KEY production secret}"
+          : "${DEPLOY_KNOWN_HOSTS:?Set the DEPLOY_KNOWN_HOSTS production secret}"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$HOME/.ssh/deploy_key"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/deploy_key" "$HOME/.ssh/known_hosts"
+          ssh-keygen -y -P "" -f "$HOME/.ssh/deploy_key" > /dev/null
+
+      - name: Upload release archive
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+        run: |
+          scp \
+            -i "$HOME/.ssh/deploy_key" \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+            "$RUNNER_TEMP/lazytown-release.tar.gz" \
+            "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/releases/$GITHUB_SHA-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT.tar.gz"
+
+      - name: Install and activate release
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+        run: |
+          printf -v remote_command 'bash -s -- %q %q %q %q' \
+            "$DEPLOY_PATH" "$GITHUB_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT"
+          ssh \
+            -i "$HOME/.ssh/deploy_key" \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+            "$DEPLOY_USER@$DEPLOY_HOST" "$remote_command" <<'REMOTE'
+          set -Eeuo pipefail
+
+          base="$1"
+          sha="$2"
+          run_id="$3"
+          attempt="$4"
+          shared="$base/shared"
+          release="$base/releases/$sha-$run_id-$attempt"
+          archive="$base/releases/$sha-$run_id-$attempt.tar.gz"
+
+          if [[ "$base" != "/var/www/lazytown" ]]; then
+            printf 'Unexpected deployment path: %s\n' "$base" >&2
+            exit 1
+          fi
+
+          if [[ ! -d "$base/releases" || ! -d "$shared" ]]; then
+            printf 'Deployment directories are missing under %s\n' "$base" >&2
+            exit 1
+          fi
+
+          if [[ ! -f "$shared/.env" ]]; then
+            printf 'Missing production environment file: %s/.env\n' "$shared" >&2
+            exit 1
+          fi
+
+          if [[ ! -f "$archive" || -e "$release" ]]; then
+            printf 'Release archive is missing or release directory already exists\n' >&2
+            exit 1
+          fi
+
+          mkdir "$release"
+          mkdir -p \
+            "$release/bootstrap/cache" \
+            "$shared/storage/app/public" \
+            "$shared/storage/framework/cache/data" \
+            "$shared/storage/framework/sessions" \
+            "$shared/storage/framework/views" \
+            "$shared/storage/logs"
+          tar -xzf "$archive" -C "$release"
+          ln -s "$shared/.env" "$release/.env"
+          ln -s "$shared/storage" "$release/storage"
+
+          if [[ -e "$release/public/storage" && ! -L "$release/public/storage" ]]; then
+            printf 'Unexpected non-symlink public/storage in release\n' >&2
+            exit 1
+          fi
+          ln -sfn "$shared/storage/app/public" "$release/public/storage"
+
+          chgrp -R www-data "$shared/storage" "$release/bootstrap/cache"
+          chmod -R g+rwX "$shared/storage" "$release/bootstrap/cache"
+          find "$shared/storage" "$release/bootstrap/cache" -type d -exec chmod g+s {} +
+
+          cd "$release"
+          php artisan package:discover --ansi
+          php artisan migrate --force
+          php artisan optimize:clear
+          php artisan optimize
+
+          chgrp -R www-data "$release/bootstrap/cache"
+          chmod -R g+rwX "$release/bootstrap/cache"
+          find "$release/bootstrap/cache" -type d -exec chmod g+s {} +
+
+          next="$base/current-$sha-$run_id-$attempt"
+          ln -s "$release" "$next"
+          mv -Tf "$next" "$base/current"
+          rm -f -- "$archive"
+          REMOTE
+
+      - name: Verify production response
+        env:
+          DEPLOY_URL: ${{ vars.DEPLOY_URL }}
+        run: |
+          for attempt in {1..10}; do
+            if curl --fail --silent --show-error --location --max-time 15 \
+              --output /dev/null "$DEPLOY_URL"; then
+              exit 0
+            fi
+            sleep 3
+          done
+          printf 'Production health check failed: %s\n' "$DEPLOY_URL" >&2
+          exit 1
