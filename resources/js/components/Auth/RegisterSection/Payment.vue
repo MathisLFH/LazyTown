@@ -14,8 +14,8 @@ defineProps<{ price: string }>();
                 <strong>Sicher bezahlen mit Stripe Checkout</strong>
                 <span>
                     Stripe zeigt dir im nächsten Schritt die verfügbaren
-                    Zahlungsmethoden an. Deine Zahlungsdaten gibst du direkt
-                    bei Stripe ein.
+                    Zahlungsmethoden an. Deine Zahlungsdaten gibst du direkt bei
+                    Stripe ein.
                 </span>
             </div>
             <strong class="payment-method__price">{{ price }}</strong>
