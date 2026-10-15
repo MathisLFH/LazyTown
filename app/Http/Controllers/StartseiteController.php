@@ -29,6 +29,10 @@ class StartseiteController extends Controller
             ->wherePivot('status', 'active');
         $hasClub = (clone $activeClubTeams)->exists();
 
+        if ($user->tenant?->isAwaitingPayment()) {
+            return to_route('register.payment');
+        }
+
         if ($user->hasRole('trainer') && ! $hasClub) {
             return to_route('club.onboarding');
         }

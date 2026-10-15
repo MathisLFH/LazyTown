@@ -23,9 +23,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('settings/notifications', [NotificationSettingsController::class, 'edit'])->name('notifications.edit');
     Route::patch('settings/notifications', [NotificationSettingsController::class, 'update'])->name('notifications.update');
 
-    Route::get('settings/teams/{team}/payment', [TeamPaymentController::class, 'edit'])->name('teams.payment.edit');
-    Route::post('settings/teams/{team}/payment', [TeamPaymentController::class, 'update'])->name('teams.payment.update');
-    Route::post('settings/teams/{team}/payment/skip', [TeamPaymentController::class, 'skip'])->name('teams.payment.skip');
+    Route::get('settings/teams/{team}/payment/complete', [TeamPaymentController::class, 'complete'])->name('teams.payment.complete');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

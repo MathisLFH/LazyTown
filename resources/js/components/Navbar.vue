@@ -18,7 +18,6 @@ import { destroy as deleteNotification, read } from '@/routes/notifications';
 import { single as markAsRead } from '@/routes/notifications/read';
 import { edit as profile } from '@/routes/profile';
 import { suggestions as searchSuggestions } from '@/routes/search';
-import { edit as payment } from '@/routes/teams/payment';
 import type { NotificationItem } from '@/types/auth';
 
 type NavigationItem = {
@@ -63,7 +62,6 @@ const searchHttp = useHttp<SearchForm, SearchResponse>({
 const { isCurrentUrl } = useCurrentUrl();
 const page = usePage();
 const currentUser = computed(() => page.props.auth.user);
-const currentTeam = computed(() => page.props.currentTeam);
 const { avatarDataUrl } = useProfileAvatar(currentUser.value?.id ?? null);
 const isAuthenticated = computed(() => Boolean(page.props.auth.user));
 const userRoles = computed(() => (currentUser.value?.roles ?? []) as string[]);
@@ -194,13 +192,6 @@ const administrationItems = computed(() => {
     }
 
     const items: NavigationItem[] = [];
-
-    if (currentTeam.value) {
-        items.push({
-            label: 'Bezahlung für das Tool',
-            href: payment(currentTeam.value.slug).url,
-        });
-    }
 
     items.push(
         { label: 'Mitglieder', href: manageMembers().url },

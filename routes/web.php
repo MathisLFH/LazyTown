@@ -7,12 +7,15 @@ use App\Http\Controllers\Plans\TrainingPlanController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\StartseiteController;
 use App\Http\Controllers\Teams\ClubOnboardingController;
+use App\Http\Controllers\Teams\RegistrationPaymentController;
+use App\Http\Controllers\Teams\StripeWebhookController;
 use App\Http\Controllers\Teams\TeamController;
 use App\Http\Controllers\Teams\TeamInvitationController;
 use App\Http\Controllers\Teams\TeamMemberController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', StartseiteController::class)->name('home');
+Route::post('stripe/webhook', StripeWebhookController::class)->name('stripe.webhook');
 Route::inertia('contact/about-us', 'AboutUs')->name('aboutus');
 Route::inertia('contact/kontakt', 'Kontakt')->name('kontakt');
 Route::inertia('contact/impressum', 'Impressum')->name('impressum');
@@ -29,6 +32,9 @@ Route::middleware(['auth'])->group(function () {
         ->name('search.suggestions');
 
     Route::post('invitations/{invitation}/accept', [TeamInvitationController::class, 'accept'])->name('invitations.accept');
+    Route::get('register/payment', [RegistrationPaymentController::class, 'show'])->name('register.payment');
+    Route::post('register/payment', [RegistrationPaymentController::class, 'store'])->name('register.payment.store');
+    Route::delete('register/payment', [RegistrationPaymentController::class, 'destroy'])->name('register.payment.destroy');
     Route::delete('invitations/{invitation}', [TeamInvitationController::class, 'decline'])->name('invitations.decline');
 
     Route::middleware('club.access')->group(function () {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form } from '@inertiajs/vue3';
+import { Form, router } from '@inertiajs/vue3';
 import { computed, reactive, ref } from 'vue';
 import RegisterAdminSection from '@/components/Auth/RegisterSection/Admin.vue';
 import RegisterClubSection from '@/components/Auth/RegisterSection/Club.vue';
@@ -12,7 +12,17 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { store } from '@/routes/register';
+import {
+    destroy as cancelRegistrationAction,
+    store as resumePayment,
+} from '@/routes/register/payment';
 import type { TeamInvitationContext } from '@/types';
+
+interface PendingRegistration {
+    club: { name: string; subdomain: string };
+    admin: Record<string, string | null>;
+    checkoutState: 'cancelled' | 'pending' | null;
+}
 
 interface CreateClubData {
     club: {
@@ -31,33 +41,35 @@ interface CreateClubData {
         city: string;
     };
     subscription: 'free' | 'premium';
-    paymentMethod: 'paypal' | 'card';
 }
 
-defineProps<{
+const props = defineProps<{
     passwordRules: string;
+    annualAccessPrice: string;
     teamInvitation?: TeamInvitationContext | null;
+    pendingRegistration?: PendingRegistration | null;
 }>();
 
-const registerSection = ref<number>(0);
+const pending = props.pendingRegistration;
+const registerSection = ref<number>(pending ? 3 : 0);
+const cancellationInProgress = ref(false);
 const createClubData = reactive<CreateClubData>({
     club: {
-        name: '',
-        subdomain: '',
+        name: pending?.club.name ?? '',
+        subdomain: pending?.club.subdomain ?? '',
     },
     admin: {
-        first_name: '',
-        last_name: '',
-        email: '',
-        birth_date: '',
-        birth_place: '',
-        nationality: '',
-        address: '',
-        postcode: '',
-        city: '',
+        first_name: pending?.admin.first_name ?? '',
+        last_name: pending?.admin.last_name ?? '',
+        email: pending?.admin.email ?? '',
+        birth_date: pending?.admin.birth_date?.slice(0, 10) ?? '',
+        birth_place: pending?.admin.birth_place ?? '',
+        nationality: pending?.admin.nationality ?? '',
+        address: pending?.admin.address ?? '',
+        postcode: pending?.admin.postcode ?? '',
+        city: pending?.admin.city ?? '',
     },
-    subscription: 'free',
-    paymentMethod: 'paypal',
+    subscription: pending ? 'premium' : 'free',
 });
 
 const steps = computed(() =>
@@ -84,6 +96,24 @@ function goToNextStep(event: MouseEvent): void {
         registerSection.value + 1,
         steps.value.length - 1,
     );
+}
+
+function cancelPendingRegistration(): void {
+    if (
+        cancellationInProgress.value ||
+        !window.confirm(
+            'Wenn du abbrichst, werden dein Benutzerkonto, dein Verein und die ausstehende Zahlung gelöscht. Möchtest du fortfahren?',
+        )
+    ) {
+        return;
+    }
+
+    cancellationInProgress.value = true;
+    router.delete(cancelRegistrationAction.url(), {
+        onFinish: () => {
+            cancellationInProgress.value = false;
+        },
+    });
 }
 
 function handleRegistrationErrors(errors: Record<string, string>): void {
@@ -127,6 +157,59 @@ function handleRegistrationErrors(errors: Record<string, string>): void {
         </header>
 
         <Form
+            v-if="pendingRegistration"
+            v-bind="resumePayment.form()"
+            v-slot="{ processing }"
+            class="flex flex-col gap-6"
+        >
+            <p
+                v-if="pendingRegistration.checkoutState === 'cancelled'"
+                class="rounded-md border border-amber-400 bg-amber-50 p-3 text-sm text-amber-950"
+            >
+                Die Zahlung wurde abgebrochen oder ist fehlgeschlagen. Deine
+                Daten sind gespeichert, du kannst die Zahlung erneut starten.
+            </p>
+            <p
+                v-else-if="pendingRegistration.checkoutState === 'pending'"
+                class="rounded-md border p-3 text-sm"
+            >
+                Die Zahlung wird noch bestätigt. Aktualisiere diese Seite in
+                Kürze.
+            </p>
+            <p class="text-sm">
+                <strong>{{ createClubData.club.name }}</strong> ({{
+                    createClubData.club.subdomain
+                }}) – Verantwortlich:
+                {{ createClubData.admin.first_name }}
+                {{ createClubData.admin.last_name }},
+                {{ createClubData.admin.email }}
+            </p>
+            <RegisterPaymentSection :price="annualAccessPrice" />
+            <div class="flex gap-3">
+                <Button
+                    type="button"
+                    variant="outline"
+                    class="flex-1"
+                    :disabled="processing || cancellationInProgress"
+                    data-test="cancel-registration-button"
+                    @click="cancelPendingRegistration"
+                >
+                    Registrierung abbrechen
+                </Button>
+                <Button
+                    type="submit"
+                    class="flex-1"
+                    :disabled="processing || cancellationInProgress"
+                    data-test="resume-payment-button"
+                >
+                    <Spinner v-if="processing" />
+                    Jetzt bezahlen
+                </Button>
+            </div>
+        </Form>
+
+        <Form
+            v-else
             v-bind="store.form()"
             :reset-on-success="['password', 'password_confirmation']"
             @error="handleRegistrationErrors"
@@ -201,6 +284,7 @@ function handleRegistrationErrors(errors: Record<string, string>): void {
             <div v-show="registerSection === 2" data-register-step="2">
                 <RegisterSubscriptionSection
                     v-model="createClubData.subscription"
+                    :price="annualAccessPrice"
                 />
                 <InputError :message="errors.subscription" />
             </div>
@@ -209,9 +293,7 @@ function handleRegistrationErrors(errors: Record<string, string>): void {
                 v-show="registerSection === 3"
                 data-register-step="3"
             >
-                <RegisterPaymentSection
-                    v-model="createClubData.paymentMethod"
-                />
+                <RegisterPaymentSection :price="annualAccessPrice" />
             </div>
 
             <section id="button-section">
@@ -247,7 +329,11 @@ function handleRegistrationErrors(errors: Record<string, string>): void {
                 data-test="register-user-button"
             >
                 <Spinner v-if="processing" />
-                Verein registrieren
+                {{
+                    createClubData.subscription === 'premium'
+                        ? 'Verein registrieren & bezahlen'
+                        : 'Verein registrieren'
+                }}
             </Button>
         </Form>
     </div>
