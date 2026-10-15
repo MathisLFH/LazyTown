@@ -167,6 +167,8 @@ PostgreSQL database.
 
 ## Testing
 
+See [CICD_INFO.MD](./CICD_INFO.MD) for the CI/CD lifecycle, production database behavior, rollback limits, and branch guidance.
+
 Run tests:
 
 ```bash

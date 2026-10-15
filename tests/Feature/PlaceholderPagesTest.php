@@ -28,7 +28,6 @@ test('authenticated users can open the placeholder pages', function () {
         route('mein-team'),
         route('profil'),
         route('security.edit'),
-        route('teams.payment.edit', $team),
     ] as $routeName) {
         $this->get($routeName)
             ->assertOk();

@@ -19,8 +19,9 @@ class ClubOnboardingController extends Controller
 
     public function store(CreateClubRequest $request, CreateTeam $createTeam): RedirectResponse
     {
-        $team = $createTeam->handle($request->user(), $request->validated('name'), addOwner: false);
+        $team = $createTeam->handle($request->user(), $request->validated('name'));
+        $team->update(['payment_status' => 'not_required']);
 
-        return to_route('teams.payment.edit', ['team' => $team->slug]);
+        return to_route('teams.edit', ['team' => $team->slug]);
     }
 }

@@ -2,78 +2,58 @@
 
 namespace App\Http\Controllers\Teams;
 
-use App\Enums\TeamRole;
+use App\Actions\Teams\ConfirmTeamPayment;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Teams\ProcessTeamPaymentRequest;
 use App\Models\Team;
-use App\Services\Teams\TeamPermissionSynchronizer;
+use App\Models\User;
+use App\Services\Teams\StripeCheckoutService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class TeamPaymentController extends Controller
 {
-    public function __construct(private TeamPermissionSynchronizer $permissionSynchronizer) {}
-
-    public function edit(Request $request, Team $team): Response
-    {
+    public function complete(
+        Request $request,
+        Team $team,
+        StripeCheckoutService $stripeCheckout,
+        ConfirmTeamPayment $confirmTeamPayment,
+    ): RedirectResponse {
         Gate::authorize('update', $team);
 
-        return Inertia::render('Bezahlung', [
-            'team' => [
-                'name' => $team->name,
-                'slug' => $team->slug,
-                'paymentStatus' => $team->payment_status,
-                'paidAt' => $team->payment_paid_at?->toISOString(),
-            ],
+        $validated = $request->validate([
+            'session_id' => ['required', 'string', 'starts_with:cs_test_', 'max:255'],
         ]);
-    }
+        $sessionId = $validated['session_id'];
+        $payer = $request->user();
 
-    public function update(ProcessTeamPaymentRequest $request, Team $team): RedirectResponse
-    {
-        Gate::authorize('update', $team);
+        if (! $payer instanceof User) {
+            abort(401);
+        }
 
-        $this->completePayment($request, $team, 'paid', 'PAY-');
+        if ($team->payment_reference !== $sessionId) {
+            abort(403);
+        }
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Zahlung erfolgreich verarbeitet.']);
+        $session = $stripeCheckout->retrieveSession($sessionId);
 
-        return to_route('home');
-    }
+        if (! $stripeCheckout->belongsToTeamAndPayer($session, $team, $payer)) {
+            abort(403);
+        }
 
-    public function skip(Request $request, Team $team): RedirectResponse
-    {
-        Gate::authorize('update', $team);
+        if (! $stripeCheckout->isPaidForTeamAndPayer($session, $team, $payer)) {
+            Inertia::flash('toast', ['type' => 'info', 'message' => 'Die Zahlung wird noch bestätigt. Bitte aktualisiere die Seite in Kürze.']);
 
-        $this->completePayment($request, $team, 'skipped', 'SKIP-');
+            return to_route('register.payment', ['checkout' => 'pending']);
+        }
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Zahlung zu Testzwecken übersprungen.']);
+        $confirmTeamPayment->handle($team, $payer, $sessionId);
 
-        return to_route('home');
-    }
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Zahlung erfolgreich bestätigt.']);
 
-    private function completePayment(Request $request, Team $team, string $status, string $referencePrefix): void
-    {
-        $user = $request->user();
-
-        DB::transaction(function () use ($team, $user, $status, $referencePrefix): void {
-            $team->update([
-                'payment_status' => $status,
-                'payment_reference' => $referencePrefix.strtoupper(Str::random(10)),
-                'payment_paid_at' => now(),
-            ]);
-
-            $membership = $team->memberships()->updateOrCreate(
-                ['user_id' => $user->id],
-                ['role' => TeamRole::Owner],
-            );
-
-            $this->permissionSynchronizer->synchronizeMembership($membership);
-
-            $user->switchTeam($team);
-        });
+        return $team->tenant
+            ? redirect()->to($team->tenant->url())
+            : to_route('teams.edit', $team);
     }
 }
