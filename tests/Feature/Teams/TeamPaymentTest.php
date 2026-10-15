@@ -283,6 +283,28 @@ test('unpaid stripe sessions do not activate a team', function () {
     expect($team->members()->whereKey($user->id)->exists())->toBeTrue();
 });
 
+test('stripe webhook ignores checkout events without a session ID', function () {
+    $event = Event::constructFrom([
+        'id' => 'evt_checkout_missing_session_id',
+        'object' => 'event',
+        'type' => 'checkout.session.completed',
+        'data' => [
+            'object' => [
+                'id' => null,
+                'object' => 'checkout.session',
+            ],
+        ],
+    ]);
+
+    $stripeCheckout = Mockery::mock(StripeCheckoutService::class);
+    $stripeCheckout->shouldReceive('constructWebhookEvent')->once()->andReturn($event);
+    $stripeCheckout->shouldNotReceive('retrieveSession');
+    $this->instance(StripeCheckoutService::class, $stripeCheckout);
+
+    $this->post(route('stripe.webhook'), [], ['Stripe-Signature' => 'test-signature'])
+        ->assertNoContent();
+});
+
 test('stripe webhook rejects invalid signatures', function () {
     config([
         'services.stripe.secret' => 'sk_test_example',
