@@ -167,6 +167,8 @@ PostgreSQL database.
 
 ## Testing
 
+See [CICD_INFO.MD](./CICD_INFO.MD) for the CI/CD lifecycle, production database behavior, rollback limits, and branch guidance.
+
 Run tests:
 
 ```bash
@@ -175,61 +177,48 @@ composer test
 
 ## CI/CD
 
-### Continuous integration
+GitHub Actions runs `.github/workflows/tests.yml` for pull requests, pushes to
+`master`, and manual `workflow_dispatch` runs. CI uses a temporary PostgreSQL
+16 service, PHP 8.5, and Node.js 22, then runs `composer ci:check`.
 
-GitHub Actions runs `.github/workflows/tests.yml` on pushes to `master` and on
-pull requests. It starts a temporary PostgreSQL 16 service, uses PHP 8.5 and
-Node.js 22, then runs `composer ci:check`. This includes ESLint, Prettier,
-TypeScript, Pint, PHPStan, and the Laravel test suite.
+Production deployment can run only on `master`, after CI passes, when the
+repository variable `DEPLOY_ENABLED` is exactly `true`. Manual runs on
+`master` follow the same gate. Pull requests and runs on other branches never
+deploy. See [CICD_INFO.MD](./CICD_INFO.MD) for deployment setup, database
+behavior, rollback limits, and branch guidance.
 
-### Production deployment (planned, not active)
+Configure the `production` GitHub Environment with these variables:
 
-The current workflow only runs CI; it does **not** deploy the application.
-The following values describe the planned deployment and must be configured
-before enabling a deploy job:
+- `DEPLOY_HOST`: production SSH host
+- `DEPLOY_USER`: SSH user
+- `DEPLOY_PATH`: exactly `/var/www/lazytown`
+- `DEPLOY_URL`: production URL used by the post-deploy health check
 
-| Setting | Planned value | Notes |
-| --- | --- | --- |
-| Server | `2.31.56.13` | Ubuntu 26.04.1 LTS |
-| Domain | `lazytown.schmidtflo.de` | Configure DNS and HTTPS before production |
-| SSH user | `deploy` | Intended restricted account; not `root` and not `lazytown` |
-| Application path | `/var/www/lazytown` | Active release would be `/var/www/lazytown/current` |
-| Web server | Nginx | Web root should be `/var/www/lazytown/current/public` |
-| Runtime | PHP 8.5 and Composer | Reported as installed on the server |
-| Database | PostgreSQL 16 via Docker Compose | Compose currently names the database `lazytown` and its user `admin`; replace its example credentials and restrict port 5432 to localhost before production |
+Configure these secrets on the same environment:
 
-When a deploy job is added, configure these GitHub repository variables:
+- `DEPLOY_SSH_KEY`: private SSH key for the deployment user
+- `DEPLOY_KNOWN_HOSTS`: pinned SSH host key entry for the production host
 
-- `DEPLOY_HOST`: `2.31.56.13`
-- `DEPLOY_USER`: `deploy`
-- `DEPLOY_PATH`: `/var/www/lazytown`
-- `DEPLOY_ENABLED`: leave `false` (or unset) until the server and deploy job
-  are ready; enable only after a successful CI run is confirmed
+Keep `DEPLOY_ENABLED` disabled until the production environment is ready. Add
+required reviewers to the `production` Environment to require approval before
+the deploy job starts. Never store deployment credentials in the repository.
 
-Create a GitHub Actions environment named `production` and store these
-environment secrets there:
-
-- `DEPLOY_SSH_KEY`: private SSH key for the restricted `deploy` user
-- `DEPLOY_KNOWN_HOSTS`: verified SSH host-key line for the server
-
-Generate the key pair on an administrator's computer, not in the repository.
-For example, in Windows PowerShell:
-
-```powershell
-ssh-keygen -t ed25519 -a 100 -C "lazytown-actions" -f "$env:USERPROFILE\.ssh\lazytown-actions"
-```
-
-Install only `lazytown-actions.pub` in the server user's
-`/home/deploy/.ssh/authorized_keys`. Add the private `lazytown-actions` key
-only to the GitHub `DEPLOY_SSH_KEY` secret; never commit or share it. Verify
-the server host key before adding it as `DEPLOY_KNOWN_HOSTS`. Do not use root
-SSH access for automated deployment.
-
-Before activating deployment, create the `deploy` account and release
-directories, configure Nginx and HTTPS, prepare the production `.env` with a
-unique `APP_KEY` and strong database credentials, and ensure PostgreSQL data
-persists across container restarts. Protect the `master` branch and the
-`production` environment so unreviewed changes cannot deploy.
+The server must provide Bash, PHP CLI 8.3 or newer (but below 9.0), and the
+standard `tar`, `ln`, `mv`, `chgrp`, `chmod`, and `find` commands. Prepare
+`/var/www/lazytown/releases`, `/var/www/lazytown/shared/.env`, and
+`/var/www/lazytown/shared/storage` before the first deployment, and configure
+the web server to serve `/var/www/lazytown/current/public`. Each deployment
+installs a versioned release, runs migrations, and atomically switches the
+`current` symlink. The deployment user needs write access to `releases` and
+`shared`, and must be root or a member of `www-data`. The shared `.env` file
+must be owned by the deployment user, belong to `www-data`, and have mode `640`
+so the PHP web process can read it without making it world-readable. If the
+production health check fails, the workflow switches back to the previous
+release when one exists; the first deployment has no previous release to
+restore. Database migrations must remain compatible with the previous
+application release because rollback does not reverse database changes. Old
+release directories are not automatically removed, so monitor server disk
+usage and decide on a retention policy before frequent deployments.
 
 ## Database
 

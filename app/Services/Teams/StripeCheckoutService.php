@@ -205,7 +205,7 @@ class StripeCheckoutService
      */
     private function sessionDetails(Session $session): array
     {
-        if (! is_string($session->id) || ! is_string($session->url) || $session->url === '') {
+        if (! is_string($session->url) || $session->url === '') {
             throw new LogicException('Stripe did not return a usable checkout session URL.');
         }
 

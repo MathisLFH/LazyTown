@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Services\Teams\StripeCheckoutService;
 use Illuminate\Support\Facades\Log;
 use Stripe\Event;
-use Stripe\StripeObject;
 
 class HandleStripeCheckoutWebhook
 {
@@ -29,7 +28,7 @@ class HandleStripeCheckoutWebhook
 
         $eventObject = $event->data->object;
 
-        if (! $eventObject instanceof StripeObject || ! is_string($eventObject->id)) {
+        if (! is_string($eventObject->id)) {
             Log::warning('Stripe checkout webhook did not contain a session ID.', [
                 'event_id' => $event->id,
                 'event_type' => $event->type,
