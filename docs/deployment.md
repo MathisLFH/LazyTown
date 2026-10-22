@@ -15,7 +15,7 @@ Workflow: [.github/workflows/tests.yml](../.github/workflows/tests.yml).
 
 Ein Deploy-Job wird nur nach erfolgreicher CI gestartet, wenn der Lauf auf `master` liegt, kein Pull Request ist und die Repository-Variable `DEPLOY_ENABLED` exakt `true` lautet. Die GitHub-Environment `production` liefert `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_PATH`, `DEPLOY_URL`, `DEPLOY_SSH_KEY` und `DEPLOY_KNOWN_HOSTS`.
 
-Der Workflow baut ein Releasearchiv, generiert Wayfinder-Routen und Vite-Assets, installiert Composer-Produktionsabhängigkeiten und überträgt das Archiv per SSH. Auf dem Server liegen `.env` und `storage` gemeinsam unter `/var/www/lazytown/shared`; jede Release liegt unter `releases/`, der Webroot zeigt auf `current/public`. Nach Migration und Laravel-Optimierung schaltet der Workflow `current` um und prüft `DEPLOY_URL`.
+Der Workflow baut ein Releasearchiv, generiert Wayfinder-Routen und Vite-Assets, installiert Composer-Produktionsabhängigkeiten und überträgt das Archiv per SSH. Auf dem Server liegen `.env` und `storage` gemeinsam unter `/var/www/lazytown/shared`; jede Release liegt unter `releases/`, der Webroot zeigt auf `current/public`. Für den PHP-FastCGI-Handler muss `SCRIPT_FILENAME` den aufgelösten Releasepfad verwenden (`$realpath_root$fastcgi_script_name`), nicht den stabilen Symlinkpfad aus `$document_root`; sonst kann PHP bei atomaren Symlink-Wechseln noch Code aus einem anderen Release ausführen als Nginx für die statischen Assets ausliefert. Vor der Aktivierung prüft der Workflow das Vite-Manifest und alle darin referenzierten Dateien. Nach der Umschaltung von `current` prüft er die von `DEPLOY_URL` ausgelieferten CSS-/JavaScript-Dateien einschließlich Content-Type; bei Fehlern wird ein Rollback versucht.
 
 Die vollständigen Vorbedingungen, Rechte und Wiederherstellungsschritte stehen in [CICD_INFO.MD](../CICD_INFO.MD).
 
@@ -33,4 +33,3 @@ Die vollständigen Vorbedingungen, Rechte und Wiederherstellungsschritte stehen 
 Produktionssecrets gehören ausschließlich in die geschützte Server-`.env` oder den GitHub-Secret-Speicher, nicht in Git. `.env.example` und `docker-compose.yml` enthalten einfache lokale Datenbankbeispielwerte und sind keine Produktionsvorlage.
 
 Der Workflow startet keinen dauerhaften Queue-Worker oder Scheduler. Für `ShouldQueue`-Notifications und die tägliche Einladungslöschung muss der entsprechende Prozess außerhalb der Releasepipeline eingerichtet werden. Der Code-Rollback setzt angewendete Migrationen nicht zurück; vor riskanten Schemaänderungen sind Datenbank-Backups erforderlich.
-

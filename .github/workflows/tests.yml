@@ -345,20 +345,33 @@ jobs:
           fi
           ln -sfn "$shared/storage/app/public" "$release/public/storage"
 
-          chgrp -R www-data "$release/bootstrap/cache"
-          chmod -R g+rwX "$release/bootstrap/cache"
-          find "$release/bootstrap/cache" -type d -exec chmod g+s {} +
-
-          cd "$release"
-          php artisan package:discover --ansi
-          php artisan migrate --force
-          php artisan optimize:clear
-          php artisan optimize
-
           if [[ ! -s "$release/public/build/manifest.json" ]]; then
             printf 'Vite manifest is missing from the release; refusing activation\n' >&2
             exit 1
           fi
+
+          cd "$release"
+          php -r '
+          $manifest = json_decode(file_get_contents("public/build/manifest.json"), true, flags: JSON_THROW_ON_ERROR);
+          foreach ($manifest as $entry) {
+              $assets = array_merge([$entry["file"] ?? null], $entry["css"] ?? [], $entry["assets"] ?? []);
+              foreach ($assets as $asset) {
+                  if ($asset !== null && ! is_file("public/build/" . $asset)) {
+                      fwrite(STDERR, "Missing Vite asset in release: " . $asset . PHP_EOL);
+                      exit(1);
+                  }
+              }
+          }
+          '
+
+          chgrp -R www-data "$release/bootstrap/cache"
+          chmod -R g+rwX "$release/bootstrap/cache"
+          find "$release/bootstrap/cache" -type d -exec chmod g+s {} +
+
+          php artisan package:discover --ansi
+          php artisan migrate --force
+          php artisan optimize:clear
+          php artisan optimize
 
           chgrp -R www-data "$release/bootstrap/cache"
           chmod -R g+rwX "$release/bootstrap/cache"

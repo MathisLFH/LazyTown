@@ -53,7 +53,9 @@ Der Deploy-Job baut auf GitHub eine Release-Datei. Die Produktions-`.env`, Laufz
 
 Das Paket wird in einem neuen Verzeichnis unter `releases/` entpackt. Die neue Release verwendet Symlinks auf `/var/www/lazytown/shared/.env` und `/var/www/lazytown/shared/storage`. Danach führt der Workflow `package:discover`, Migrationen und Laravel-Optimierungen aus. Erst anschließend wird `current` atomar auf die neue Release umgeschaltet.
 
-Zum Schluss ruft der Workflow `DEPLOY_URL` per HTTPS ab. Bei erfolgreicher Antwort ist der Job grün. Dieser Health-Check bestätigt eine HTTP-Antwort, aber nicht jeden Anwendungsablauf oder jede externe Integration.
+Die Nginx-Konfiguration muss bei atomaren Release-Symlinks für PHP-FPM den aufgelösten Pfad übergeben: `fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;`. Die Standardzeile `$document_root$fastcgi_script_name` kann dazu führen, dass PHP-Code aus einem anderen Release ausgeführt wird als die statischen Dateien unter `current/public`. Nach Änderungen an der Nginx-Konfiguration `nginx -t` ausführen und Nginx neu laden.
+
+Vor der Aktivierung prüft der Workflow, ob das Vite-Manifest und alle darin referenzierten Assets im entpackten Release vorhanden sind. Nach der Umschaltung ruft er `DEPLOY_URL` per HTTPS ab und prüft zusätzlich, ob die referenzierten CSS-/JavaScript-Dateien erreichbar sind und passende Content-Types liefern. Bei Fehlern versucht der Workflow einen Rollback auf die vorherige Release. Dieser Health-Check bestätigt nicht jeden Anwendungsablauf oder jede externe Integration.
 
 ## Was mit der Produktionsdatenbank passiert
 
