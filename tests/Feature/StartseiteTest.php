@@ -17,8 +17,15 @@ test('guests can visit the home page', function () {
     $user = User::factory()->create();
     $team = $user->currentTeam;
 
-    $response = $this->get(route('home'));
-    $response->assertOk();
+    $response = $this->get(route('home'))->assertOk();
+    $html = $response->getContent();
+    $bodyPosition = strpos($html, '<body');
+    $footerPosition = strpos($html, '<footer');
+    $bodyEndPosition = strpos($html, '</body>');
+
+    expect($bodyPosition)->not->toBeFalse()
+        ->and($footerPosition)->toBeGreaterThan($bodyPosition)
+        ->and($bodyEndPosition)->toBeGreaterThan($footerPosition);
 });
 
 test('authenticated users can visit the home page', function () {
