@@ -360,6 +360,8 @@ jobs:
             exit 1
           fi
 
+          chmod -R a+rX "$release/public/build"
+
           chgrp -R www-data "$release/bootstrap/cache"
           chmod -R g+rwX "$release/bootstrap/cache"
           find "$release/bootstrap/cache" -type d -exec chmod g+s {} +
