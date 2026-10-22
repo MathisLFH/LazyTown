@@ -1,6 +1,6 @@
 # LazyTown CI/CD: Ablauf und Betrieb
 
-Stand: 15. Oktober 2026
+Stand: 21. Oktober 2026
 
 Dieses Dokument beschreibt, wie Änderungen von GitHub bis zur Produktionsseite gelangen, was dabei mit der PostgreSQL-Datenbank passiert und welche Betriebsaufgaben noch offen sind. Der Workflow liegt unter [`.github/workflows/tests.yml`](./.github/workflows/tests.yml).
 
@@ -97,11 +97,9 @@ Der Workflow entfernt das hochgeladene Archiv nach dem Entpacken, löscht aber *
 
 - PR [#5](https://github.com/MathisLFH/LazyTown/pull/5) von `feat/production-deploy` nach `master` wurde am 15. Oktober 2026 gemergt.
 - Der erfolgreiche Production-Lauf war Run [#20](https://github.com/MathisLFH/LazyTown/actions/runs/38712716178) auf `master`; die Produktionsseite antwortete danach.
-- `master` ist der Produktions-Branch. `feat/production-deploy` muss **nicht noch einmal** nach `master` gemergt werden, damit die Pipeline funktioniert.
-- Die Remote-Branches `dev` und `master` waren am 15. Oktober 2026 auseinander gelaufen: seit ihrem gemeinsamen Basis-Commit hatte jeder vier beziehungsweise fünf eigene Commits.
-- Der aktuelle lokale Branch `feat/production-deploy` enthält inzwischen den Merge-Commit `3eac9c6`, der `origin/dev` in den Feature-Branch integriert. Dieser Stand ist lokal und noch nicht nach `origin/feat/production-deploy` gepusht.
-- Wenn die CI/CD-Änderungen auch in `dev` verfügbar sein sollen, kann nach Prüfung ein Pull Request **von `feat/production-deploy` nach `dev`** erstellt werden. Da `origin/dev` bereits Vorfahr des lokalen Feature-Branches ist, ist das die passende Richtung für diesen aktuellen Stand. CI läuft auf dem PR; der Deploy-Job wird übersprungen. Das ist für den bereits funktionierenden Production-Deploy nicht erforderlich.
-- Den aktuellen Feature-Branch nicht als Ganzes erneut nach `master` mergen: Er enthält zusätzlich Änderungen aus `dev`, die derzeit nicht in `master` sind. Für die neue Infodatei in `master` wäre ein separater, docs-only Branch auf Basis von `master` die sichere Variante.
-- Ein Push auf `dev` löst nach der aktuellen Workflow-Konfiguration keinen Production-Deploy aus.
+- `master` ist der Produktions-Branch. Der Merge von `feat/production-deploy` nach `dev` am 21. Oktober 2026 ändert `master` nicht.
+- Der Merge liegt zunächst nur im lokalen Branch `dev`; `origin/dev` wird dadurch nicht aktualisiert.
+- Der Workflow reagiert auf Pull Requests, Pushes auf `master` und manuelle `workflow_dispatch`-Läufe. Ein direkter Push auf `dev` löst weder CI noch Deploy aus; ein Pull Request nach `dev` führt CI aus, deployt aber nicht.
+- Ein Push auf `master` löst CI aus. Nach erfolgreicher CI wird der Deploy-Job nur ausgeführt, wenn `DEPLOY_ENABLED` exakt `true` ist und die nötige Freigabe der `production`-Environment vorliegt. Die Variable allein startet keinen Lauf.
 
-Aktuell meldet GitHub `master` als ungeschützt. Da ein Push auf `master` bei aktivem Deploy-Gate unmittelbar Produktion auslösen kann, wird dringend empfohlen, in GitHub eine Branch-Regel für `master` einzurichten: Änderungen nur per Pull Request zulassen, den Check `ci` verlangen und Force-Pushes sowie das Löschen des Branches sperren.
+Da ein Push auf `master` bei aktivem Deploy-Gate unmittelbar Produktion auslösen kann, sollte `master` geschützt sein: Änderungen nur per Pull Request zulassen, den Check `ci` verlangen und Force-Pushes sowie das Löschen des Branches sperren. Eine Freigabe für die `production`-Environment kann zusätzlich den Deploy-Job absichern.

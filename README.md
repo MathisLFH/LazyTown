@@ -1,299 +1,64 @@
 # LazyTown
 
-A modern Laravel application with Inertia.js, Team management, Two-Factor Authentication, and Passkeys support.
+LazyTown ist eine Laravel-Webanwendung zur Verwaltung von Vereinen, Mannschaften und Sportplänen. Die Anwendung verbindet ein Laravel-Backend mit Vue-Seiten über Inertia; PostgreSQL speichert Vereins-, Mitglieder- und Planungsdaten.
 
-## DB Model
+> **Dokumentationsstand:** Diese Beschreibung folgt dem aktuellen Code und den Konfigurationsdateien. Ältere Planungsnotizen im Repository können davon abweichen.
 
-```bash
-https://drive.google.com/file/d/138h61cUHgIPvP5xJYaqKCmR0bhETEy24/view?usp=sharing
-```
+## Tech-Stack
 
-Datei -> Öffnen -> draw.io
+| Bereich | Technologie und Version |
+|---|---|
+| Backend | PHP `^8.3`, Laravel `^13.17` (lokal installiert: 13.31.0) |
+| Datenbank | PostgreSQL 16 (lokale Compose-Konfiguration und CI) |
+| Web-Integration | Inertia Laravel 3.3.1 |
+| Frontend | Vue 3.5.42, Inertia Vue 3.7.0, TypeScript 5.9.3 |
+| Build und Styling | Vite 8.2.2, Tailwind CSS 4.3.3 |
+| JavaScript-Laufzeit | Node.js 20.20.2 lokal laut `.nvmrc`; CI verwendet Node.js 22 |
+| Routen-Typen | Laravel Wayfinder (PHP 0.1.21, Vite-Plugin 0.1.7) |
+| Authentifizierung | Laravel Fortify 1.39.0, Laravel Passkeys (PHP) 0.2.1, `@laravel/passkeys` (JS) 0.2.0 |
+| Rollen und Berechtigungen | Spatie Laravel Permission 8.0.0 |
+| Qualität und Tests | Pest 5.1.3, Pint 1.30.5, Larastan 3.10.0, ESLint 9.39.5, Prettier 3.9.6 |
 
-## Permission System
+Versionsnummern der installierten Pakete stammen aus `composer show --direct` und `npm list --depth=0`; verbindlich für Installationen sind [composer.lock](./composer.lock) und [package-lock.json](./package-lock.json).
 
-```bash
-composer dump-autoload --optimize
-```
+## Funktionen
 
-## Quickstart
+- Registrierung und Anmeldung mit E-Mail und Passwort, E-Mail-Verifizierung, Passwort-Reset, Zwei-Faktor-Authentifizierung und Passkeys.
+- Vereine als Mandanten mit Subdomains, Teams, Mitgliedschaften, Einladungen und teambezogenen Berechtigungen.
+- Spielplan- und Hallenplanverwaltung inklusive CSV-Vorschau und Import.
+- Suche nach Benutzern, Teams, Hallenorten und Einstellungen.
+- Datenbankbenachrichtigungen mit Benutzereinstellungen.
+- Stripe-Checkout für Vereinsregistrierungen; die Implementierung akzeptiert ausschließlich Stripe-Testschlüssel.
 
-Start the local development environment
+Es gibt keine separate JSON-REST-API unter `routes/api.php`. Der Großteil der Requests sind sessiongebundene Web- und Inertia-Routen; einzelne Aktionen liefern JSON. Details stehen in [docs/api.md](./docs/api.md).
 
-```bash
-npm run start
-```
+## Schnellstart
 
-## Features
+### Voraussetzungen
 
-- 🔐 **Authentication**: Complete auth system with Laravel Fortify
-- 👥 **Team Management**: Multi-tenant team support with roles and permissions
-- 🔑 **Passkeys Support**: WebAuthn/Passkeys authentication
-- 🛡️ **Two-Factor Authentication**: 2FA with TOTP and Recovery Codes
-- 🎨 **Modern UI**: Built with React, TypeScript, and Shadcn UI
-- ⚡ **Vite + Inertia.js**: Fast development experience with Inertia.js
+- PHP 8.3 oder neuer (unter 9.0), Composer und Node.js.
+- Docker Compose für die lokale PostgreSQL-16-Datenbank.
+- Laravel Herd für die in der Konfiguration verwendete lokale Site `https://lazytown.test`.
+- Unter Windows verwendet das Vite-Startskript Node.js 20.20.2 aus der Herd-nvm-Installation; siehe [docs/setup.md](./docs/setup.md).
 
-## Prerequisites
+### Installation
 
-- PHP 8.2+
-- Node.js 18+
-- Composer
-- npm or pnpm
-
-## Installation
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/MathisLFH/LazyTown.git
-cd LazyTown
-```
-
-### 2. Install dependencies
-
-**Backend (PHP)**:
-
-```bash
+```powershell
 composer install
-```
-
-**Frontend (JavaScript/TypeScript)**:
-
-```bash
-npm install
-# or
-pnpm install
-```
-
-### 3. Environment setup
-
-Copy the example environment file:
-
-```bash
-cp .env.example .env
-```
-
-Generate the application key:
-
-```bash
+Copy-Item .env.example .env
+docker compose up -d postgres
 php artisan key:generate
-```
-
-### 4. Database setup
-
-Create a database and update your `.env` file with the database credentials.
-
-Run migrations:
-
-```bash
-php artisan migrate
-```
-
-### 5. Build frontend assets
-
-Development:
-
-```bash
+php artisan migrate --seed
+npm ci
 npm run dev
-# or
-pnpm dev
 ```
 
-Production:
+Prüfe bei Bedarf die Zugangsdaten in `.env`; `.env.example` und Compose sind auf PostgreSQL mit lokalen Beispielwerten eingerichtet. Der Laravel-Request wird lokal von Herd bedient; `npm run dev` startet Vite mit HMR. Eine ausführliche Anleitung, optionale Demodaten und Fehlerbehebung stehen in [docs/setup.md](./docs/setup.md).
 
-```bash
-npm run build
-# or
-pnpm build
-```
+## Dokumentation
 
-## Development
+Das zentrale Inhaltsverzeichnis befindet sich in [docs/README.md](./docs/README.md). Es führt zu Architektur, Backend, Frontend, Datenbank, Authentifizierung, API-Routen, Modulen/Fachbereichen, Tests, Setup, Deployment und Beitragsregeln.
 
-### Running the development server
+## CI und Deployment
 
-Laravel Herd serves the application at `https://lazytown.test`. Start the
-frontend development server in a terminal:
-
-```bash
-nvm use 20.20.2
-npm run dev
-# or
-pnpm dev
-```
-
-On Windows, open a new terminal after changing the Node version and verify
-that `node --version` reports `v20.20.2`. This project uses Node 20 because
-the current Vite HTTPS/HMR path fails with Node 22 in this environment.
-
-The application will be available at `https://lazytown.test`. Vite serves
-frontend assets and provides hot module replacement while the terminal stays
-running. Docker Compose is only used for infrastructure services such as the
-PostgreSQL database.
-
-## Project Structure
-
-```
-├── app/                    # Laravel application code
-│   ├── Actions/           # Action classes
-│   ├── Models/            # Eloquent models
-│   ├── Http/              # Controllers, Requests, Middleware
-│   └── ...
-├── resources/
-│   ├── js/                # React components and pages
-│   │   ├── components/    # Reusable React components
-│   │   ├── pages/         # Page components
-│   │   ├── layouts/       # Layout components
-│   │   └── ...
-│   └── css/               # Stylesheets
-├── database/
-│   ├── migrations/        # Database migrations
-│   ├── factories/         # Model factories
-│   └── seeders/           # Database seeders
-├── routes/                # Application routes
-├── tests/                 # Test files
-└── ...
-```
-
-## Available Scripts
-
-- `php artisan` - Laravel Artisan commands
-- `php artisan serve` - Start development server
-- `php artisan migrate` - Run database migrations
-- `php artisan tinker` - Interactive shell
-- `npm run dev` - Watch frontend in development
-- `npm run build` - Build frontend for production
-- `npm run lint` - Run ESLint
-- `npm run format` - Format code with Prettier
-
-## Testing
-
-See [CICD_INFO.MD](./CICD_INFO.MD) for the CI/CD lifecycle, production database behavior, rollback limits, and branch guidance.
-
-Run tests:
-
-```bash
-composer test
-```
-
-GitHub Actions runs CI on pull requests and pushes to `master`. It starts a
-temporary PostgreSQL 16 service, builds the frontend, and runs `composer
-ci:check` (ESLint, Prettier, TypeScript checks, Pint, PHPStan, and the Laravel
-test suite). A push or manual workflow run on `master` can deploy after CI
-passes when the repository variable `DEPLOY_ENABLED` is set to `true`. Pull
-requests and workflow runs on other branches never deploy.
-
-Configure the `production` GitHub Environment with these variables:
-
-- `DEPLOY_HOST`: production SSH host
-- `DEPLOY_USER`: SSH user
-- `DEPLOY_PATH`: exactly `/var/www/lazytown`
-- `DEPLOY_URL`: production URL used by the post-deploy health check
-
-Configure these secrets on the same environment:
-
-- `DEPLOY_SSH_KEY`: private SSH key for the deployment user
-- `DEPLOY_KNOWN_HOSTS`: pinned SSH host key entry for the production host
-
-Keep `DEPLOY_ENABLED` disabled until the production environment is ready. Add
-required reviewers to the `production` Environment to require approval before
-the deploy job starts. Never store deployment credentials in the repository.
-
-The server must provide Bash, PHP CLI 8.3 or newer (but below 9.0), and the
-standard `tar`, `ln`, `mv`, `chgrp`, `chmod`, and `find` commands. Prepare
-`/var/www/lazytown/releases`, `/var/www/lazytown/shared/.env`, and
-`/var/www/lazytown/shared/storage` before the first deployment, and configure
-the web server to serve `/var/www/lazytown/current/public`. Each deployment
-installs a versioned release, runs migrations, and atomically switches the
-`current` symlink. The deployment user needs write access to `releases` and
-`shared`, and must be root or a member of `www-data`. The shared `.env` file
-must be owned by the deployment user, belong to `www-data`, and have mode `640`
-so the PHP web process can read it without making it world-readable. If the
-production health check fails, the workflow switches back to the previous
-release when one exists; the first deployment has no previous release to
-restore. Database migrations must remain compatible with the previous
-application release because rollback does not reverse database changes. Old
-release directories are not automatically removed, so monitor server disk
-usage and decide on a retention policy before frequent deployments.
-
-## Database
-
-### Migrations
-
-Create new migration:
-
-```bash
-php artisan make:migration migration_name
-```
-
-### Seeders
-
-Run seeders:
-
-```bash
-php artisan db:seed
-```
-
-Create or update the demo test accounts (only allowed in the `local` and
-`testing` environments):
-
-```bash
-php artisan db:seed --class=DemoAccountsSeeder
-```
-
-The accounts `premium@example.com`, `free@example.com`, `trainer@example.com`,
-and `player@example.com` all use the password `12345678`. The seeder can be run
-again safely to recreate or update these demo accounts.
-The home page uses the selected team's saved matches and training sessions, as
-well as news assigned to the signed-in user. If a section has no matching
-records, it displays "Keine Daten verfügbar."
-
-## Authentication
-
-The application includes:
-
-- Email/Password authentication
-- Two-Factor Authentication
-- Passkeys (WebAuthn)
-- Social authentication ready (via Laravel Fortify)
-
-## Team Management
-
-- Create and manage teams
-- Invite team members
-- Assign roles and permissions
-- Team-specific features and data
-
-## Environment Variables
-
-Key variables to configure in `.env`:
-
-```
-APP_NAME=LazyTown
-APP_ENV=local
-APP_DEBUG=true
-APP_URL=http://localhost:8000
-
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=lazytown
-DB_USERNAME=root
-DB_PASSWORD=
-
-MAIL_DRIVER=log
-```
-
-## Contributing
-
-1. Create a feature branch
-2. Make your changes
-3. Run tests and linting
-4. Submit a pull request
-
-## License
-
-This project is open-sourced software licensed under the MIT license.
-
-## Support
-
-For issues and questions, please open an issue on the GitHub repository.
+GitHub Actions führt CI bei Pull Requests, Pushes auf `master` und manuellen Läufen aus. Ein Produktionsdeploy ist nur für `master` nach erfolgreicher CI und bei `DEPLOY_ENABLED=true` vorgesehen. Die Pipeline und ihre Grenzen sind in [CICD_INFO.MD](./CICD_INFO.MD) dokumentiert; die technische Zusammenfassung steht in [docs/deployment.md](./docs/deployment.md).
