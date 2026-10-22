@@ -105,6 +105,22 @@ jobs:
         run: |
           npm ci
           npm run build
+          node --input-type=module -e '
+            import { existsSync, readFileSync } from "node:fs";
+            const manifest = JSON.parse(readFileSync("public/build/manifest.json", "utf8"));
+            for (const entry of ["resources/css/app.css", "resources/js/app.ts"]) {
+              if (!manifest[entry]) throw new Error(`Missing Vite manifest entry: ${entry}`);
+            }
+            const assets = new Set();
+            for (const entry of Object.values(manifest)) {
+              if (entry.file) assets.add(entry.file);
+              for (const file of entry.css ?? []) assets.add(file);
+              for (const file of entry.assets ?? []) assets.add(file);
+            }
+            for (const asset of assets) {
+              if (!existsSync(`public/build/${asset}`)) throw new Error(`Missing built asset: ${asset}`);
+            }
+          '
 
       - name: Install production Composer dependencies
         run: composer install --no-dev --no-interaction --prefer-dist --no-progress --optimize-autoloader
@@ -339,6 +355,11 @@ jobs:
           php artisan optimize:clear
           php artisan optimize
 
+          if [[ ! -s "$release/public/build/manifest.json" ]]; then
+            printf 'Vite manifest is missing from the release; refusing activation\n' >&2
+            exit 1
+          fi
+
           chgrp -R www-data "$release/bootstrap/cache"
           chmod -R g+rwX "$release/bootstrap/cache"
           find "$release/bootstrap/cache" -type d -exec chmod g+s {} +
@@ -363,9 +384,43 @@ jobs:
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
           DEPLOY_URL: ${{ vars.DEPLOY_URL }}
         run: |
+          verify_assets() {
+            local html asset_urls asset_url content_type origin
+            html="$(curl --fail --silent --show-error --location --max-time 15 "$DEPLOY_URL")" || return 1
+            asset_urls="$(printf '%s' "$html" | grep -oE '(src|href)="[^"]*/build/assets/[^"]+"' | cut -d '"' -f 2 | sort -u)" || return 1
+            if [[ -z "$asset_urls" ]] || ! grep -q '\.css' <<< "$asset_urls" || ! grep -q '\.js' <<< "$asset_urls"; then
+              printf 'Production HTML is missing built CSS or JavaScript asset references\n' >&2
+              return 1
+            fi
+
+            origin="$(printf '%s' "$DEPLOY_URL" | sed -E 's#^(https?://[^/]+).*#\1#')"
+            while IFS= read -r asset_url; do
+              if [[ "$asset_url" == /* ]]; then
+                asset_url="$origin$asset_url"
+              fi
+              if ! content_type="$(curl --fail --silent --show-error --location --max-time 15 --output /dev/null --write-out '%{content_type}' "$asset_url")"; then
+                printf 'Production asset failed to load: %s\n' "$asset_url" >&2
+                return 1
+              fi
+              case "$asset_url" in
+                *.css)
+                  if [[ "$content_type" != text/css* ]]; then
+                    printf 'Production CSS has an unexpected content type (%s): %s\n' "$content_type" "$asset_url" >&2
+                    return 1
+                  fi
+                  ;;
+                *.js)
+                  if [[ "$content_type" != *javascript* ]]; then
+                    printf 'Production JavaScript has an unexpected content type (%s): %s\n' "$content_type" "$asset_url" >&2
+                    return 1
+                  fi
+                  ;;
+              esac
+            done <<< "$asset_urls"
+          }
+
           for attempt in {1..10}; do
-            if curl --fail --silent --show-error --location --max-time 15 \
-              --output /dev/null "$DEPLOY_URL"; then
+            if verify_assets; then
               exit 0
             fi
             sleep 3
